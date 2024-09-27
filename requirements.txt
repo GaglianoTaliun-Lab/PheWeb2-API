@@ -1,0 +1,8 @@
+blinker==1.8.2+computecanada
+click==8.1.7+computecanada
+flask==3.0.3+computecanada
+Flask-Cors==5.0.0
+itsdangerous==2.2.0+computecanada
+jinja2==3.1.4+computecanada
+MarkupSafe==2.1.5+computecanada
+werkzeug==3.0.4+computecanada
