@@ -6,9 +6,9 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.config.from_object('config')
 
-CORS(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)
+CORS(app, origins=app.config['CORS_ORIGINS'])
 
-app.register_blueprint(phenotype_routes.bp, url_prefix='/ui')
+app.register_blueprint(phenotype_routes.bp)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=9099)
