@@ -7,7 +7,7 @@ bp = Blueprint('phenotype_routes', __name__)
 def hello():
     return jsonify({'message': 'Hello, World!'})
 
-@bp.route('/phenotypes', methods=('GET'))
+@bp.route('/phenotypes', methods=['GET'])
 def phenotype_table():
     result = Phenotypes.get_phenotypes()
     
@@ -16,7 +16,7 @@ def phenotype_table():
     
     return jsonify(result), 200
 
-@bp.route('/variant/<variant_code>', methods=('GET'))
+@bp.route('/variant/<variant_code>', methods=['GET'])
 def get_variant(variant_code):
     
     variant_list = Variant(variant_code).get_variant()
@@ -26,12 +26,10 @@ def get_variant(variant_code):
 
     return jsonify(variant_list), 200
 
-@bp.route('/pheno/<phenocode>', methods=('GET'))
-def get_variant(variant_code):
+@bp.route('/pheno/<phenocode>', methods=['GET'])
+def get_pheno(phenocode):
     
-    pheno_list = Pheno(phenocode).get_pheno()
-        
-    if pheno_list == []:
-        return jsonify({"message": f"Cannot find variant with variant code {variant_code}."}), 404
-
-    return jsonify(pheno_list), 200
+    pheno = Pheno().get_pheno(phenocode)
+    
+    # send from directory does all error coding automatically
+    return pheno
