@@ -15,14 +15,9 @@ for the query part (again, in theory)
 
 class Phenotypes():
     
-    def __init__(self):
-        self.data = {}
-        phenotype_file_dir = current_app.config['PHENOTYPES_DIR']
-        phenotype_file_path = os.path.join(phenotype_file_dir, 'phenotypes.json')
+    def __init__(self, data):
+        self.data = data
 
-        with open(phenotype_file_path, 'r') as file:
-            self.data = json.load(file)
-    
     def get_phenotypes(self):
         return self.data
     
@@ -31,17 +26,28 @@ class Pheno():
     # TODO: in the future, it would be a thousand times better 
     # to have a sqlite3 nosql database with all the manhattan jsons inside,
     # so we could query the database instead of reading the json every single time
-    #pheno = get_pheno():
-    
-    # it would also likely be better to pre-populate the pheno dict for this purpose
-    
+        
     # but for now, send_from_directory is likely the fastest way
-    def __init__(self):
-        self.pheno = {}
-
     
+    def __init__(self, data = []):
+        self.pheno = {}
+        self.phenolist = data
+        
+    def get_phenolist(self, phenocode):
+        
+        if not phenocode:
+            return self.phenolist
+        
+        # we can turn self.phenolist into a dict with keys somehow being stratifications to optimize O(n) -> O(1)
+        specified_phenos = [pheno_info for pheno_info in self.phenolist if pheno_info['phenocode']==phenocode]
+        return specified_phenos
+                
     def get_pheno(self, phenocode):
         response = send_from_directory(current_app.config['MANHATTAN_DIR'], f"{phenocode}.json")
+        return response
+    
+    def get_qq(self, phenocode):
+        response = send_from_directory(current_app.config['QQ_DIR'], f"{phenocode}.json")
         return response
 
 # TODO : create functionality for getting information for phewas page
@@ -51,4 +57,29 @@ class Variant():
     
     def get_variant(self, variant_code):
         return self.variants[variant_code]
+    
+    
+# functions to create class (factory pattern)
+def create_phenotypes() -> Phenotypes:
+        
+    data = send_from_directory(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json' )
+        
+    return Phenotypes(data)
+
+def create_phenolist() -> Pheno:
+
+    try:
+        with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'pheno-list.json')) as f:
+            data = json.load(f)
+
+    except Exception as e:
+        # TODO: logger instead of print?
+        print(e)
+        return None
+    
+    return Pheno(data)
+
+def create_variant() -> Variant:
+    
+    return Variant()
     

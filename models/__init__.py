@@ -1,1 +1,1 @@
-from .models import Phenotypes, Pheno, Variant
+from .models import create_phenotypes, create_phenolist, create_variant
