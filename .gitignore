@@ -1,5 +1,7 @@
+<<<<<<< HEAD
 *__pycache__*
 *.venv
 
 data
 test.md
+*.py[cod]
