@@ -1,4 +1,4 @@
-from flask import current_app, send_from_directory
+from flask import current_app, send_from_directory, send_file
 import os
 import json
 
@@ -48,6 +48,17 @@ class Pheno():
     
     def get_qq(self, phenocode):
         response = send_from_directory(current_app.config['QQ_DIR'], f"{phenocode}.json")
+        return response
+    
+    # TODO: filtering logic
+    def get_pheno_filtered(self, phenocode):
+        response = send_from_directory(current_app.config['MANHATTAN_DIR'], f"{phenocode}.json")
+        return response
+    
+    def get_sumstats(self, phenocode):
+        response = send_file(current_app.config['PHENO_GZ_DIR'] + f"/{phenocode}.gz",
+                                        as_attachment=True,
+                                        download_name=f'phenocode-{phenocode}.tsv.gz')
         return response
 
 # TODO : create functionality for getting information for phewas page
