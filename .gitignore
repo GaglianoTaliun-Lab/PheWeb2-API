@@ -5,3 +5,4 @@
 data
 test.md
 *.py[cod]
+config.py
