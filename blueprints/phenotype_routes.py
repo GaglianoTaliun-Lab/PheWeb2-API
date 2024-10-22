@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, request
 from models import create_phenotypes, create_phenolist, create_variant
+from utils import extract_variants
 
 bp = Blueprint('phenotype_routes', __name__)
 
@@ -56,12 +57,24 @@ def get_pheno(phenocode):
     return result
 
 @bp.route('/pheno-filter/<phenocode>', methods=['GET'])
-def get_pheno_filter(phenocode):
+@bp.route('/pheno-filter/<phenocode1>/<phenocode2>', methods=['GET'])
+def get_pheno_filter(phenocode1, phenocode2 = None):
+    
+    # this will get optional parameters after a '?', such as /pheno-filter/DIA_TYPE2_COM.European.Male/DIA_TYPE1_COM.European.Female?min_maf=0.1&min_maf=0.2
+    min_maf = request.args.get('min_maf', default=0.0, type=float)
+    max_maf = request.args.get('max_maf', default=0.5,type=float)
+    indel = request.args.get('indel', default=True, type=bool)
+    csq = request.args.get('csq', default='', type=str)
     
     if 'pheno' not in g:
         g.pheno = create_phenolist()
         
-    result = g.pheno.get_pheno_filtered(phenocode)
+    chosen_variants1 : list = extract_variants(phenocode1, min_maf, max_maf)
+    chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf)
+        
+    result = g.pheno.get_pheno_filtered(phenocode1, phenocode2, min_maf, max_maf, indel, csq)
+
+    
     return result
 
 @bp.route('/qq/<phenocode>', methods=['GET'])

@@ -51,8 +51,10 @@ class Pheno():
         return response
     
     # TODO: filtering logic
-    def get_pheno_filtered(self, phenocode):
-        response = send_from_directory(current_app.config['MANHATTAN_DIR'], f"{phenocode}.json")
+    def get_pheno_filtered(self, phenocode, chosen_variants):
+        
+        # TODO : we will get the manhattan.json but only take the variants present in chosen_variants
+        response = send_from_directory(current_app.config['BEST_OF_PHENO'], f"{phenocode}")
         return response
     
     def get_sumstats(self, phenocode):
