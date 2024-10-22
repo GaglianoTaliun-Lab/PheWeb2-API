@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, g
-from models import create_phenotypes, create_phenolist, create_variant
+from models import create_phenotypes, create_phenolist, create_variant, create_tophits
 
 bp = Blueprint('phenotype_routes', __name__)
 
@@ -14,6 +14,16 @@ def phenotype_table():
         g.phenotypes = create_phenotypes()
         
     result = g.phenotypes.get_phenotypes()
+    
+    return result
+
+@bp.route('/tophits', methods=['GET'])
+def tophits_table():
+    
+    if 'tophits' not in g:
+        g.tophits = create_tophits()
+        
+    result = g.tophits.get_tophits()
     
     return result
 
