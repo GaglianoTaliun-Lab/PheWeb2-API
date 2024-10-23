@@ -20,7 +20,15 @@ class Phenotypes():
 
     def get_phenotypes(self):
         return self.data
+
+class Tophits():
     
+    def __init__(self, data):
+        self.data = data
+
+    def get_tophits(self):
+        return self.data
+
 class Pheno():
     
     # TODO: in the future, it would be a thousand times better 
@@ -75,9 +83,17 @@ class Variant():
 # functions to create class (factory pattern)
 def create_phenotypes() -> Phenotypes:
         
-    data = send_from_directory(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json' )
+    with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json'), 'r') as f:
+            data = json.load(f)
         
     return Phenotypes(data)
+
+def create_tophits() -> Tophits:
+        
+    with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'top_hits.json'), 'r') as f:
+            data = json.load(f)
+        
+    return Tophits(data)
 
 def create_phenolist() -> Pheno:
 

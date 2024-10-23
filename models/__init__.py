@@ -1,1 +1,1 @@
-from .models import create_phenotypes, create_phenolist, create_variant
+from .models import create_phenotypes, create_phenolist, create_variant, create_tophits

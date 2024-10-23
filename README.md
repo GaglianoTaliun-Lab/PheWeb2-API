@@ -15,17 +15,22 @@ e.g. to view phenotype table data, go to http://localhost:9099/ui/phenotypes
 The runtime data on disk needs to be present before running.
 
 ```
-/var/local/CLSA_PheWeb_data
-└── runtime
-    ├── phenotypes
-        ├── phenotypes.json 
+CLSA_PheWeb_data
+└── generated_by_pheweb
+    ├── manhattan
+        ├── ... 
+    ├── qq
+        ├── ...
+    ├── phenotypes.json 
+    ├── top_hits.json 
     ├── ...
 ```
 
 The paths to the runtime data needs to be specified in the config.py
 ```py
-BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'runtime')
+BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated_by_pheweb')
 
-PHENOTYPES_DIR = os.path.join(BASE_DIR, 'phenotypes')
+PHENOTYPES_DIR = os.path.join(BASE_DIR)
 ...
 ```
+please refer the `sample_config.py` for more examples
