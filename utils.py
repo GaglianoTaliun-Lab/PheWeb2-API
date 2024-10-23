@@ -28,20 +28,26 @@ def extract_variants(phenocode : str, min_maf : float, max_maf : float, indel : 
     )
     
     # filter variants that don't meet to maf requirements
-    if (indel):
+    if (indel == 'both'):
+        subset = df.filter(
+            pl.col("maf") > min_maf,
+            pl.col("maf") < max_maf,
+        )
+    elif (indel == 'true'):
+        subset = df.filter(
+            pl.col("maf") > min_maf,
+            pl.col("maf") < max_maf,
+            ((pl.col("ref").str.len_bytes() != 1) | (pl.col("alt").str.len_bytes() != 1))  # New condition
+        )
+    elif (indel == 'false'):
         subset = df.filter(
             pl.col("maf") > min_maf,
             pl.col("maf") < max_maf,
             pl.col("ref").str.len_bytes() == 1,
             pl.col("alt").str.len_bytes() == 1
         )
-    else:
-        subset = df.filter(
-            pl.col("maf") > min_maf,
-            pl.col("maf") < max_maf,
-        )
-    
-    weakest_pval_seen = df.select(pl.col('pval').min()).item()
+        
+    weakest_pval_seen = df.select(pl.col('pval').max()).item()
     
     chosen_variants = subset.to_dicts()
         

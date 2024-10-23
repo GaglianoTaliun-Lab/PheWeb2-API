@@ -6,4 +6,5 @@ itsdangerous==2.2.0+computecanada
 jinja2==3.1.4+computecanada
 MarkupSafe==2.1.5+computecanada
 polars==1.0.0+computecanada
+python_dotenv==1.0.1+computecanada
 werkzeug==3.0.4+computecanada

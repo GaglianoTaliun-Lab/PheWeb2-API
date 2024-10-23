@@ -74,17 +74,15 @@ def get_pheno_filter(phenocode1, phenocode2 = None):
     # this will get optional parameters after a '?', such as /pheno-filter/DIA_TYPE2_COM.European.Male/DIA_TYPE1_COM.European.Female?min_maf=0.1&min_maf=0.2
     min_maf = request.args.get('min_maf', default=0.0, type=float)
     max_maf = request.args.get('max_maf', default=0.5,type=float)
-    indel = request.args.get('indel', default=True, type=bool)
+    indel = request.args.get('indel', default="both", type=str)
     #csq = request.args.get('csq', default='', type=str)
     
     if 'pheno' not in g:
         g.pheno = create_phenolist()
     
-    print(f"running extract varaints with {phenocode1=}, {phenocode2=}, {min_maf=} and {max_maf=}")
     chosen_variants1 : list = extract_variants(phenocode1, min_maf, max_maf, indel)
     chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf, indel)
     
-    print(f"got {chosen_variants1=} and {chosen_variants2=}")
     miami_data = []
     miami_data.append(chosen_variants1)
     miami_data.append(chosen_variants2)
