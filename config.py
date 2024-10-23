@@ -1,9 +1,6 @@
 import os.path
 from dotenv import load_dotenv
 
-#BASE_DIR = os.path.join(os.sep, 'home', 'justb11', "scratch", "sex-stratified-pheweb", "PheWeb2.0-API", "data")
-#BASE_DIR = os.path.join(os.sep, 'home', 'justb11', "projects", "def-gsarah", "justb11", "sex-stratified", "PheWeb2.0-API", "data")
-
 load_dotenv(dotenv_path='.env')
 
 BASE_DIR = os.getenv('BASE_DIR')
@@ -21,4 +18,5 @@ MANHATTAN_PEAK_PVAL_THRESHOLD = 1e-6
 MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 
-CORS_ORIGINS = ['http://localhost:8090']
+# CORS_ORIGINS = ['http://localhost:8099']
+CORS_ORIGINS = os.getenv('CORS_ORIGINS', '').split(',')
