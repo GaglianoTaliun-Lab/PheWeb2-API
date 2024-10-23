@@ -56,7 +56,7 @@ def get_pheno(phenocode):
     # but keeping this format in the likely case we change it in the future
     return result
 
-@bp.route('/pheno-filter/<phenocode>', methods=['GET'])
+@bp.route('/pheno-filter/<phenocode1>', methods=['GET'])
 @bp.route('/pheno-filter/<phenocode1>/<phenocode2>', methods=['GET'])
 def get_pheno_filter(phenocode1, phenocode2 = None):
     
@@ -64,18 +64,24 @@ def get_pheno_filter(phenocode1, phenocode2 = None):
     min_maf = request.args.get('min_maf', default=0.0, type=float)
     max_maf = request.args.get('max_maf', default=0.5,type=float)
     indel = request.args.get('indel', default=True, type=bool)
-    csq = request.args.get('csq', default='', type=str)
+    #csq = request.args.get('csq', default='', type=str)
     
     if 'pheno' not in g:
         g.pheno = create_phenolist()
-        
-    chosen_variants1 : list = extract_variants(phenocode1, min_maf, max_maf)
-    chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf)
-        
-    result = g.pheno.get_pheno_filtered(phenocode1, phenocode2, min_maf, max_maf, indel, csq)
+    
+    print(f"running extract varaints with {phenocode1=}, {phenocode2=}, {min_maf=} and {max_maf=}")
+    chosen_variants1 : list = extract_variants(phenocode1, min_maf, max_maf, indel)
+    chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf, indel)
+    
+    print(f"got {chosen_variants1=} and {chosen_variants2=}")
+    miami_data = []
+    miami_data.append(chosen_variants1)
+    miami_data.append(chosen_variants2)
+    # TODO : two sets of chosen variants in miami? What if manhattan?
+    # result = g.pheno.get_pheno_filtered(chosen_variants1, chosen_variants2)
 
     
-    return result
+    return jsonify(miami_data), 200
 
 @bp.route('/qq/<phenocode>', methods=['GET'])
 def get_qq(phenocode):
