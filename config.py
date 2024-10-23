@@ -1,8 +1,12 @@
 import os.path
-from .config import BASE_DIR
+from dotenv import load_dotenv
 
 #BASE_DIR = os.path.join(os.sep, 'home', 'justb11', "scratch", "sex-stratified-pheweb", "PheWeb2.0-API", "data")
 #BASE_DIR = os.path.join(os.sep, 'home', 'justb11', "projects", "def-gsarah", "justb11", "sex-stratified", "PheWeb2.0-API", "data")
+
+load_dotenv(dotenv_path='.env')
+
+BASE_DIR = os.getenv('BASE_DIR')
 
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
 MANHATTAN_DIR = os.path.join(BASE_DIR, "manhattan")
