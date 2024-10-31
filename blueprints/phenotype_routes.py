@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, g, request
-from models import create_phenotypes, create_phenolist, create_variant, create_tophits
+from models import create_phenotypes, create_phenolist, create_variant, create_tophits, create_genes
 from utils import extract_variants
 
 
@@ -18,6 +18,7 @@ def phenotype_table():
     result = g.phenotypes.get_phenotypes()
     
     return result
+
 
 @bp.route('/tophits', methods=['GET'])
 def tophits_table():
