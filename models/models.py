@@ -1,4 +1,5 @@
 from flask import current_app, send_from_directory, send_file
+import sqlite3
 import os
 import json
 
@@ -28,6 +29,34 @@ class Tophits():
 
     def get_tophits(self):
         return self.data
+    
+class Genes():
+    def __init__(self, data=None):
+        self.data = data
+    
+    def connect_to_sqlite(self):
+        # connect to sqlite3 database of best-phenos-by-gene
+        connection = sqlite3.connect(os.path.join(current_app.config['PHENOTYPES_DIR'], 'best-phenos-by-gene.sqlite3'))
+        connection.row_factory = sqlite3.Row # each row as dictionary
+        return connection
+    
+    def get_genes_table(self, gene):
+        # get best phenos for the selected gene
+        connection = self.connect_to_sqlite()
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM best_phenos_for_each_gene WHERE gene='{gene}'")
+        results = cursor.fetchone()
+        connection.close()
+        
+        if results:
+            data = json.loads(results['json'])
+            response = {
+                "gene": gene,
+                "data": data,
+            }
+            return response
+        else:
+            pass
 
 class Pheno():
     
@@ -80,6 +109,10 @@ def create_phenotypes() -> Phenotypes:
             data = json.load(f)
         
     return Phenotypes(data)
+
+def create_genes() -> Genes:
+    
+    return Genes()
 
 def create_tophits() -> Tophits:
         
