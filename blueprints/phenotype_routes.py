@@ -77,20 +77,19 @@ def get_pheno_filter(phenocode1, phenocode2 = None):
     indel = request.args.get('indel', default="both", type=str)
     #csq = request.args.get('csq', default='', type=str)
     
-    if 'pheno' not in g:
-        g.pheno = create_phenolist()
+    # TODO : we can cache the BEST_OF_PHENO_DIR/<phenocode> for better performance after 1 filter
+    # TODO : also, move extract variants call to models.py
     
     chosen_variants1 : list = extract_variants(phenocode1, min_maf, max_maf, indel)
-    chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf, indel)
+    chosen_variants2 : list = extract_variants(phenocode2, min_maf, max_maf, indel) if phenocode2 else None
     
-    miami_data = []
-    miami_data.append(chosen_variants1)
-    miami_data.append(chosen_variants2)
-    # TODO : two sets of chosen variants in miami? What if manhattan?
-    # result = g.pheno.get_pheno_filtered(chosen_variants1, chosen_variants2)
+    data = []
+    data.append(chosen_variants1)
+    
+    if chosen_variants2:
+        data.append(chosen_variants2)
 
-    
-    return jsonify(miami_data), 200
+    return jsonify(data), 200
 
 @bp.route('/qq/<phenocode>', methods=['GET'])
 def get_qq(phenocode):
