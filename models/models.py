@@ -66,17 +66,17 @@ class Pheno():
         
     # but for now, send_from_directory is likely the fastest way
     
-    def __init__(self, data = []):
+    def __init__(self, data = None):
         self.pheno = {}
-        self.phenolist = data
+        self.phenotypes_list = data
         
-    def get_phenolist(self, phenocode):
+    def get_phenotypes_list(self, phenocode):
         
         if not phenocode:
-            return self.phenolist
+            return self.phenotypes_list
         
-        # we can turn self.phenolist into a dict with keys somehow being stratifications to optimize O(n) -> O(1)
-        specified_phenos = [pheno_info for pheno_info in self.phenolist if pheno_info['phenocode']==phenocode]
+        # we can turn self.phenotypes_list into a dict with keys somehow being stratifications to optimize O(n) -> O(1)
+        specified_phenos = [pheno_info for pheno_info in self.phenotypes_list if pheno_info['phenocode']==phenocode]
         return specified_phenos
                 
     def get_pheno(self, phenocode):
@@ -121,10 +121,10 @@ def create_tophits() -> Tophits:
         
     return Tophits(data)
 
-def create_phenolist() -> Pheno:
+def create_phenotypes_list() -> Pheno:
 
     try:
-        with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'pheno-list.json')) as f:
+        with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json')) as f:
             data = json.load(f)
 
     except Exception as e:
