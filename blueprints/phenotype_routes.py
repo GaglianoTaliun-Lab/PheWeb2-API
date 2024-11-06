@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, g, request
 from models import create_phenotypes, create_phenotypes_list, create_tophits
-from utils import extract_variants
+from models.utils import extract_variants
 
 
 bp = Blueprint('phenotype_routes', __name__)
@@ -103,11 +103,14 @@ def get_region(phenocode,region_code):
     if 'pheno' not in g:
         g.pheno = create_phenotypes_list()
         
+    result = None
     
+    print(phenocode, region_code)
     result = g.pheno.get_region(phenocode, region_code)
-    
-    if result:
-        return jsonify(result)
-    else:
+    print(result)
+    if not result:
         # TODO : did we fail to get the phenocode or the region?
         return jsonify({'data' : [], 'message' : f"Could not find region data for {phenocode=} and {region_code=}"}), 404
+        
+    return jsonify(result)
+

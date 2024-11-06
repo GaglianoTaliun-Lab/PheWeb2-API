@@ -1,7 +1,11 @@
 from flask import current_app, send_from_directory, send_file
+from models.locus_zoom_utils import get_pheno_region
+from models.utils import extract_variants
+
 import sqlite3
 import os
 import json
+import re
 
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -92,8 +96,26 @@ class Pheno():
                                         as_attachment=True,
                                         download_name=f'phenocode-{phenocode}.tsv.gz')
         return response
+    
+    def get_region(self, phenocode, region):
+        
+        # they used this originally... but i'll wait for now.
+        
+        # m = re.match(r".*chromosome in +'(.+?)' and position ge ([0-9]+) and position le ([0-9]+)", region)
+        # print(m)
+        # if not m:
+        #     return None  
+        # chrom, pos_start, pos_end = region.group(1), int(region.group(2)), int(region.group(3))
+        
+        chrom, part2_and_part3 = region.split(':')
+        pos_start, pos_end = part2_and_part3.split('-')  
+        pos_start = int(pos_start)
+        pos_end = int(pos_end)
+        
+        print(f'{phenocode=}, {chrom=}, {pos_start=}, {pos_end=}')
+        return get_pheno_region(phenocode, chrom, pos_start, pos_end)
+            
 
-# TODO : create functionality for getting information for phewas page
 class Variant():
     def __init__(self):
         self.variants = {}
