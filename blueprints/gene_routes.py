@@ -14,4 +14,4 @@ def significant_association_table(gene):
     if table_data:
         return jsonify(table_data), 200
     else:
-        return jsonify({'message': 'No data found for this gene'}), 404
+        return jsonify({'data': [], 'message': 'No data found for this gene'}), 404
