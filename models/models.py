@@ -99,20 +99,19 @@ class Pheno():
     
     def get_region(self, phenocode, region):
         
-        # they used this originally... but i'll wait for now.
+        # they used this originally... but I don't see why it's necessary.
         
         # m = re.match(r".*chromosome in +'(.+?)' and position ge ([0-9]+) and position le ([0-9]+)", region)
         # print(m)
         # if not m:
         #     return None  
-        # chrom, pos_start, pos_end = region.group(1), int(region.group(2)), int(region.group(3))
+        # chrom, pos_start, pos_end = m.group(1), int(m.group(2)), int(m.group(3))
         
         chrom, part2_and_part3 = region.split(':')
         pos_start, pos_end = part2_and_part3.split('-')  
         pos_start = int(pos_start)
         pos_end = int(pos_end)
         
-        print(f'{phenocode=}, {chrom=}, {pos_start=}, {pos_end=}')
         return get_pheno_region(phenocode, chrom, pos_start, pos_end)
             
 

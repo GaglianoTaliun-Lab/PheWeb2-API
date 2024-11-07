@@ -1,10 +1,24 @@
 from typing import List, Dict, Optional, Any, Iterator
 from . import parse_utils
 from flask import current_app
+from contextlib import contextmanager
+
 
 import itertools, gzip, io, csv, os
 import pysam
 
+csv.register_dialect(
+    'pheweb-internal-dialect',
+    delimiter='\t',
+    doublequote=False,
+    escapechar='\\',
+    lineterminator='\n',
+    quotechar='"',
+    skipinitialspace=False,
+    strict=True,
+)
+
+@contextmanager
 def read_gzip(filepath):  # mypy doesn't like it
     # hopefully faster than `gzip.open(filepath, 'rt')` -- TODO: find out whether it is
     with gzip.GzipFile(filepath, 'rb') as f: # leave in binary mode (default), let TextIOWrapper decode
@@ -50,8 +64,9 @@ class _Get_Pheno_Region:
         }
 get_pheno_region = _Get_Pheno_Region.get_pheno_region
 
+@contextmanager
 def IndexedVariantFileReader(phenocode:str):
-    filepath = os.path.join(current_app.config['PHENOTYPES_DIR'], phenocode)
+    filepath = os.path.join(current_app.config['PHENO_GZ_DIR'], phenocode + ".gz")
     # filepath = get_pheno_filepath('pheno_gz', phenocode)
     with read_gzip(filepath) as f:
         reader:Iterator[List[str]] = csv.reader(f, dialect='pheweb-internal-dialect')
