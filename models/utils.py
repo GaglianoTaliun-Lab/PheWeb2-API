@@ -1,5 +1,5 @@
 import polars as pl
-from flask import current_app, jsonify
+from flask import current_app
 
 import math
 import heapq
