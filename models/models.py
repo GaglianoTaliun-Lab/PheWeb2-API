@@ -99,14 +99,6 @@ class Pheno():
     
     def get_region(self, phenocode, region):
         
-        # they used this originally... but I don't see why it's necessary.
-        
-        # m = re.match(r".*chromosome in +'(.+?)' and position ge ([0-9]+) and position le ([0-9]+)", region)
-        # print(m)
-        # if not m:
-        #     return None  
-        # chrom, pos_start, pos_end = m.group(1), int(m.group(2)), int(m.group(3))
-        
         chrom, part2_and_part3 = region.split(':')
         pos_start, pos_end = part2_and_part3.split('-')  
         pos_start = int(pos_start)
@@ -116,14 +108,21 @@ class Pheno():
             
 
 class Variant():
-    def __init__(self):
+    def __init__(self, data : list = None):
         self.variants = {}
+        self.stratifications = data
+        
+    def get_stratifications(self):
+        return self.stratifications
     
     def get_variant(self, variant_code, stratification):
         reader = PhewasMatrixReader(variant_code, stratification)
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
+
+
+        
 
     
     
@@ -161,5 +160,15 @@ def create_phenotypes_list() -> Pheno:
 
 def create_variant() -> Variant:
     
-    return Variant()
+    try:
+        with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json')) as f:
+            data = json.load(f)
+
+    except Exception as e:
+        # TODO: logger instead of print?
+        print(e)
+        return None
+    
+    stratifications : list = list(set([".".join(pheno['stratification'].values()) for pheno in data if 'stratification' in pheno]))
+    return Variant(stratifications)
     

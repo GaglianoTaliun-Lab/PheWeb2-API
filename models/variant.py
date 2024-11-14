@@ -9,7 +9,6 @@ import pysam
 
 class PhewasMatrixReader:
     def __init__(self, variant_code, stratification):
-        print("yes")
         parts = variant_code.split('-')
         if len(parts) != 4:
             raise ValueError("variant_code should be 'chr-pos-ref-alt'")

@@ -113,23 +113,3 @@ def get_region(phenocode,region_code):
         
     return jsonify(result)
 
-# @bp.route('/phenotypes/<phenocode>/region/lz-results', methods=['GET'])
-# def get_region(phenocode):
-    
-#     filter = request.args.get('filter', type=str)
-    
-#     print(filter)
-        
-#     if 'pheno' not in g:
-#         g.pheno = create_phenotypes_list()
-        
-#     result = None
-    
-#     print(phenocode, filter)
-#     result = g.pheno.get_region(phenocode, filter)
-#     if not result:
-#         # TODO : did we fail to get the phenocode or the region?
-#         return jsonify({'data' : [], 'message' : f"Could not find region data for {phenocode=} and {region_code=}"}), 404
-        
-#     return jsonify(result)
-
