@@ -2,6 +2,7 @@ from flask import current_app, send_from_directory, send_file
 import sqlite3
 import os
 import json
+from .variant import PhewasMatrixReader
 
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -98,8 +99,12 @@ class Variant():
     def __init__(self):
         self.variants = {}
     
-    def get_variant(self, variant_code):
-        return self.variants[variant_code]
+    def get_variant(self, variant_code, stratification):
+        reader = PhewasMatrixReader(variant_code, stratification)
+        reader.read_matrix()
+        response = reader.find_matching_row()
+        return response
+
     
     
 # functions to create class (factory pattern)
