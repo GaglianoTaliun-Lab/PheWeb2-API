@@ -141,7 +141,7 @@ def create_genes() -> Genes:
 
 def create_tophits() -> Tophits:
         
-    with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'top_hits.json'), 'r') as f:
+    with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'top_hits_1k.json'), 'r') as f:
             data = json.load(f)
         
     return Tophits(data)
