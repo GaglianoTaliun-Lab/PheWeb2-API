@@ -14,4 +14,4 @@ app.register_blueprint(variant_routes.bp)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 9099))
-    app.run(host='127.0.0.1', port=port, debug=True)
+    app.run(host='127.0.0.1', port=port, debug=True) # remove debug=TRue when in prod.

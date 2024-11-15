@@ -15,4 +15,19 @@ def get_variant(variant_code, stratification):
         return jsonify(variant_phewas), 200
     else:
         return jsonify({"message": f"Cannot find variant with variant code {variant_code}."}), 404
+    
+    
+@bp.route('/variant/stratification_list', methods=['GET'])
+def get_stratifications_list():
+    
+    
+    if 'variant' not in g:
+        g.variant = create_variant()
+        
+    strat_list = g.variant.get_stratifications()
+    
+    if strat_list:
+        return jsonify(strat_list), 200
+    
+    return jsonify({"message" : "Could not fetch the list of stratifications within data. Please check phenotypes.json file."}), 404
 
