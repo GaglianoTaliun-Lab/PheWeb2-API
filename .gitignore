@@ -6,3 +6,9 @@ data
 test.md
 *.py[cod]
 /myenv
+
+raw_data
+pheno-list.csv
+pheno-list.json
+
+generated-by-pheweb/
