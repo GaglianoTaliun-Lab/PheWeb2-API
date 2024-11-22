@@ -27,6 +27,35 @@ class PhewasMatrixReader:
             quoting=csv.QUOTE_MINIMAL,
             skipinitialspace=True
         )
+        self.phenotype_data_with_index = {}
+        self.get_phenotypes_data()
+    
+    def get_phenotypes_data(self):
+        try:
+            phenotypes_file = os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json')
+            with open(phenotypes_file) as f:
+                data = json.load(f)
+
+            self.phenotype_data_with_index = self.build_phenotypes_index(data)
+
+        except Exception as e:
+            print(e)
+            self.phenotype_data_with_index = None
+            return None
+    
+    def build_phenotypes_index(self, phenotypes_data):
+        index = {}
+        for phenotype in phenotypes_data:
+            key = (
+                phenotype["phenocode"],
+                phenotype["stratification"]["ancestry"],
+                phenotype["stratification"]["sex"],
+            )
+            if key not in index:
+                index[key] = []
+            index[key].append(phenotype)
+        return index
+        
     
     def read_matrix(self):
         with gzip.open(self.filepath, 'rt') as f:
@@ -48,9 +77,6 @@ class PhewasMatrixReader:
                     self.phenotype_fields[phenocode] = {}
                 self.phenotype_fields[phenocode][field] = self._colidxs[colname] # get index of each field of each phenocode
     
-    # def get_phenocodes(self):
-    #     return list(self._colidxs_for_pheno)
-    
     def find_matching_row(self):
         with pysam.TabixFile(self.filepath) as tbx:
             for row in tbx.fetch(self.data['chrom'], self.data['pos'] - 1, self.data['pos']):
@@ -68,7 +94,26 @@ class PhewasMatrixReader:
                     
                     self.data['nearest_genes'] = row_data[self._colidxs.get('nearest_genes')] # get nearest gene
                     for phenocode, fields in self.phenotype_fields.items():
-                        pheno_data = {'phenocode': phenocode}
+                        phenocode_parts = phenocode.split('.')
+                        # pheno_basic_info = self.phenotype_data_with_index.get((phenocode_parts[0],phenocode_parts[1],phenocode_parts[2]), [])[0]
+                        key = (phenocode_parts[0], phenocode_parts[1], phenocode_parts[2])
+                        pheno_list = self.phenotype_data_with_index.get(key, [])
+                        if pheno_list:
+                            pheno_basic_info = pheno_list[0]
+                        else:
+                            pheno_basic_info = None
+                        pheno_data = {
+                            'phenocode': phenocode_parts[0],
+                            'stratification': {
+                                'ancestry': phenocode_parts[1] if len(phenocode_parts) > 1 else None, 
+                                'sex': phenocode_parts[2] if len(phenocode_parts) > 2 else None
+                                },
+                            'category': pheno_basic_info['category'] if pheno_basic_info != None else None,
+                            'phenostring': pheno_basic_info['phenostring'] if pheno_basic_info != None else None,
+                            'num_samples': pheno_basic_info['num_samples'] if pheno_basic_info != None else None,
+                            'num_controls': pheno_basic_info['num_controls'] if pheno_basic_info != None else None,
+                            'num_cases': pheno_basic_info['num_cases'] if pheno_basic_info != None else None
+                            }
                         for field, idx in fields.items():
                             try:
                                 pheno_data[field] = float(row_data[idx])
