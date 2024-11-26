@@ -6,9 +6,11 @@ data
 test.md
 *.py[cod]
 /myenv
+*.out
 
 raw_data
 pheno-list.csv
 pheno-list.json
 
 generated-by-pheweb/
+run_process.sh

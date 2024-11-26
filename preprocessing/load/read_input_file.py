@@ -89,6 +89,7 @@ class PhenoReader:
 
 
 class AssocFileReader:
+    # TODO: Dec 2024 : this could be way faster with polars.
     '''Has no concern for ordering, only in charge of parsing one associations file.'''
     # TODO: use `pandas.read_csv(src_filepath, usecols=[...], converters={...}, iterator=True, verbose=True, na_values='.', sep=None)
     #   - first without `usecols`, to parse the column names, and then a second time with `usecols`.
@@ -96,7 +97,7 @@ class AssocFileReader:
     def __init__(self, filepath, pheno):
         self.filepath = filepath
         self._pheno = pheno
-
+        self._interaction = pheno['interaction'] 
 
     def get_variants(self, minimum_maf=0, use_per_pheno_fields=False):
         if use_per_pheno_fields:
@@ -136,23 +137,37 @@ class AssocFileReader:
                     yield variant
 
             else:
+
                 for line in f:
+                    
                     values = line.rstrip('\n\r').split(delimiter)
                     variant = self._parse_variant(values, colnames, colidx_for_field)
 
-                    if variant['pval'] == '': continue
+                    test_value = variant.get('test', '')
 
-                    maf = get_maf(variant, self._pheno) # checks for agreement
+                    if self._interaction:
+                        if f'ADD-INT_SNPx{self._interaction}' not in test_value:
+                            continue
+                    elif test_value not in {'ADD', 'ADD-CONDTL'}:
+                        continue
+
+                    # Skip processing further if `pval` is empty
+                    if not variant.get('pval'): 
+                        continue
+
+                    # Retrieve and check minor allele frequency (MAF) early to avoid unnecessary processing
+                    maf = get_maf(variant, self._pheno)
                     if maf is not None and maf < minimum_maf:
                         continue
 
+                    # Parse marker ID only if necessary
                     if marker_id_col is not None:
                         chrom2, pos2, variant['ref'], variant['alt'] = AssocFileReader.parse_marker_id(values[marker_id_col])
-                        assert variant['chrom'] == chrom2, (values, variant, chrom2)
-                        assert variant['pos'] == pos2, (values, variant, pos2)
+                        if variant['chrom'] != chrom2 or variant['pos'] != pos2:
+                            raise AssertionError((values, variant, chrom2 if variant['chrom'] != chrom2 else pos2))
 
-                    if variant['chrom'] in chrom_aliases:
-                        variant['chrom'] = chrom_aliases[variant['chrom']]
+                    # Use alias replacement only if the chromosome is in the aliases dictionary
+                    variant['chrom'] = chrom_aliases.get(variant['chrom'], variant['chrom'])
 
                     yield variant
 

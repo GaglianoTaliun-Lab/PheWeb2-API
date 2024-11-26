@@ -1,11 +1,11 @@
 from flask import current_app, send_from_directory, send_file
 from models.locus_zoom_utils import get_pheno_region
 from models.utils import extract_variants
+from models.gene_utils import get_gene_tuples
 
 import sqlite3
 import os
 import json
-import re
 from .variant import PhewasMatrixReader
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -35,8 +35,9 @@ class Tophits():
         return self.data
     
 class Genes():
-    def __init__(self, data=None):
+    def __init__(self, data=None, **kwargs : dict):
         self.data = data
+        self.gene_region_mapping = kwargs['gene_region_mapping']
     
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
@@ -61,6 +62,12 @@ class Genes():
             return response
         else:
             pass
+        
+    def get_gene_position(self, gene):
+        chrom, start, end = self.gene_region_mapping[gene]
+        print(f"{chrom=}, {start=}, {end=}")
+        
+        return chrom, start, end
 
 class Pheno():
     
@@ -121,10 +128,6 @@ class Variant():
         response = reader.find_matching_row()
         return response
 
-
-        
-
-    
     
 # functions to create class (factory pattern)
 def create_phenotypes() -> Phenotypes:
@@ -136,7 +139,9 @@ def create_phenotypes() -> Phenotypes:
 
 def create_genes() -> Genes:
     
-    return Genes()
+    gene_region_mapping = {genename: (chrom, pos1, pos2) for chrom, pos1, pos2, genename in get_gene_tuples()}
+    
+    return Genes(gene_region_mapping=gene_region_mapping)
 
 def create_tophits() -> Tophits:
         

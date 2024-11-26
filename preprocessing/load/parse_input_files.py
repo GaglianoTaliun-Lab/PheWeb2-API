@@ -20,9 +20,7 @@ def run(argv:List[str]) -> None:
     # For each pheno in phenos, we need to update the phenocode if stratified.
     if conf.stratified():
         for i, pheno in enumerate(phenos):
-            phenos[i]['phenocode'] = get_phenocode_with_stratifications(pheno)
-            
-    print(f"phenos to parallelize per pheno: {phenos}")
+            phenos[i]['phenocode'] = get_phenocode_with_stratifications(pheno)   
 
     results_by_phenocode = parallelize_per_pheno(
         get_input_filepaths = get_input_filepaths,

@@ -15,3 +15,17 @@ def significant_association_table(gene):
         return jsonify(table_data), 200
     else:
         return jsonify({'data': [], 'message': 'No data found for this gene'}), 404
+    
+    
+@bp.route('/gene/gene_position/<gene>', methods = ['GET'])
+def get_gene_position(gene):
+    
+    if 'genes' not in g:
+        g.genes = create_genes()
+        
+    chrom, start, end = g.genes.get_gene_position(gene)
+    
+    if all(value is not None for value in (chrom, start, end)):
+        return jsonify((chrom, start, end)), 200
+    else:
+        return jsonify({'data': [], 'message': 'Could not find this gene without our data'}), 404

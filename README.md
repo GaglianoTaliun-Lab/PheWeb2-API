@@ -52,4 +52,6 @@ run
 `pheweb phenolist import-phenolist "/path/to/pheno-list.csv"`
 
 
-Then with 
+Then:
+
+`pheweb process`

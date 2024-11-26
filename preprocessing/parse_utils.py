@@ -71,6 +71,9 @@ per_variant_fields: Dict[str,Dict[str,Any]] = {
     'consequence': {
         'from_assoc_files': False,
     },
+    'test' : {
+        'aliases' : ["TEST"]
+    }
 }
 
 per_assoc_fields: Dict[str,Dict[str,Any]] = {

@@ -211,6 +211,7 @@ def _import_phenolist_csv(f, has_header):
         fieldnames = list(range(num_cols))
         
     # if conf.stratified == True, build stratified column as a sub dictionary
+    # TODO: change this to it's own function like 'list_values_on_pipe'
     if (stratified):
         col_stratification = fieldnames.index('stratification')
         stratification_list = [value[col_stratification].split(';') for value in rows]
@@ -265,6 +266,24 @@ def listify_assoc_files(phenolist):
                 raise PheWebError("assoc_files is of unsupported type({!r}). value: {!r}".format(type(pheno['assoc_files']), pheno['assoc_files']))
             pheno['assoc_files'] = [pheno['assoc_files']]
     return phenolist
+
+def split_phenos_on_interaction(phenolist):
+    all_keys = list(set(itertools.chain.from_iterable(phenolist)))
+    print(all_keys)
+    
+    # check if interaction is present
+    if 'interaction' not in all_keys:
+        return phenolist
+    
+    for pheno in phenolist:
+        if pheno['interaction'] == "null":
+            pheno['interaction'] = None
+            continue
+        
+        pheno['phenocode'] = pheno['phenocode'] + f".inter-{pheno['interaction']}"
+    
+    return phenolist
+
 
 def numify_numeric_cols(phenolist):
     int_regex = re.compile(r'^-?\d+$')  # Matches integers (e.g., -1, 0, 42)
@@ -576,6 +595,7 @@ def run(argv):
         phenolist = interpret_json(phenolist)
         if args.delimit_lists_with_pipe:
             phenolist = split_values_on_pipes(phenolist)
+        phenolist = split_phenos_on_interaction(phenolist)
         phenolist = listify_assoc_files(phenolist)
         phenolist = numify_numeric_cols(phenolist)
         phenolist = boolify_boolean_cols(phenolist)
