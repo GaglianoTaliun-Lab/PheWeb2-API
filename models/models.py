@@ -18,14 +18,6 @@ In addition, these classes allow pre-loading of most data, thereby only having l
 for the query part (again, in theory)
 """
 
-class Phenotypes():
-    
-    def __init__(self, data):
-        self.data = data
-
-    def get_phenotypes(self):
-        return self.data
-
 class Tophits():
     
     def __init__(self, data):
@@ -65,7 +57,6 @@ class Genes():
         
     def get_gene_position(self, gene):
         chrom, start, end = self.gene_region_mapping[gene]
-        print(f"{chrom=}, {start=}, {end=}")
         
         return chrom, start, end
 
@@ -77,17 +68,26 @@ class Pheno():
         
     # but for now, send_from_directory is likely the fastest way
     
-    def __init__(self, data = None):
+    def __init__(self, phenotypes_list = None, interaction_list = None, **kwargs):
         self.pheno = {}
-        self.phenotypes_list = data
+        self.phenotypes_list = phenotypes_list
+        self.interaction_list = interaction_list
         
-    def get_phenotypes_list(self, phenocode):
+    def get_phenotypes_list(self, phenocode = None):
         
         if not phenocode:
             return self.phenotypes_list
         
         # we can turn self.phenotypes_list into a dict with keys somehow being stratifications to optimize O(n) -> O(1)
         specified_phenos = [pheno_info for pheno_info in self.phenotypes_list if pheno_info['phenocode']==phenocode]
+        return specified_phenos
+    
+    def get_interaction_list(self, phenocode):
+        
+        if not phenocode:
+            return self.interaction_list
+        
+        specified_phenos = [interaction_info for interaction_info in self.interaction_list if interaction_info['phenocode']==phenocode]
         return specified_phenos
                 
     def get_pheno(self, phenocode):
@@ -130,12 +130,12 @@ class Variant():
 
     
 # functions to create class (factory pattern)
-def create_phenotypes() -> Phenotypes:
+# def create_phenotypes() -> Phenotypes:
         
-    with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json'), 'r') as f:
-            data = json.load(f)
+#     with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json'), 'r') as f:
+#             data = json.load(f)
         
-    return Phenotypes(data)
+#     return Phenotypes(data)
 
 def create_genes() -> Genes:
     
@@ -155,13 +155,22 @@ def create_phenotypes_list() -> Pheno:
     try:
         with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json')) as f:
             data = json.load(f)
-
+            
+        # split interaction and regular pheno
+        phenotypes_list = []
+        interaction_list = []
+        for pheno in data:
+            if not pheno['interaction']:
+                phenotypes_list.append(pheno)
+            else:
+                interaction_list.append(pheno)
+        
     except Exception as e:
         # TODO: logger instead of print?
         print(e)
         return None
     
-    return Pheno(data)
+    return Pheno(phenotypes_list = phenotypes_list, interaction_list = interaction_list)
 
 def create_variant() -> Variant:
     

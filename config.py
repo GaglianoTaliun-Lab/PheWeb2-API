@@ -43,3 +43,7 @@ field_aliases = {
         "LOG10P" : "pval",
         "TEST" : "test"
 }
+
+interaction_aliases = {
+        "BSEX" : "sex"
+}

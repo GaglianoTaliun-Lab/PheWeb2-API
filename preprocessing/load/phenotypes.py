@@ -37,6 +37,14 @@ def get_phenotypes_including_top_variants_stratified() -> Iterator[Dict[str,Any]
     
     for pheno in get_phenolist():
         phenocode = pheno['phenocode']
+        
+        print(phenocode)
+        
+        # if there's an interaction, add it to filename
+        if pheno['interaction']:
+            phenocode = phenocode + ".inter-" + pheno['interaction'] 
+        
+        # if there's stratifications, add it to filename
         for strats in pheno['stratification']:
             phenocode = phenocode + "." + pheno['stratification'][strats]
         
@@ -55,11 +63,10 @@ def get_phenotypes_including_top_variants_stratified() -> Iterator[Dict[str,Any]
             'alt': top_variant['alt'],
             'rsids': top_variant['rsids'],
             'num_peaks': num_peaks,
-            'stratification': pheno['stratification']
+            'stratification': pheno.get('stratification', None), # will this put null if the column isn't even there?
+            'interaction' : pheno.get('interaction', None), # will this put null if the column isn't even there?
         }
-        # for strats in pheno['stratification']:
-        #     ret[strats] = pheno['stratification'][strats]
-            
+                    
         for key in ['num_samples', 'num_controls', 'num_cases', 'category', 'phenostring']:
             if key in pheno: ret[key] = pheno[key]
         if isinstance(ret['nearest_genes'], list): ret['nearest_genes'] = ','.join(ret['nearest_genes'])

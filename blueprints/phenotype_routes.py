@@ -1,19 +1,31 @@
 from flask import Blueprint, jsonify, g, request
-from models import create_phenotypes, create_phenotypes_list, create_tophits
+from models import create_phenotypes_list, create_tophits
 from models.utils import extract_variants
 
 
 bp = Blueprint('phenotype_routes', __name__)
 
-@bp.route('/phenotypes', methods=['GET'])
-def phenotype_table():
+# @bp.route('/phenotypes', methods=['GET'])
+# def phenotype_list():
     
-    if 'phenotypes' not in g:
-        g.phenotypes = create_phenotypes()
+#     # cache pheno so to not load class more than once    
+#     if 'pheno' not in g:
+#         g.pheno = create_phenotypes_list()
         
-    result = g.phenotypes.get_phenotypes()
+#     result = g.pheno.get_phenotypes_list()
     
-    return result
+#     return result
+
+# @bp.route('/phenotypes/interaction', methods=['GET'])
+# def interaction_list():
+    
+#     # cache pheno so to not load class more than once    
+#     if 'pheno' not in g:
+#         g.pheno = create_phenotypes_list()
+        
+#     result = g.pheno.get_interaction_list()
+    
+#     return result
 
 
 @bp.route('/phenotypes/tophits', methods=['GET'])
@@ -39,7 +51,21 @@ def phenotype_list(phenocode = None):
         return jsonify(result)
     else:
         # TODO : specify which phenocode?
-        return jsonify({'data' : [], 'message' : f"Succesfully retrieved phenotypes information list"}), 404
+        return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of phenotypes."}), 404
+    
+@bp.route('/phenotypes/interaction_list', methods=['GET'])
+@bp.route('/phenotypes/interaction_list/<phenocode>', methods=['GET'])
+def interaction_list(phenocode = None):
+    
+    # cache pheno so to not load class more than once    
+    if 'pheno' not in g:
+        g.pheno = create_phenotypes_list()
+    
+    result = g.pheno.get_interaction_list(phenocode)
+    if result:
+        return jsonify(result)
+    else:
+        return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of interaction results."}), 404
     
 @bp.route('/phenotypes/sumstats/<phenocode>', methods=['GET'])
 def get_sumstats(phenocode):

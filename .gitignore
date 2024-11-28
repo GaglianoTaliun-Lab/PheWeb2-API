@@ -12,5 +12,5 @@ raw_data
 pheno-list.csv
 pheno-list.json
 
-generated-by-pheweb/
+generated-by-pheweb*/
 run_process.sh

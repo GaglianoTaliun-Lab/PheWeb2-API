@@ -92,8 +92,10 @@ def check_that_columns_are_present(phenolist, columns):
 
 def check_that_phenocode_is_unique(phenolist):
     #if stratified is True, then verify that the same stratifications are not present for the non-unique phenocode
+    
+    # also check for interaction
     if(stratified):
-        phenocodes_stratifications = [[pheno['phenocode'], pheno['stratification']] for pheno in phenolist]
+        phenocodes_stratifications = [[pheno['phenocode'], pheno['stratification']] for pheno in phenolist if pheno['interaction'] == None]
         seen = []
         duplicates = []
         for stratification in phenocodes_stratifications:
@@ -267,21 +269,18 @@ def listify_assoc_files(phenolist):
             pheno['assoc_files'] = [pheno['assoc_files']]
     return phenolist
 
+# convert "null" string in interaction to actual null
 def split_phenos_on_interaction(phenolist):
     all_keys = list(set(itertools.chain.from_iterable(phenolist)))
-    print(all_keys)
-    
+
     # check if interaction is present
     if 'interaction' not in all_keys:
         return phenolist
-    
+
     for pheno in phenolist:
         if pheno['interaction'] == "null":
             pheno['interaction'] = None
-            continue
-        
-        pheno['phenocode'] = pheno['phenocode'] + f".inter-{pheno['interaction']}"
-    
+
     return phenolist
 
 
