@@ -3,6 +3,7 @@ from models import create_phenotypes, create_phenotypes_list, create_tophits
 from models.utils import extract_variants
 
 
+
 bp = Blueprint('phenotype_routes', __name__)
 
 @bp.route('/phenotypes', methods=['GET'])
@@ -113,3 +114,32 @@ def get_region(phenocode,region_code):
         
     return jsonify(result)
 
+@bp.route('/phenotypes/gwas.missing', methods=['POST'])
+def missing_gwas():
+    # receive data only from one stratification
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'message' : 'No data provided'}), 400
+        
+        # print(data)
+        if 'pheno' not in g:
+            g.pheno = create_phenotypes_list()
+
+        # TODO: process data using SNPFetcher
+        # print(data)
+        results = g.pheno.get_gwas_missing(data)
+        print("input")
+        for key, snp_list in data.items():
+            print(f"{key}: {len(snp_list)} elements")
+        print("output")
+        for key, snp_list in results.items():
+            print(f"{key}: {len(snp_list)} elements")
+
+        processed_data = {
+            "message": "success",
+            "data": results,
+        }
+        return jsonify(processed_data), 200
+    except Exception as e:
+        return jsonify({'data' : [], "message": str(e), }), 500

@@ -7,6 +7,7 @@ import os
 import json
 import re
 from .variant import PhewasMatrixReader
+from .gwas_missing import SNPFetcher
 """
 My eventual aspiration is to have an SQLite3 database for all these 
 data, which will use classes such as these for insertion, get, etc..
@@ -105,6 +106,14 @@ class Pheno():
         pos_end = int(pos_end)
         
         return get_pheno_region(phenocode, chrom, pos_start, pos_end)
+    
+    def get_gwas_missing(self, gwas_missing_data):
+        # TODO: process data using SNPFetcher
+        print("get_gwas_missing triggered")
+        fetcher = SNPFetcher(current_app.config['PHENO_GZ_DIR'])
+        response = fetcher.process_keys(gwas_missing_data)
+
+        return response
             
 
 class Variant():
