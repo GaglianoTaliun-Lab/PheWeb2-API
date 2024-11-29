@@ -7,7 +7,7 @@
 #  When all the child processes are done, the main thread needs to concatenate all the single-chrom matrix files and then append an empty bgzip block to signal EOF.
 
 
-from ..utils import get_phenolist, PheWebError, get_stratification_paths, get_phenocode_with_stratifications
+from ..utils import get_phenolist, PheWebError, get_stratification_paths, get_phenocode_with_suffixes
 from ..file_utils import MatrixReader, get_tmp_path, get_filepath, get_pheno_filepath
 from .load_utils import mtime, get_phenos_subset
 from .cffi._x import ffi, lib
@@ -26,7 +26,7 @@ def clear_out_junk() -> None:
     cur_phenocodes = set(pheno['phenocode'] for pheno in get_phenolist())
 
     if (conf.stratified()):
-        cur_phenocodes = OrderedSet(get_phenocode_with_stratifications(pheno) for pheno in get_phenolist())
+        cur_phenocodes = OrderedSet(get_phenocode_with_suffixes(pheno) for pheno in get_phenolist())
         
     for filepath in glob.glob(get_filepath('pheno_gz')+'/*.gz'):
         name = os.path.basename(filepath)
@@ -43,7 +43,7 @@ def should_run(matrix_gz_filepath) -> bool:
     cur_phenocodes = set(pheno['phenocode'] for pheno in get_phenolist())
 
     if (conf.stratified()):
-        cur_phenocodes = OrderedSet(get_phenocode_with_stratifications(pheno) for pheno in get_phenolist())
+        cur_phenocodes = OrderedSet(get_phenocode_with_suffixes(pheno) for pheno in get_phenolist())
         
     if (not conf.stratified()):
         try:

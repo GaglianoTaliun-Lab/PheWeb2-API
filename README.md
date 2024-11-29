@@ -55,3 +55,8 @@ run
 Then:
 
 `pheweb process`
+
+
+# Documentation
+
+In order to keep an orderly documention of this API, we have used Flask RESTX (https://github.com/python-restx/flask-restx)

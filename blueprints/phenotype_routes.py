@@ -1,10 +1,12 @@
-from flask import Blueprint, jsonify, g, request
+from flask import Blueprint, jsonify, g, request, json
 from models import create_phenotypes_list, create_tophits
 from models.utils import extract_variants
 
+from flask_restx import fields, Resource, Api
 
 bp = Blueprint('phenotype_routes', __name__)
 
+api = Api(bp)
 # @bp.route('/phenotypes', methods=['GET'])
 # def phenotype_list():
     
@@ -27,31 +29,41 @@ bp = Blueprint('phenotype_routes', __name__)
     
 #     return result
 
-
-@bp.route('/phenotypes/tophits', methods=['GET'])
-def tophits_table():
-    
-    if 'tophits' not in g:
-        g.tophits = create_tophits()
+@api.route('/phenotypes/tophits', doc={
+    'description': "Retrieve 1000 top variants (1 per loci) for all the GWAS"
+})
+class TopHits(Resource):
+    def get(self):
+        if 'tophits' not in g:
+            g.tophits = create_tophits()
+            
+        result = g.tophits.get_tophits()
         
-    result = g.tophits.get_tophits()
-    
-    return result
+        return result
 
-@bp.route('/phenotypes/phenotypes_list', methods=['GET'])
-@bp.route('/phenotypes/phenotypes_list/<phenocode>', methods=['GET'])
-def phenotype_list(phenocode = None):
-    
-    # cache pheno so to not load class more than once    
-    if 'pheno' not in g:
-        g.pheno = create_phenotypes_list()
-    
-    result = g.pheno.get_phenotypes_list(phenocode)
-    if result:
-        return jsonify(result)
-    else:
-        # TODO : specify which phenocode?
-        return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of phenotypes."}), 404
+@api.route('/phenotypes/phenotypes_list', doc={
+    'description': "Retrieve the all phenotype descriptions"
+})
+@api.route('/phenotypes/phenotypes_list/<phenocode>', doc={
+    'description': "Retrieve all phenotype descriptions for specified phenocode"
+})
+@api.doc(params={'phenocode': 'Phenocode string for wanted trait. Ex : "DIA_TYPE2_COM"'})
+class PhenotypeList(Resource):
+    @api.doc(responses={
+        200: 'Success',
+        404: 'Could not retrieve list of phenotypes'
+    })
+    def get(self, phenocode = None):
+        # cache pheno so to not load class more than once    
+        if 'pheno' not in g:
+            g.pheno = create_phenotypes_list()
+        
+        result = g.pheno.get_phenotypes_list(phenocode)
+        if result:
+            return jsonify(result)
+        else:
+            # TODO : specify which phenocode?
+            return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of phenotypes."}), 404
     
 @bp.route('/phenotypes/interaction_list', methods=['GET'])
 @bp.route('/phenotypes/interaction_list/<phenocode>', methods=['GET'])
@@ -138,4 +150,3 @@ def get_region(phenocode,region_code):
         return jsonify({'data' : [], 'message' : f"Could not find region data for {phenocode=} and {region_code=}"}), 404
         
     return jsonify(result)
-

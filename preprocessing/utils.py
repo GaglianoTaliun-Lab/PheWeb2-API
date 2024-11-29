@@ -122,6 +122,14 @@ def get_phenocode_with_stratifications(pheno:dict) -> str:
         phenocode += "."+pheno['stratification'][stratification]
     return phenocode
 
+def get_phenocode_with_suffixes(pheno:dict) -> str:
+    phenocode = pheno['phenocode']
+    if pheno['interaction'] is not None:
+        phenocode += '.inter-' + pheno['interaction']
+    for stratification in pheno['stratification']:
+        phenocode += "."+pheno['stratification'][stratification]
+    return phenocode
+
 def get_stratification_paths_server(phenos:dict) -> [str]:
     stratification_paths = []
     for pheno in phenos:

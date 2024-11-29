@@ -17,11 +17,13 @@ def run(argv:List[str]) -> None:
 
     phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
     
-    # For each pheno in phenos, we need to update the phenocode if stratified.
-    if conf.stratified():
-        for i, pheno in enumerate(phenos):
-            phenos[i]['phenocode'] = get_phenocode_with_stratifications(pheno)   
-
+    # Single loop to handle both updates
+    for pheno in phenos:
+        if pheno['interaction'] is not None:
+            pheno['phenocode'] += '.inter-' + pheno['interaction']
+        if conf.stratified():
+            pheno['phenocode'] = get_phenocode_with_stratifications(pheno)
+            
     results_by_phenocode = parallelize_per_pheno(
         get_input_filepaths = get_input_filepaths,
         get_output_filepaths = get_output_filepaths,
