@@ -158,9 +158,10 @@ def create_phenotypes_list() -> Pheno:
             
         # split interaction and regular pheno
         phenotypes_list = []
-        interaction_list = []
+        interaction_list = []        
+        
         for pheno in data:
-            if not pheno['interaction']:
+            if 'interaction' not in pheno or not pheno['interaction']:
                 phenotypes_list.append(pheno)
             else:
                 interaction_list.append(pheno)
@@ -171,6 +172,7 @@ def create_phenotypes_list() -> Pheno:
         return None
     
     return Pheno(phenotypes_list = phenotypes_list, interaction_list = interaction_list)
+
 
 def create_variant() -> Variant:
     
