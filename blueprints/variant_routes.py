@@ -4,7 +4,7 @@ from flask import Blueprint
 from flask_restx import Namespace, Resource, reqparse
 
 bp = Blueprint('variant_routes', __name__)
-api = Namespace('variants', description="Routes related to variants")
+api = Namespace('variant', description="Routes related to variants")
 
 @api.route('/variant/<variant_code>/<stratification>')
 class Variant(Resource):
@@ -12,7 +12,7 @@ class Variant(Resource):
         'variant_code': 'Variant code string for the wanted variant, ex : 1-100000-A-T',
         'stratification': 'Stratification code, ex : European.Male ',
     })
-    def get(variant_code, stratification):
+    def get(self, variant_code, stratification):
         """
         Get PheWAS plotting information for a given variant.
         """
@@ -28,7 +28,7 @@ class Variant(Resource):
         
 @api.route('/variant/stratification_list')
 class StratificationList(Resource):
-    def get():
+    def get(self):
         """
         Get stratification information for PheWAS plot.
         """

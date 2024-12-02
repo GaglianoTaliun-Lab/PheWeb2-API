@@ -7,13 +7,13 @@ bp = Blueprint('phenotype_routes', __name__)
 api = Namespace('phenotypes', description="Routes related to phenotypes")
 
 
-@api.route('/phenotypes', doc={
+@api.route('/', doc={
     'description': "Retrieve the all phenotype descriptions"
 })
-@api.route('/phenotypes/phenotypes_list', doc={
+@api.route('/phenotypes_list', doc={
     'description': "Retrieve the all phenotype descriptions"
 })
-@api.route('/phenotypes/phenotypes_list/<phenocode>', doc={
+@api.route('/phenotypes_list/<phenocode>', doc={
     'description': "Retrieve all phenotype descriptions for specified phenocode"
 })
 class PhenotypeList(Resource):
@@ -27,11 +27,6 @@ class PhenotypeList(Resource):
         """
         Retrieve phenotype meta information
         """
-        # add docs if paramter will be passed
-        if phenocode is not None:
-            api.doc(params={
-                'phenocode': 'Phenocode string for wanted trait. Ex: "DIA_TYPE2_COM"'
-            })(self.get)
         
         # cache pheno so to not load class more than once  
         if 'pheno' not in g:
@@ -44,7 +39,7 @@ class PhenotypeList(Resource):
             # TODO : specify which phenocode?
             return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of phenotypes."}), 404
 
-@api.route('/phenotypes/tophits', doc={
+@api.route('/tophits', doc={
     'description': "Retrieve 1000 top variants (1 per loci) for all the GWAS"
 })
 class TopHits(Resource):
@@ -59,19 +54,14 @@ class TopHits(Resource):
         
         return result
     
-@api.route('/phenotypes/interaction', doc={'description' : "Retrieve all interaction result descriptions"})
-@api.route('/phenotypes/interaction_list',  doc={'description' : "Retrieve all interaction result descriptions"})
-@api.route('/phenotypes/interaction_list/<phenocode>',  doc={'description' : "Retrieve interaction result description(s) for specified phenocode"})
+@api.route('/interaction', doc={'description' : "Retrieve all interaction result descriptions"})
+@api.route('/interaction_list',  doc={'description' : "Retrieve all interaction result descriptions"})
+@api.route('/interaction_list/<phenocode>',  doc={'description' : "Retrieve interaction result description(s) for specified phenocode"})
 class InteractionList(Resource):
     def get(self, phenocode = None):
         """
         Retrieve interaction result meta information
         """
-        # add docs if paramter will be passed
-        if phenocode is not None:
-            api.doc(params={
-                'phenocode': 'Phenocode string for wanted trait. Ex: "DIA_TYPE2_COM"'
-            })(self.get)
         
         # cache pheno so to not load class more than once    
         if 'pheno' not in g:
@@ -84,7 +74,7 @@ class InteractionList(Resource):
             return jsonify({'data' : [], 'message' : f"Unsuccesfully retrieved list of interaction results."}), 404
 
 # this is the 'hidden' sumstats download api
-@api.route('/phenotypes/sumstats/<phenocode>')
+@api.route('/sumstats/<phenocode>')
 @api.hide
 class SumStats(Resource):
     @api.doc(params={
@@ -101,12 +91,12 @@ class SumStats(Resource):
         
         return result
 
-@api.route('/phenotypes/<phenocode>', doc = {'description' : 'Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)'})
+@api.route('/<phenocode>', doc = {'description' : 'Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)'})
 class Pheno(Resource):
     @api.doc(params={
         'phenocode': 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
     })
-    def get(phenocode):
+    def get(self, phenocode):
         """
         Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)
         """
@@ -150,12 +140,12 @@ class PhenoFilter(Resource):
 
         return jsonify(data), 200
 
-@api.route('/phenotypes/qq/<phenocode>')
+@api.route('/qq/<phenocode>')
 class QQ(Resource):
     @api.doc(params={
         'phenocode': 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM.European.Male"',
     })
-    def get(phenocode):
+    def get(self, phenocode):
         """
         Retrieve qq results for the specified phenocode(s).
         """
@@ -172,7 +162,7 @@ class Region(Resource):
         'phenocode': 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM.European.Male"',
         'region_code': 'Region code string formatted as such : "1:20000-100000" ',
     })
-    def get(phenocode, region_code):
+    def get(self, phenocode, region_code):
         """
         Get region plotting data for LocusZoom region plots.
         """

@@ -19,8 +19,8 @@ api = Api(
 
 # Register blueprints with the shared API instance
 api.add_namespace(phenotype_routes.api, path="/phenotypes")
-api.add_namespace(gene_routes.api, path="/genes")
-api.add_namespace(variant_routes.api, path="/variants")
+api.add_namespace(gene_routes.api, path="/gene")
+api.add_namespace(variant_routes.api, path="/variant")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 9099))

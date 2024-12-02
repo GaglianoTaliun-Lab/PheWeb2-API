@@ -3,11 +3,11 @@ from models import create_genes
 from flask_restx import Namespace, Resource, reqparse
 
 bp = Blueprint('gene_routes', __name__)
-api = Namespace('genes', description="Routes related to genes")
+api = Namespace('gene', description="Routes related to genes")
 
 @api.route('/gene/<gene>')
 class SignificantAssociationTable(Resource):
-    def get(gene):
+    def get(self, gene):
         """
         Get association information for a specific gene.
         """
@@ -22,7 +22,7 @@ class SignificantAssociationTable(Resource):
     
 @api.route('/gene/gene_position/<gene>')
 class GenePosition(Resource):
-    def get(gene):
+    def get(self, gene):
         """
         Get base-pair and chromosome position of a given gene
         """
