@@ -3,12 +3,12 @@
 from . import conf
 from .utils import PheWebError
 
-import sys, json
+import sys
+import json
 import os
 import importlib
 import functools
-import math
-from typing import List,Dict,Callable
+from typing import List, Dict, Callable
 
 
 # if sys.platform.startswith('win'):
@@ -21,14 +21,17 @@ from typing import List,Dict,Callable
 #     sys.exit(1)
 
 
-if 'PHEWEB_IPDB' in os.environ:
+if "PHEWEB_IPDB" in os.environ:
     # from <http://ipython.readthedocs.io/en/stable/interactive/reference.html#post-mortem-debugging>
     from IPython.core import ultratb
-    sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
+
+    sys.excepthook = ultratb.FormattedTB(
+        mode="Verbose", color_scheme="Linux", call_pdb=1
+    )
 
 
-handlers:Dict[str,Callable[[List[str]],None]] = {}
-for submodule in '''
+handlers: Dict[str, Callable[[List[str]], None]] = {}
+for submodule in """
  phenolist
  cluster
  parse_input_files
@@ -54,41 +57,56 @@ for submodule in '''
  wsgi
  top_loci
  detect_ref
-'''.split():
-    def f(submodule:str, argv:List[str]) -> None:
-        module = importlib.import_module('.load.{}'.format(submodule), __package__)
-        module_run = getattr(module, 'run', None)
-        if not callable(module_run): raise Exception("module.run ({!r}) isn't callable for module {!r}".format(module_run, module))
+""".split():
+
+    def f(submodule: str, argv: List[str]) -> None:
+        module = importlib.import_module(".load.{}".format(submodule), __package__)
+        module_run = getattr(module, "run", None)
+        if not callable(module_run):
+            raise Exception(
+                "module.run ({!r}) isn't callable for module {!r}".format(
+                    module_run, module
+                )
+            )
         module_run(argv)
-    handlers[submodule.replace('_', '-')] = functools.partial(f, submodule)
-handlers['process'] = handlers['process-assoc-files']
-handlers['parse'] = handlers['parse-input-files']
+
+    handlers[submodule.replace("_", "-")] = functools.partial(f, submodule)
+handlers["process"] = handlers["process-assoc-files"]
+handlers["parse"] = handlers["parse-input-files"]
 
 # def serve(argv:List[str]) -> None:
 #     from pheweb.serve.run import run
 #     run(argv)
 # handlers['serve'] = serve
 
-def configure(argv:List[str]) -> None:
+
+def configure(argv: List[str]) -> None:
     for i, arg in enumerate(argv):
-        if '=' not in arg: break
-        k,v = arg.split('=', 1)
-        if v == '':
+        if "=" not in arg:
+            break
+        k, v = arg.split("=", 1)
+        if v == "":
             del conf.overrides[k]
         else:
-            try: v = json.loads(v)
-            except json.JSONDecodeError: pass
+            try:
+                v = json.loads(v)
+            except json.JSONDecodeError:
+                pass
             conf.set_override(k, v)
     else:
         print(json.dumps(conf.overrides, indent=2))
         return
     run(argv[i:])
-handlers['conf'] = configure
+
+
+handlers["conf"] = configure
 
 
 def print_help_message() -> None:
     from . import version
-    print('''\
+
+    print(
+        """\
 PheWeb {}
 
 To see more information about a subcommand, run that command followed by `-h`.
@@ -110,23 +128,25 @@ Subcommands:
     pheweb conf
         Show configuration.
 
-'''.format(version.version))
+""".format(version.version)
+    )
 
 
-def run(argv:List[str]) -> None:
-    subcommand = argv[0] if argv else ''
-    if subcommand in ['', '-h', '--help']:
+def run(argv: List[str]) -> None:
+    subcommand = argv[0] if argv else ""
+    if subcommand in ["", "-h", "--help"]:
         print_help_message()
     elif subcommand not in handlers:
-        print('Unknown subcommand {!r}\n'.format(subcommand))
+        print("Unknown subcommand {!r}\n".format(subcommand))
         print_help_message()
     else:
         handlers[subcommand](argv[1:])
 
+
 # this is in `entry_points` in setup.py:
 def main() -> None:
     # Load config.py
-    config_filepath = os.path.join(conf.get_data_dir(), 'config.py')
+    config_filepath = os.path.join(conf.get_data_dir(), "config.py")
     if os.path.isfile(config_filepath):
         conf.load_overrides_from_file(config_filepath)
     # Run
@@ -135,15 +155,21 @@ def main() -> None:
     except (KeyboardInterrupt, Exception) as exc:
         from .file_utils import get_dated_tmp_path
         import traceback
-        exc_filepath = get_dated_tmp_path('exception')
-        with open(exc_filepath, 'w') as f:
-            f.write('======= Exception ====\n')
-            f.write(str(exc) + '\n\n')
-            f.write('======= Traceback ====\n')
+
+        exc_filepath = get_dated_tmp_path("exception")
+        with open(exc_filepath, "w") as f:
+            f.write("======= Exception ====\n")
+            f.write(str(exc) + "\n\n")
+            f.write("======= Traceback ====\n")
             f.write(traceback.format_exc())
-        if isinstance(exc, PheWebError): print('\n\n'); print(exc)
-        elif isinstance(exc, KeyboardInterrupt): print('\nInterrupted')
-        elif isinstance(exc, SyntaxError): print(repr(exc))
-        else: print('\nAn exception occurred')
-        print('(Details in {})\n'.format(exc_filepath))
+        if isinstance(exc, PheWebError):
+            print("\n\n")
+            print(exc)
+        elif isinstance(exc, KeyboardInterrupt):
+            print("\nInterrupted")
+        elif isinstance(exc, SyntaxError):
+            print(repr(exc))
+        else:
+            print("\nAn exception occurred")
+        print("(Details in {})\n".format(exc_filepath))
         exit(1)

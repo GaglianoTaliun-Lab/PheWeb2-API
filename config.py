@@ -1,9 +1,9 @@
 import os.path
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path='.env')
+load_dotenv(dotenv_path=".env")
 
-BASE_DIR = os.getenv('BASE_DIR')
+BASE_DIR = os.getenv("BASE_DIR")
 
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
 MANHATTAN_DIR = os.path.join(BASE_DIR, "manhattan")
@@ -22,28 +22,26 @@ MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 PVAL_IS_NEGLOG10 = True
 
 # CORS_ORIGINS = ['http://localhost:8099']
-CORS_ORIGINS = os.getenv('CORS_ORIGINS', '').split(',')
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 
-hg_build_number=38
+hg_build_number = 38
 
-stratified=True
+stratified = True
 
 pval_is_neglog10 = True
 
-show_manhattan_filter_button=True
+show_manhattan_filter_button = True
 
 field_aliases = {
-        "CHROM" : "chrom",
-        "GENPOS" : "pos",
-        "ALLELE0" : "ref",
-        "ALLELE1" : "alt",
-        "A1FREQ" : "af",
-        "BETA" : "beta",
-        "SE" : "sebeta",
-        "LOG10P" : "pval",
-        "TEST" : "test"
+    "CHROM": "chrom",
+    "GENPOS": "pos",
+    "ALLELE0": "ref",
+    "ALLELE1": "alt",
+    "A1FREQ": "af",
+    "BETA": "beta",
+    "SE": "sebeta",
+    "LOG10P": "pval",
+    "TEST": "test",
 }
 
-interaction_aliases = {
-        "BSEX" : "sex"
-}
+interaction_aliases = {"BSEX": "sex"}

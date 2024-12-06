@@ -9,17 +9,21 @@ This is useful for, eg, looking up all information associated with a given pheno
 
 import os
 import pickle
-from typing import List,Optional,Dict
+from typing import List, Optional, Dict
 
 
-def _index_name(filename:str) -> str:
+def _index_name(filename: str) -> str:
     # TODO: Replace pickle with another storage mechanism
-    return '{}.pickle'.format(filename)
+    return "{}.pickle".format(filename)
 
 
-def make_byte_index(filename: str, key_col: int,
-                    skip_lines: int = 1, delimiter: str = '\t',
-                    index_fn: Optional[str] = None) -> str:
+def make_byte_index(
+    filename: str,
+    key_col: int,
+    skip_lines: int = 1,
+    delimiter: str = "\t",
+    index_fn: Optional[str] = None,
+) -> str:
     """
     Generate a crude index specifying byte ranges of lines where each value can be found
     :param filename: The file to index
@@ -29,9 +33,9 @@ def make_byte_index(filename: str, key_col: int,
     :param index_fn: (optional) path to the index file
     :return:
     """
-    byte_index:Dict[str,List[int]] = {}
+    byte_index: Dict[str, List[int]] = {}
 
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         for r in range(skip_lines):
             f.readline()
 
@@ -57,14 +61,15 @@ def make_byte_index(filename: str, key_col: int,
             byte_index[last_key] = [span_start, last_line_end]
 
     index_fn = index_fn or _index_name(filename)
-    with open(index_fn, 'wb') as pickle_f:
+    with open(index_fn, "wb") as pickle_f:
         pickle.dump(byte_index, pickle_f)
 
     return index_fn
 
 
-def get_indexed_rows(filename: str, key: str,
-                     strict: bool = False, index_fn: Optional[str] = None) -> List[str]:
+def get_indexed_rows(
+    filename: str, key: str, strict: bool = False, index_fn: Optional[str] = None
+) -> List[str]:
     """
     Fetch all lines that reference the specified key, from a previously indexed file
     :param filename: The filename to search
@@ -77,7 +82,7 @@ def get_indexed_rows(filename: str, key: str,
     if not os.path.isfile(index_fn):
         raise FileNotFoundError()
 
-    with open(index_fn, 'rb') as pickle_f:
+    with open(index_fn, "rb") as pickle_f:
         byte_index = pickle.load(pickle_f)
 
     if key not in byte_index and not strict:
@@ -86,7 +91,7 @@ def get_indexed_rows(filename: str, key: str,
 
     start, end = byte_index[key]
 
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         # TODO: Improve this to support for big file ranges
         f.seek(start, 0)
         return f.read(end - start).splitlines()
