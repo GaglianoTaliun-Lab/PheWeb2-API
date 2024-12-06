@@ -16,10 +16,11 @@ class SignificantAssociationTable(Resource):
             g.genes = create_genes()
 
         table_data = g.genes.get_genes_table(gene)
+                
         if table_data:
-            return jsonify(table_data), 200
+            return table_data, 200
         else:
-            return jsonify({"data": [], "message": "No data found for this gene"}), 404
+            return {"data": [], "message": "No data found for this gene"}, 404
 
 
 @api.route("/gene_position/<gene>")
@@ -32,10 +33,8 @@ class GenePosition(Resource):
             g.genes = create_genes()
 
         chrom, start, end = g.genes.get_gene_position(gene)
-
+        
         if all(value is not None for value in (chrom, start, end)):
-            return jsonify((chrom, start, end)), 200
+            return (chrom, start, end), 200
         else:
-            return jsonify(
-                {"data": [], "message": "Could not find this gene without our data"}
-            ), 404
+            return {"data": [], "message": "Could not find this gene without our data"}, 404

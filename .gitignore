@@ -7,6 +7,7 @@ test.md
 *.py[cod]
 /myenv
 *.out
+*.swp
 
 raw_data
 pheno-list.csv

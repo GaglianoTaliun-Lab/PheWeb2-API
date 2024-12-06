@@ -10,7 +10,7 @@ api = Namespace("variant", description="Routes related to variants")
 class Variant(Resource):
     @api.doc(
         params={
-            "variant_code": "Variant code string for the wanted variant, ex : 1-100000-A-T",
+            "variant_code": "Variant code string for the wanted variant, ex : 1-196698298-A-T",
             "stratification": "Stratification code, ex : European.Male ",
         }
     )
@@ -22,13 +22,11 @@ class Variant(Resource):
             g.variant = create_variant()
 
         variant_phewas = g.variant.get_variant(variant_code, stratification)
-
+        
         if variant_phewas:
-            return jsonify(variant_phewas), 200
+            return variant_phewas, 200
         else:
-            return jsonify(
-                {"message": f"Cannot find variant with variant code {variant_code}."}
-            ), 404
+            return {"message": f"Cannot find variant with variant code {variant_code}."}, 404
 
 
 @api.route("/stratification_list")
@@ -43,10 +41,6 @@ class StratificationList(Resource):
         strat_list = g.variant.get_stratifications()
 
         if strat_list:
-            return jsonify(strat_list), 200
+            return strat_list, 200
 
-        return jsonify(
-            {
-                "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."
-            }
-        ), 404
+        return {"message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."}, 404
