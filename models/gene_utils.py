@@ -13,7 +13,8 @@ for alias, chrom in list(chrom_aliases.items()):
 
 def get_gene_tuples_with_ensg() -> ty.Iterator[ty.Tuple[str, int, int, str, str]]:
     with open(
-        f'{current_app.config['BASE_DIR']}/resources/genes-v{37}-hg{38}.bed'
+        # f'{current_app.config['BASE_DIR']}/resources/genes-v{37}-hg{38}.bed'
+        f"{current_app.config['BASE_DIR']}/resources/genes-v{37}-hg{38}.bed"
     ) as f:  # TODO : this was flexible in the original pheweb
         for row in csv.reader(f, delimiter="\t"):
             assert row[0] in chrom_order, row[0]

@@ -221,3 +221,36 @@ class Region(Resource):
             ), 404
 
         return jsonify(result)
+
+@api.route('/gwas.missing')
+class MissingGWAS(Resource):
+    @api.response(400, 'Bad Request')
+    @api.response(500, 'Internal Server Error')
+    def post(self):
+        """Process missing GWAS data for specific stratifications"""
+        try:
+            data = api.payload  # Using api.payload to access the incoming JSON data
+            if not data:
+                return {'message': 'No data provided'}, 400
+            
+            if 'pheno' not in g:
+                g.pheno = create_phenotypes_list()
+                
+            # process data using SNPFetcher
+            results = g.pheno.get_gwas_missing(data)
+            
+            # Debugging prints to console
+            print("input")
+            for key, snp_list in data.items():
+                print(f"{key}: {len(snp_list)} elements")
+            print("\noutput")
+            for key, snp_list in results.items():
+                print(f"{key}: {len(snp_list)} elements")
+            
+            processed_data = {
+                "message": "success",
+                "data": results,
+            }
+            return processed_data, 200
+        except Exception as e:
+            return {'data': [], "message": str(e)}, 500

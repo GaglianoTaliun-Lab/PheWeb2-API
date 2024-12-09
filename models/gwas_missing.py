@@ -52,7 +52,7 @@ class SNPFetcher:
         file_path = os.path.join(self.file_base_path, f"{key}.gz")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-        print("found file")
+        # print("found file")
         tabix_file = pysam.TabixFile(file_path)
         grouped_snps = self.group_snps_by_region(snp_list)
         # print(grouped_snps)
@@ -71,8 +71,8 @@ class SNPFetcher:
                     for snp in snps:
                         parts = snp.split('-')
                         if int(parts[1]) == int(pos) and record_data[2] == parts[2] and record_data[3] == parts[3]:
-                            print("found snp in raw file")
-                            print(record_data[2] == parts[2] and record_data[3] == parts[3])
+                            # print("found snp in raw file")
+                            # print(record_data[2] == parts[2] and record_data[3] == parts[3])
                             results.append({
                                 "chrom": chrom,
                                 "pos": pos,
