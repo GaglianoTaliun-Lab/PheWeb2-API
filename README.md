@@ -34,3 +34,29 @@ PHENOTYPES_DIR = os.path.join(BASE_DIR)
 ...
 ```
 please refer the `sample_config.py` for more examples
+
+
+# Preprocessing
+
+To run the data pre-processing, run (in the same folder as setup.py)
+
+`pip install -e .`
+
+with python >=3.12
+
+
+Then with your 'pheno-list.csv' properly filled out (see pheno-list-example.csv)`
+
+run
+
+`pheweb phenolist import-phenolist "/path/to/pheno-list.csv"`
+
+
+Then:
+
+`pheweb process`
+
+
+# Documentation
+
+In order to keep an orderly documention of this API, we have used Flask RESTX (https://github.com/python-restx/flask-restx)

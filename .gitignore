@@ -6,3 +6,12 @@ data
 test.md
 *.py[cod]
 /myenv
+*.out
+*.swp
+
+raw_data
+pheno-list.csv
+pheno-list.json
+
+generated-by-pheweb*/
+run_process.sh
