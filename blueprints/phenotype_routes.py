@@ -222,12 +222,14 @@ class Region(Resource):
 
         return jsonify(result)
 
-@api.route('/gwas.missing')
+@api.route(
+    '/variants',
+    doc={"description": "Retrieve vairants' information from received variantid subsets"},)
 class MissingGWAS(Resource):
     @api.response(400, 'Bad Request')
     @api.response(500, 'Internal Server Error')
     def post(self):
-        """Process missing GWAS data for specific stratifications"""
+        """Process variants form GWAS table for specific stratifications"""
         try:
             data = api.payload  # Using api.payload to access the incoming JSON data
             if not data:
@@ -238,6 +240,8 @@ class MissingGWAS(Resource):
                 
             # process data using SNPFetcher
             results = g.pheno.get_gwas_missing(data)
+            
+            # print(results)
             
             # Debugging prints to console
             print("input")
