@@ -31,12 +31,10 @@ class PhenotypeList(Resource):
 
         result = g.pheno.get_phenotypes_list(phenocode)
         if result:
-            return jsonify(result)
+            return result
         else:
             # TODO : specify which phenocode?
-            return jsonify(
-                {"data": [], "message": "Unsuccesfully retrieved list of phenotypes."}
-            ), 404
+            return {"data": [], "message": "Unsuccesfully retrieved list of phenotypes."}
 
 
 @api.route(
