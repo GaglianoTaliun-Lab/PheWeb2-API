@@ -11,8 +11,12 @@ api = Namespace("phenotypes", description="Routes related to phenotypes")
 @api.route(
     "/phenotypes_list", doc={"description": "Retrieve the all phenotype descriptions"}
 )
+# @api.route( #TODO : remove this for consistency
+#     "/phenotypes_list/<phenocode>",
+#     doc={"description": "Retrieve all phenotype descriptions for specified phenocode"},
+# )
 @api.route(
-    "/phenotypes_list/<phenocode>",
+    "/<phenocode>/phenotypes_list",
     doc={"description": "Retrieve all phenotype descriptions for specified phenocode"},
 )
 class PhenotypeList(Resource):
@@ -59,8 +63,14 @@ class TopHits(Resource):
     "/interaction_list",
     doc={"description": "Retrieve all interaction result descriptions"},
 )
+# @api.route( #TODO: remove this for consistency
+#     "/interaction_list/<phenocode>",
+#     doc={
+#         "description": "Retrieve interaction result description(s) for specified phenocode"
+#     },
+# )
 @api.route(
-    "/interaction_list/<phenocode>",
+    "/<phenocode>/interaction_list",
     doc={
         "description": "Retrieve interaction result description(s) for specified phenocode"
     },
@@ -79,56 +89,62 @@ class InteractionList(Resource):
         if result:
             return jsonify(result)
         else:
-            return jsonify(
-                {
-                    "data": [],
-                    "message": "Unsuccesfully retrieved list of interaction results.",
-                }
-            ), 404
+            return {
+                        "data": [],
+                        "message": "Unsuccesfully retrieved list of interaction results.",
+                    }
 
 
 # this is the 'hidden' sumstats download api
-@api.route("/sumstats/<phenocode>")
-@api.hide
+#@api.route("/sumstats/<phenocode>")
+@api.route("/<phenocode>/<stratification>/download")
 class SumStats(Resource):
     @api.doc(
         params={
-            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
+            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
+            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
         }
     )
-    def get(self, phenocode):
+    def get(self, phenocode, stratification = None):
         """
         Retrieve summary stats information for a specified phenotype.
         """
         if "pheno" not in g:
             g.pheno = create_phenotypes_list()
-
-        result = g.pheno.get_sumstats(phenocode)
+            
+        result = g.pheno.get_sumstats(phenocode, stratification)
 
         return result
 
 
+# @api.route( # TODO: remove this!
+#     "/<phenocode>",
+#     doc={
+#         "description": "Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)"
+#     },
+# )
 @api.route(
-    "/<phenocode>",
+    "/<phenocode>/<stratification>",
     doc={
-        "description": "Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)"
+        "description": "Retrieve pheno plotting and table information for a particular phenocode and stratification (used for pheno page)"
     },
 )
 class Pheno(Resource):
     @api.doc(
         params={
-            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
+            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
+            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
         }
     )
-    def get(self, phenocode):
+    def get(self, phenocode, stratification = None):
         """
         Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)
         """
         if "pheno" not in g:
             g.pheno = create_phenotypes_list()
 
-        result = g.pheno.get_pheno(phenocode)
-
+        result = g.pheno.get_pheno(phenocode, stratification)
+        
         # send from directory does all error coding automatically
         # but keeping this format in the likely case we change it in the future
         return result
@@ -141,16 +157,48 @@ parser.add_argument(
     "indel", type=str, default="both", help="Type of variants (e.g., indel, snp, both)"
 )
 
-@api.route("/pheno-filter/<string:phenocode1>")
-@api.route("/pheno-filter/<string:phenocode1>/<string:phenocode2>")
-class PhenoFilter(Resource):
+# # TODO: remove this whole class and API endpoints.
+# @api.route("/pheno-filter/<string:phenocode1>") # TODO: remove this for consistency
+# @api.route("/pheno-filter/<string:phenocode1>/<string:phenocode2>") # TODO: remove this because it should only be one route at a time.
+# class PhenoFilter(Resource):
+#     @api.doc(
+#         params={
+#             "phenocode1": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
+#             "phenocode2": 'Phenocode string for the second trait (optional). Ex: "DIA_TYPE1_COM.European.Female"',
+#         }
+#     )
+#     def get(self, phenocode1, phenocode2=None):
+#         """
+#         Retrieve filtered variants for the specified phenocode(s).
+#         """
+#         args = parser.parse_args()
+#         min_maf = args["min_maf"]
+#         max_maf = args["max_maf"]
+#         indel = args["indel"]
+
+#         # Extract variants for the phenocodes
+#         chosen_variants1 = extract_variants(phenocode1, min_maf, max_maf, indel)
+#         chosen_variants2 = (
+#             extract_variants(phenocode2, min_maf, max_maf, indel)
+#             if phenocode2
+#             else None
+#         )
+
+#         data = [chosen_variants1]
+#         if chosen_variants2:
+#             data.append(chosen_variants2)
+
+#         return data, 200
+
+@api.route("/<string:phenocode>/<string:stratification>/filter")
+class PhenoFilterSingle(Resource):
     @api.doc(
         params={
-            "phenocode1": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
-            "phenocode2": 'Phenocode string for the second trait (optional). Ex: "DIA_TYPE1_COM.European.Female"',
+            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
+            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
         }
     )
-    def get(self, phenocode1, phenocode2=None):
+    def get(self, phenocode, stratification = None):
         """
         Retrieve filtered variants for the specified phenocode(s).
         """
@@ -160,48 +208,46 @@ class PhenoFilter(Resource):
         indel = args["indel"]
 
         # Extract variants for the phenocodes
-        chosen_variants1 = extract_variants(phenocode1, min_maf, max_maf, indel)
-        chosen_variants2 = (
-            extract_variants(phenocode2, min_maf, max_maf, indel)
-            if phenocode2
-            else None
-        )
+        chosen_variants = extract_variants(phenocode, stratification, min_maf, max_maf, indel)
 
-        data = [chosen_variants1]
-        if chosen_variants2:
-            data.append(chosen_variants2)
+        data = chosen_variants
 
-        return jsonify(data), 200
+        return data
 
 
-@api.route("/qq/<phenocode>")
+# @api.route("/qq/<phenocode>") # TODO: remove this for consistency
+@api.route("/<phenocode>/<stratification>/qq")
 class QQ(Resource):
     @api.doc(
         params={
-            "phenocode": 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM.European.Male"',
+            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
+            "stratification" : "Stratification string for the given phenocode. Ex: European.Male"
         }
     )
-    def get(self, phenocode):
+    def get(self, phenocode, stratification = None):
         """
         Retrieve qq results for the specified phenocode(s).
         """
         if "pheno" not in g:
             g.pheno = create_phenotypes_list()
 
-        result = g.pheno.get_qq(phenocode)
+        result = g.pheno.get_qq(phenocode, stratification)
 
         return result
 
 
+# @api.route("/<phenocode>/region/<region_code>") #TODO : remove this for consistency
 @api.route("/<phenocode>/region/<region_code>")
+@api.route("/<phenocode>/<stratification>/region/<region_code>")
 class Region(Resource):
     @api.doc(
         params={
-            "phenocode": 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM.European.Male"',
+            "phenocode": 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM"',
+            "stratification" : "Stratification string for the given phenocode. Ex: European.Male",
             "region_code": 'Region code string formatted as such : "1:20000-100000" ',
         }
     )
-    def get(self, phenocode, region_code):
+    def get(self, phenocode,  region_code, stratification = None):
         """
         Get region plotting data for LocusZoom region plots.
         """
@@ -210,13 +256,13 @@ class Region(Resource):
 
         result = None
 
-        result = g.pheno.get_region(phenocode, region_code)
+        result = g.pheno.get_region(phenocode, stratification, region_code)
         if not result:
             # TODO : did we fail to get the phenocode or the region?
             return jsonify(
                 {
                     "data": [],
-                    "message": f"Could not find region data for {phenocode=} and {region_code=}",
+                    "message": f"Could not find region data for {phenocode=}, {stratification=} and {region_code=}",
                 }
             ), 404
 

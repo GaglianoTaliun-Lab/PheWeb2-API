@@ -1,5 +1,5 @@
-from flask import current_app, send_from_directory, send_file
 from models.locus_zoom_utils import get_pheno_region
+from flask import current_app, send_from_directory, send_file
 from models.gene_utils import get_gene_tuples
 
 import sqlite3
@@ -100,27 +100,51 @@ class Pheno:
         ]
         return specified_phenos
 
-    def get_pheno(self, phenocode):
+    def get_pheno(self, phenocode, stratification):
+        
+        if stratification:
+            phenocode += stratification
+            
         response = send_from_directory(
             current_app.config["MANHATTAN_DIR"], f"{phenocode}.json"
         )
         return response
 
-    def get_qq(self, phenocode):
+    def get_qq(self, phenocode, stratification):
+        
+        if stratification:
+            phenocode += stratification
+            
         response = send_from_directory(
             current_app.config["QQ_DIR"], f"{phenocode}.json"
         )
         return response
 
-    def get_sumstats(self, phenocode):
-        response = send_file(
-            current_app.config["PHENO_GZ_DIR"] + f"/{phenocode}.gz",
+    def get_sumstats(self, phenocode, suffix = None):
+        if not suffix:
+            return send_file(
+                current_app.config["PHENO_GZ_DIR"] + f"/{phenocode}.gz",
+                as_attachment=True,
+                download_name=f"{phenocode}.tsv.gz",
+            )
+        
+        if 'inter-' in suffix:
+            return send_file(
+                current_app.config["INTERACTION_DIR"] + f"/{phenocode}{suffix}.gz",
+                as_attachment=True,
+                download_name=f"{phenocode}{suffix}.tsv.gz",
+            )
+        
+        return send_file(
+            current_app.config["PHENO_GZ_DIR"] + f"/{phenocode}{suffix}.gz",
             as_attachment=True,
-            download_name=f"phenocode-{phenocode}.tsv.gz",
+            download_name=f"{phenocode}{suffix}.tsv.gz",
         )
-        return response
 
-    def get_region(self, phenocode, region):
+    def get_region(self, phenocode, stratification, region):
+        if stratification:
+            phenocode += stratification
+        
         chrom, part2_and_part3 = region.split(":")
         pos_start, pos_end = part2_and_part3.split("-")
         pos_start = int(pos_start)
@@ -178,7 +202,7 @@ def create_tophits() -> Tophits:
         os.path.join(current_app.config["PHENOTYPES_DIR"], "top_hits_1k.json"), "r"
     ) as f:
         data = json.load(f)
-
+        
     return Tophits(data)
 
 

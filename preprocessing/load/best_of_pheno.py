@@ -3,7 +3,12 @@ This script creates generated-by-pheweb/best-of-pheno/<pheno> which contains the
 """
 
 from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath
-from ..utils import chrom_order, get_phenocode_with_stratifications
+from ..utils import (
+    get_phenolist,
+    get_phenocode_with_stratifications,
+    get_phenocode_with_suffixes,
+    chrom_order
+)
 from .. import conf
 from .load_utils import (
     MaxPriorityQueue,
@@ -29,12 +34,17 @@ def run(argv: List[str]) -> None:
 
     phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
 
+    interaction_phenos = []
+    non_interaction_phenos = []
+
     # For each pheno in phenos, we need to update the phenocode if stratified.
     for pheno in phenos:
         if pheno["interaction"] is not None:
-            pheno["phenocode"] += ".inter-" + pheno["interaction"]
-        if conf.stratified():
+            pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
+            interaction_phenos.append(pheno)
+        elif conf.stratified():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+            non_interaction_phenos.append(pheno)
 
     parallelize_per_pheno(
         get_input_filepaths=lambda pheno: get_pheno_filepath(
@@ -45,13 +55,31 @@ def run(argv: List[str]) -> None:
         ),
         convert=make_bestof_file,
         cmd="best_of_pheno",
-        phenos=phenos,
+        phenos=non_interaction_phenos,
+    )
+    
+    parallelize_per_pheno(
+        get_input_filepaths=lambda pheno: get_pheno_filepath(
+            "interaction", pheno["phenocode"]
+        ),
+        get_output_filepaths=lambda pheno: get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False
+        ),
+        convert=make_bestof_file_interaction,
+        cmd="best_of_pheno",
+        phenos=interaction_phenos,
     )
 
 
 def make_bestof_file(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("pheno_gz", pheno["phenocode"]),
+        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+    )
+    
+def make_bestof_file_interaction(pheno: Dict[str, Any]) -> None:
+    make_bestof_file_explicit(
+        get_pheno_filepath("interaction", pheno["phenocode"]),
         get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
