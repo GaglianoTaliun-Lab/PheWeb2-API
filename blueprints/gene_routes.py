@@ -23,7 +23,8 @@ class SignificantAssociationTable(Resource):
             return {"data": [], "message": "No data found for this gene"}, 404
 
 
-@api.route("/gene_position/<gene>")
+@api.route("/gene_position/<gene>") #TODO: remove this 
+@api.route("/<gene>/gene_position")
 class GenePosition(Resource):
     def get(self, gene):
         """

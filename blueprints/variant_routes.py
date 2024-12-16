@@ -24,7 +24,7 @@ class Variant(Resource):
         variant_phewas = g.variant.get_variant(variant_code, stratification)
         
         if variant_phewas:
-            return variant_phewas, 200
+            return variant_phewas
         else:
             return {"message": f"Cannot find variant with variant code {variant_code}."}, 404
 
