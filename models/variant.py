@@ -29,10 +29,12 @@ class PhewasMatrixReader:
         )
         self.phenotype_data_with_index = {}
         self.get_phenotypes_data()
-    
+
     def get_phenotypes_data(self):
         try:
-            phenotypes_file = os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json')
+            phenotypes_file = os.path.join(
+                current_app.config["PHENOTYPES_DIR"], "phenotypes.json"
+            )
             with open(phenotypes_file) as f:
                 data = json.load(f)
 
@@ -42,7 +44,7 @@ class PhewasMatrixReader:
             print(e)
             self.phenotype_data_with_index = None
             return None
-    
+
     def build_phenotypes_index(self, phenotypes_data):
         index = {}
         for phenotype in phenotypes_data:
@@ -55,8 +57,7 @@ class PhewasMatrixReader:
                 index[key] = []
             index[key].append(phenotype)
         return index
-        
-    
+
     def read_matrix(self):
         with gzip.open(self.filepath, "rt") as f:
             reader = csv.reader(f, dialect="pheweb-internal-dialect")
@@ -106,26 +107,44 @@ class PhewasMatrixReader:
                         self._colidxs.get("nearest_genes")
                     ]  # get nearest gene
                     for phenocode, fields in self.phenotype_fields.items():
-                        phenocode_parts = phenocode.split('.')
+                        phenocode_parts = phenocode.split(".")
                         # pheno_basic_info = self.phenotype_data_with_index.get((phenocode_parts[0],phenocode_parts[1],phenocode_parts[2]), [])[0]
-                        key = (phenocode_parts[0], phenocode_parts[1], phenocode_parts[2])
+                        key = (
+                            phenocode_parts[0],
+                            phenocode_parts[1],
+                            phenocode_parts[2],
+                        )
                         pheno_list = self.phenotype_data_with_index.get(key, [])
                         if pheno_list:
                             pheno_basic_info = pheno_list[0]
                         else:
                             pheno_basic_info = None
                         pheno_data = {
-                            'phenocode': phenocode_parts[0],
-                            'stratification': {
-                                'ancestry': phenocode_parts[1] if len(phenocode_parts) > 1 else None, 
-                                'sex': phenocode_parts[2] if len(phenocode_parts) > 2 else None
-                                },
-                            'category': pheno_basic_info['category'] if pheno_basic_info != None else None,
-                            'phenostring': pheno_basic_info['phenostring'] if pheno_basic_info != None else None,
-                            'num_samples': pheno_basic_info['num_samples'] if pheno_basic_info != None else None,
-                            'num_controls': pheno_basic_info['num_controls'] if pheno_basic_info != None else None,
-                            'num_cases': pheno_basic_info['num_cases'] if pheno_basic_info != None else None
-                            }
+                            "phenocode": phenocode_parts[0],
+                            "stratification": {
+                                "ancestry": phenocode_parts[1]
+                                if len(phenocode_parts) > 1
+                                else None,
+                                "sex": phenocode_parts[2]
+                                if len(phenocode_parts) > 2
+                                else None,
+                            },
+                            "category": pheno_basic_info["category"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "phenostring": pheno_basic_info["phenostring"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_samples": pheno_basic_info["num_samples"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_controls": pheno_basic_info["num_controls"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_cases": pheno_basic_info["num_cases"]
+                            if pheno_basic_info is not None
+                            else None,
+                        }
                         for field, idx in fields.items():
                             try:
                                 pheno_data[field] = float(row_data[idx])

@@ -20,13 +20,13 @@ CHROM_ORDER = {chrom: index for index, chrom in enumerate(CHROM_ORDER_LIST)}
 
 # extract variants from the given phenocode within the set parameters of min_maf and max_maf
 def extract_variants(
-    phenocode: str, stratification : str, min_maf: float, max_maf: float, indel: bool
+    phenocode: str, stratification: str, min_maf: float, max_maf: float, indel: bool
 ) -> list:
     # load best of file
     # it's just a tsv of max 100 000 rows so I think the best option would be polars (instead of pandas) for this.
     if stratification:
         phenocode = phenocode + stratification
-    
+
     df = pl.read_csv(
         current_app.config["BEST_OF_PHENO_DIR"] + f"/{phenocode}",
         separator="\t",

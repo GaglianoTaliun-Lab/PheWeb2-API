@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, g
 from models import create_variant
 from flask_restx import Namespace, Resource
 
@@ -22,11 +22,13 @@ class Variant(Resource):
             g.variant = create_variant()
 
         variant_phewas = g.variant.get_variant(variant_code, stratification)
-        
+
         if variant_phewas:
             return variant_phewas
         else:
-            return {"message": f"Cannot find variant with variant code {variant_code}."}, 404
+            return {
+                "message": f"Cannot find variant with variant code {variant_code}."
+            }, 404
 
 
 @api.route("/stratification_list")
@@ -43,4 +45,6 @@ class StratificationList(Resource):
         if strat_list:
             return strat_list, 200
 
-        return {"message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."}, 404
+        return {
+            "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."
+        }, 404

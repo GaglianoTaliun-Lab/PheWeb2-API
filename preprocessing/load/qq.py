@@ -88,13 +88,11 @@ def get_output_filepaths(pheno: dict) -> List[str]:
 
 
 def make_json_file(pheno: Dict[str, Any], ignore=None) -> None:
-    
-    if pheno['interaction'] is not None:
-        input_filepath = get_pheno_filepath('interaction', pheno['phenocode'])
+    if pheno["interaction"] is not None:
+        input_filepath = get_pheno_filepath("interaction", pheno["phenocode"])
     else:
-        input_filepath = get_pheno_filepath('pheno_gz', pheno['phenocode'])
+        input_filepath = get_pheno_filepath("pheno_gz", pheno["phenocode"])
 
-    
     make_json_file_explicit(
         input_filepath,
         get_pheno_filepath("qq", pheno["phenocode"], must_exist=False),

@@ -319,27 +319,58 @@ def _import_phenolist_csv(f, has_header):
         fieldnames = list(range(num_cols))
 
     # if conf.stratified == True, build stratified column as a sub dictionary
-    # TODO: change this to it's own function like 'list_values_on_pipe'
     if stratified:
-        col_stratification = fieldnames.index("stratification")
-        stratification_list = [value[col_stratification].split(";") for value in rows]
-        stratifications_list = []
-        for stratifications in stratification_list:
+        stratification_colnumbers = [
+            i
+            for i in range(0, len(fieldnames))
+            if fieldnames[i].startswith("stratification.")
+        ]
+        stratifications = [
+            fieldname
+            for fieldname in fieldnames
+            if fieldname.startswith("stratification.")
+        ]
+
+        stratification_list = []
+
+        for row in rows:
             stratification_dict = {}
-            for stratification in stratifications:
-                stratification_dict[stratification.split(":")[0]] = (
-                    stratification.split(":")[1]
+            for i, stratification in enumerate(stratifications):
+                stratification_dict[stratification.removeprefix("stratification.")] = (
+                    row[stratification_colnumbers[i]]
                 )
-            stratifications_list.append(stratification_dict)
+
+            stratification_list.append(stratification_dict)
 
         json_file = []
         for index, row in enumerate(rows):
             json_object = {}
             for i in range(num_cols):
-                if i != col_stratification:
+                if not fieldnames[i].startswith("stratification."):
                     json_object[fieldnames[i]] = row[i]
-            json_object["stratification"] = stratifications_list[index]
+            json_object["stratification"] = stratification_list[index]
             json_file.append(json_object)
+
+    # if stratified:
+    #     col_stratification = fieldnames.index("stratification")
+    #     stratification_list = [value[col_stratification].split(";") for value in rows]
+    #     stratifications_list = []
+    #     for stratifications in stratification_list:
+    #         stratification_dict = {}
+    #         for stratification in stratifications:
+    #             stratification_dict[stratification.split(":")[0]] = (
+    #                 stratification.split(":")[1]
+    #             )
+    #         stratifications_list.append(stratification_dict)
+
+    #     json_file = []
+    #     for index, row in enumerate(rows):
+    #         json_object = {}
+    #         for i in range(num_cols):
+    #             if i != col_stratification:
+    #                 json_object[fieldnames[i]] = row[i]
+    #         json_object["stratification"] = stratifications_list[index]
+    #         json_file.append(json_object)
     else:
         json_file = [{fieldnames[i]: row[i] for i in range(num_cols)} for row in rows]
     return json_file
@@ -414,7 +445,7 @@ def split_phenos_on_interaction(phenolist):
         return phenolist
 
     for pheno in phenolist:
-        if pheno["interaction"] == "null":
+        if pheno["interaction"] == "null" or pheno["interaction"] == "":
             pheno["interaction"] = None
         else:
             convert_interaction(pheno)
@@ -731,7 +762,7 @@ def run(argv):
         return f2
 
     @add_subcommand("view")
-    def f(args):
+    def view(args):
         filepath = args.filepath or default_phenolist_filepath
         phenolist = load_phenolist(filepath)
         write_phenolist_to_file(phenolist, sys.stdout)
@@ -744,7 +775,7 @@ def run(argv):
     )
 
     @add_subcommand("glob")
-    def f(args):
+    def glob(args):
         if args.simple_phenocode and args.star_is_phenocode:
             raise PheWebError(
                 "You cannot use --star-is-phenocode and --simple-phenocode at the same time."
@@ -786,7 +817,7 @@ def run(argv):
 
     @add_subcommand("extract-phenocode-from-filepath")
     @modifies_phenolist
-    def f(args, phenolist):
+    def extractPhenocode(args, phenolist):
         if args.simple:
             args.pattern = (
                 r".*/(?:(?:epacts|pheno)[\.-]?)?"
@@ -822,7 +853,7 @@ def run(argv):
 
     @add_subcommand("unique-phenocode")
     @modifies_phenolist
-    def f(args, phenolist):
+    def uniquePhenocode(args, phenolist):
         return unique_phenocode(phenolist, args.new_column_name)
 
     p = subparsers.add_parser(
@@ -849,7 +880,7 @@ def run(argv):
     )
 
     @add_subcommand("verify")
-    def f(args):
+    def verify(args):
         filepath = args.filepath or default_phenolist_filepath
         phenolist = load_phenolist(filepath)
         check_that_columns_are_present(
@@ -881,7 +912,7 @@ def run(argv):
 
     @add_subcommand("filter-phenotypes")
     @modifies_phenolist
-    def f(args, phenolist):
+    def filterPhenotypes(args, phenolist):
         if args.minimum_num_cases is not None:
             phenolist = filter_phenolist(
                 phenolist,
@@ -935,7 +966,7 @@ def run(argv):
 
     @add_subcommand("hide-small-numbers-of-samples")
     @modifies_phenolist
-    def f(args, phenolist):
+    def hideSmallNumbersOfSamples(args, phenolist):
         return hide_small_numbers_of_samples(phenolist, args.minimum_visible_number)
 
     p = subparsers.add_parser(
@@ -958,7 +989,7 @@ def run(argv):
 
     @add_subcommand("read-info-from-association-files")
     @modifies_phenolist
-    def f(args, phenolist):
+    def readInfoFromAssociationFiles(args, phenolist):
         return extract_info_from_assoc_files(phenolist)
 
     p = subparsers.add_parser(
@@ -974,7 +1005,7 @@ def run(argv):
     )
 
     @add_subcommand("import-phenolist")
-    def f(args):
+    def importPhenolist(args):
         filepath = args.filepath or default_phenolist_filepath
         phenolist = import_phenolist(args.input_filepath, not args.no_header)
         phenolist = interpret_json(phenolist)
@@ -1011,7 +1042,7 @@ def run(argv):
     # TODO: add option to strictly read a comma-delimited double-doublequote-escaped csv
 
     @add_subcommand("print-as-csv")
-    def f(args):
+    def printAsCSV(args):
         filepath = args.filepath or default_phenolist_filepath
         phenolist = load_phenolist(filepath)
         print_as_csv(phenolist)
@@ -1029,7 +1060,7 @@ def run(argv):
 
     @add_subcommand("keep-only-columns")
     @modifies_phenolist
-    def f(args, phenolist):
+    def keepOnlyColumns(args, phenolist):
         return keep_only_columns(phenolist, args.columns_to_keep)
 
     p = subparsers.add_parser("keep-only-columns", help="")
@@ -1048,7 +1079,7 @@ def run(argv):
 
     @add_subcommand("rename-columns")
     @modifies_phenolist
-    def f(args, phenolist):
+    def renameColumns(args, phenolist):
         if len(args.renames) % 2 != 0:
             raise PheWebError(
                 "You supplied {} arguments. That's not a multiple of two. How am I supposed to pair old names with new names if you don't give me the same number of each?".format(
@@ -1078,7 +1109,7 @@ def run(argv):
 
     @add_subcommand("merge-in-info")
     @modifies_phenolist
-    def f(args, phenolist):
+    def mergeInInfo(args, phenolist):
         more_info_file = load_phenolist(
             args.file_with_more_info
         )  # TODO: maybe import_phenolist?

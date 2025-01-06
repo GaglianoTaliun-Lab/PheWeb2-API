@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Any, Iterator
 from . import parse_utils
 from flask import current_app
+import math
 from contextlib import contextmanager
 
 
@@ -67,6 +68,10 @@ class _Get_Pheno_Region:
                 variants.append(v)
 
         df = _Get_Pheno_Region._dataframify(variants)
+
+        max_log10p = -math.log10(min(df["pvalue"]))
+
+        df["max_log10p"] = max_log10p
 
         return {
             "data": df,
