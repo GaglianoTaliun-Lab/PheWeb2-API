@@ -130,19 +130,19 @@ class PhewasMatrixReader:
                                 else None,
                             },
                             "category": pheno_basic_info["category"]
-                            if pheno_basic_info != None
+                            if pheno_basic_info is not None
                             else None,
                             "phenostring": pheno_basic_info["phenostring"]
-                            if pheno_basic_info != None
+                            if pheno_basic_info is not None
                             else None,
                             "num_samples": pheno_basic_info["num_samples"]
-                            if pheno_basic_info != None
+                            if pheno_basic_info is not None
                             else None,
                             "num_controls": pheno_basic_info["num_controls"]
-                            if pheno_basic_info != None
+                            if pheno_basic_info is not None
                             else None,
                             "num_cases": pheno_basic_info["num_cases"]
-                            if pheno_basic_info != None
+                            if pheno_basic_info is not None
                             else None,
                         }
                         for field, idx in fields.items():
