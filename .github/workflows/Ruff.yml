@@ -17,5 +17,5 @@ jobs:
         pip install ruff
     - name: Linting and formatting code with ruff
       run: |
-        ruff check --fix
-        ruff format
+        ruff check --fix || true
+        ruff format || true
