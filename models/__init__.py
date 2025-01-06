@@ -1,1 +1,0 @@
-from .models import create_phenotypes_list, create_tophits, create_genes, create_variant

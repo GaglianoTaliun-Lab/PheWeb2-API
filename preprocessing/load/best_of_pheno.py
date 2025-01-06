@@ -7,14 +7,13 @@ from ..utils import (
     get_phenolist,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
-    chrom_order
+    chrom_order,
 )
 from .. import conf
 from .load_utils import (
     MaxPriorityQueue,
     parallelize_per_pheno,
     get_phenos_subset,
-    get_phenolist,
 )
 
 import argparse
@@ -57,7 +56,7 @@ def run(argv: List[str]) -> None:
         cmd="best_of_pheno",
         phenos=non_interaction_phenos,
     )
-    
+
     parallelize_per_pheno(
         get_input_filepaths=lambda pheno: get_pheno_filepath(
             "interaction", pheno["phenocode"]
@@ -76,7 +75,8 @@ def make_bestof_file(pheno: Dict[str, Any]) -> None:
         get_pheno_filepath("pheno_gz", pheno["phenocode"]),
         get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
     )
-    
+
+
 def make_bestof_file_interaction(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("interaction", pheno["phenocode"]),

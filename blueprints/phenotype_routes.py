@@ -34,7 +34,10 @@ class PhenotypeList(Resource):
             return result
         else:
             # TODO : specify which phenocode?
-            return {"data": [], "message": "Unsuccesfully retrieved list of phenotypes."}
+            return {
+                "data": [],
+                "message": "Unsuccesfully retrieved list of phenotypes.",
+            }
 
 
 @api.route(
@@ -88,28 +91,28 @@ class InteractionList(Resource):
             return jsonify(result)
         else:
             return {
-                        "data": [],
-                        "message": "Unsuccesfully retrieved list of interaction results.",
-                    }
+                "data": [],
+                "message": "Unsuccesfully retrieved list of interaction results.",
+            }
 
 
 # this is the 'hidden' sumstats download api
-#@api.route("/sumstats/<phenocode>")
+# @api.route("/sumstats/<phenocode>")
 @api.route("/<phenocode>/<stratification>/download")
 class SumStats(Resource):
     @api.doc(
         params={
             "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
-            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
+            "stratification": "Stratification string for the given phenocode. Ex: .European.Male",
         }
     )
-    def get(self, phenocode, stratification = None):
+    def get(self, phenocode, stratification=None):
         """
         Retrieve summary stats information for a specified phenotype.
         """
         if "pheno" not in g:
             g.pheno = create_phenotypes_list()
-            
+
         result = g.pheno.get_sumstats(phenocode, stratification)
 
         return result
@@ -131,10 +134,10 @@ class Pheno(Resource):
     @api.doc(
         params={
             "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
-            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
+            "stratification": "Stratification string for the given phenocode. Ex: .European.Male",
         }
     )
-    def get(self, phenocode, stratification = None):
+    def get(self, phenocode, stratification=None):
         """
         Retrieve pheno plotting and table information for a particular phenocode (used for pheno page)
         """
@@ -142,7 +145,7 @@ class Pheno(Resource):
             g.pheno = create_phenotypes_list()
 
         result = g.pheno.get_pheno(phenocode, stratification)
-        
+
         # send from directory does all error coding automatically
         # but keeping this format in the likely case we change it in the future
         return result
@@ -188,15 +191,16 @@ parser.add_argument(
 
 #         return data, 200
 
+
 @api.route("/<string:phenocode>/<string:stratification>/filter")
 class PhenoFilterSingle(Resource):
     @api.doc(
         params={
             "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
-            "stratification" : "Stratification string for the given phenocode. Ex: .European.Male"
+            "stratification": "Stratification string for the given phenocode. Ex: .European.Male",
         }
     )
-    def get(self, phenocode, stratification = None):
+    def get(self, phenocode, stratification=None):
         """
         Retrieve filtered variants for the specified phenocode(s).
         """
@@ -206,7 +210,9 @@ class PhenoFilterSingle(Resource):
         indel = args["indel"]
 
         # Extract variants for the phenocodes
-        chosen_variants = extract_variants(phenocode, stratification, min_maf, max_maf, indel)
+        chosen_variants = extract_variants(
+            phenocode, stratification, min_maf, max_maf, indel
+        )
 
         data = chosen_variants
 
@@ -219,10 +225,10 @@ class QQ(Resource):
     @api.doc(
         params={
             "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
-            "stratification" : "Stratification string for the given phenocode. Ex: European.Male"
+            "stratification": "Stratification string for the given phenocode. Ex: European.Male",
         }
     )
-    def get(self, phenocode, stratification = None):
+    def get(self, phenocode, stratification=None):
         """
         Retrieve qq results for the specified phenocode(s).
         """
@@ -241,13 +247,13 @@ class Region(Resource):
     @api.doc(
         params={
             "phenocode": 'Phenocode string for the wanted trait. Ex: "DIA_TYPE2_COM"',
-            "stratification" : "Stratification string for the given phenocode. Ex: European.Male",
+            "stratification": "Stratification string for the given phenocode. Ex: European.Male",
             "region_code": 'Region code string formatted as such : "1:20000-100000" ',
         }
     )
-    def get(self, phenocode,  region_code, stratification = None):
+    def get(self, phenocode, region_code, stratification=None):
         """
-        Get region plotting data for LocusZoom region plots.
+        Get max -log10 pvalue for current region
         """
         if "pheno" not in g:
             g.pheno = create_phenotypes_list()
@@ -260,33 +266,37 @@ class Region(Resource):
             return jsonify(
                 {
                     "data": [],
-                    "message": f"Could not find region data for {phenocode=}, {stratification=} and {region_code=}",
+                    "message": f"Could not find region max pvalue data for {phenocode=}, {stratification=} and {region_code=}",
                 }
             ), 404
 
         return jsonify(result)
 
+
 @api.route(
-    '/variants',
-    doc={"description": "Retrieve vairants' information from received variantid subsets"},)
+    "/variants",
+    doc={
+        "description": "Retrieve vairants' information from received variantid subsets"
+    },
+)
 class MissingGWAS(Resource):
-    @api.response(400, 'Bad Request')
-    @api.response(500, 'Internal Server Error')
+    @api.response(400, "Bad Request")
+    @api.response(500, "Internal Server Error")
     def post(self):
         """Process variants form GWAS table for specific stratifications"""
         try:
             data = api.payload  # Using api.payload to access the incoming JSON data
             if not data:
-                return {'message': 'No data provided'}, 400
-            
-            if 'pheno' not in g:
+                return {"message": "No data provided"}, 400
+
+            if "pheno" not in g:
                 g.pheno = create_phenotypes_list()
-                
+
             # process data using SNPFetcher
             results = g.pheno.get_gwas_missing(data)
-            
+
             # print(results)
-            
+
             # Debugging prints to console
             print("input")
             for key, snp_list in data.items():
@@ -294,11 +304,11 @@ class MissingGWAS(Resource):
             print("\noutput")
             for key, snp_list in results.items():
                 print(f"{key}: {len(snp_list)} elements")
-            
+
             processed_data = {
                 "message": "success",
                 "data": results,
             }
             return processed_data, 200
         except Exception as e:
-            return {'data': [], "message": str(e)}, 500
+            return {"data": [], "message": str(e)}, 500

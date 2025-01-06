@@ -319,27 +319,58 @@ def _import_phenolist_csv(f, has_header):
         fieldnames = list(range(num_cols))
 
     # if conf.stratified == True, build stratified column as a sub dictionary
-    # TODO: change this to it's own function like 'list_values_on_pipe'
     if stratified:
-        col_stratification = fieldnames.index("stratification")
-        stratification_list = [value[col_stratification].split(";") for value in rows]
-        stratifications_list = []
-        for stratifications in stratification_list:
+        stratification_colnumbers = [
+            i
+            for i in range(0, len(fieldnames))
+            if fieldnames[i].startswith("stratification.")
+        ]
+        stratifications = [
+            fieldname
+            for fieldname in fieldnames
+            if fieldname.startswith("stratification.")
+        ]
+
+        stratification_list = []
+
+        for row in rows:
             stratification_dict = {}
-            for stratification in stratifications:
-                stratification_dict[stratification.split(":")[0]] = (
-                    stratification.split(":")[1]
+            for i, stratification in enumerate(stratifications):
+                stratification_dict[stratification.removeprefix("stratification.")] = (
+                    row[stratification_colnumbers[i]]
                 )
-            stratifications_list.append(stratification_dict)
+
+            stratification_list.append(stratification_dict)
 
         json_file = []
         for index, row in enumerate(rows):
             json_object = {}
             for i in range(num_cols):
-                if i != col_stratification:
+                if not fieldnames[i].startswith("stratification."):
                     json_object[fieldnames[i]] = row[i]
-            json_object["stratification"] = stratifications_list[index]
+            json_object["stratification"] = stratification_list[index]
             json_file.append(json_object)
+
+    # if stratified:
+    #     col_stratification = fieldnames.index("stratification")
+    #     stratification_list = [value[col_stratification].split(";") for value in rows]
+    #     stratifications_list = []
+    #     for stratifications in stratification_list:
+    #         stratification_dict = {}
+    #         for stratification in stratifications:
+    #             stratification_dict[stratification.split(":")[0]] = (
+    #                 stratification.split(":")[1]
+    #             )
+    #         stratifications_list.append(stratification_dict)
+
+    #     json_file = []
+    #     for index, row in enumerate(rows):
+    #         json_object = {}
+    #         for i in range(num_cols):
+    #             if i != col_stratification:
+    #                 json_object[fieldnames[i]] = row[i]
+    #         json_object["stratification"] = stratifications_list[index]
+    #         json_file.append(json_object)
     else:
         json_file = [{fieldnames[i]: row[i] for i in range(num_cols)} for row in rows]
     return json_file
@@ -414,7 +445,7 @@ def split_phenos_on_interaction(phenolist):
         return phenolist
 
     for pheno in phenolist:
-        if pheno["interaction"] == "null":
+        if pheno["interaction"] == "null" or pheno["interaction"] == "":
             pheno["interaction"] = None
         else:
             convert_interaction(pheno)
