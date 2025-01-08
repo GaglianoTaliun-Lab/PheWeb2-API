@@ -31,7 +31,7 @@ def run(argv: List[str]) -> None:
     # For each pheno in phenos, we need to update the phenocode if stratified.
     for pheno in phenos:
         if pheno["interaction"] is not None:
-            pheno["phenocode"] += ".inter-" + pheno["interaction"]
+            pheno["phenocode"] += ".interaction-" + pheno["interaction"]
         if conf.stratified():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
 

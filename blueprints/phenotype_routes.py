@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, Response
 from models import create_phenotypes_list, create_tophits
 from models.utils import extract_variants
 from flask_restx import Namespace, Resource, reqparse
@@ -95,29 +95,6 @@ class InteractionList(Resource):
                 "message": "Unsuccesfully retrieved list of interaction results.",
             }
 
-
-# this is the 'hidden' sumstats download api
-# @api.route("/sumstats/<phenocode>")
-@api.route("/<phenocode>/<stratification>/download")
-class SumStats(Resource):
-    @api.doc(
-        params={
-            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
-            "stratification": "Stratification string for the given phenocode. Ex: .European.Male",
-        }
-    )
-    def get(self, phenocode, stratification=None):
-        """
-        Retrieve summary stats information for a specified phenotype.
-        """
-        if "pheno" not in g:
-            g.pheno = create_phenotypes_list()
-
-        result = g.pheno.get_sumstats(phenocode, stratification)
-
-        return result
-
-
 # @api.route( # TODO: remove this!
 #     "/<phenocode>",
 #     doc={
@@ -158,40 +135,6 @@ parser.add_argument(
     "indel", type=str, default="both", help="Type of variants (e.g., indel, snp, both)"
 )
 
-# # TODO: remove this whole class and API endpoints.
-# @api.route("/pheno-filter/<string:phenocode1>") # TODO: remove this for consistency
-# @api.route("/pheno-filter/<string:phenocode1>/<string:phenocode2>") # TODO: remove this because it should only be one route at a time.
-# class PhenoFilter(Resource):
-#     @api.doc(
-#         params={
-#             "phenocode1": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM.European.Male"',
-#             "phenocode2": 'Phenocode string for the second trait (optional). Ex: "DIA_TYPE1_COM.European.Female"',
-#         }
-#     )
-#     def get(self, phenocode1, phenocode2=None):
-#         """
-#         Retrieve filtered variants for the specified phenocode(s).
-#         """
-#         args = parser.parse_args()
-#         min_maf = args["min_maf"]
-#         max_maf = args["max_maf"]
-#         indel = args["indel"]
-
-#         # Extract variants for the phenocodes
-#         chosen_variants1 = extract_variants(phenocode1, min_maf, max_maf, indel)
-#         chosen_variants2 = (
-#             extract_variants(phenocode2, min_maf, max_maf, indel)
-#             if phenocode2
-#             else None
-#         )
-
-#         data = [chosen_variants1]
-#         if chosen_variants2:
-#             data.append(chosen_variants2)
-
-#         return data, 200
-
-
 @api.route("/<string:phenocode>/<string:stratification>/filter")
 class PhenoFilterSingle(Resource):
     @api.doc(
@@ -217,6 +160,39 @@ class PhenoFilterSingle(Resource):
         data = chosen_variants
 
         return data
+    
+    
+# this is the 'hidden' sumstats download api
+# uses the same arguments as above
+# @api.route("/sumstats/<phenocode>")
+@api.route("/<phenocode>/<stratification>/download")
+class SumStats(Resource):
+    @api.doc(
+        params={
+            "phenocode": 'Phenocode string for the first trait. Ex: "DIA_TYPE2_COM"',
+            "stratification": "Stratification string for the given phenocode. Ex: .European.Male",
+        }
+    )
+    def get(self, phenocode, stratification=None):
+        """
+        Retrieve summary stats information for a specified phenotype.
+        """
+        args = parser.parse_args()
+        min_maf = args["min_maf"]
+        max_maf = args["max_maf"]
+        indel = args["indel"]
+        
+        if "pheno" not in g:
+            g.pheno = create_phenotypes_list()
+            
+        filtering_options = {
+                            "min_maf" : min_maf,
+                            "max_maf" : max_maf,
+                            "indel" : indel
+                            }        
+
+        result = g.pheno.get_sumstats(phenocode, filtering_options, stratification)
+        return result
 
 
 # @api.route("/qq/<phenocode>") # TODO: remove this for consistency
