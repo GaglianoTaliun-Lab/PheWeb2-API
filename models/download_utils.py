@@ -8,17 +8,17 @@ def getDownloadFunction(dir, phenocode, filtering_options, suffix=None):
     if suffix is not None:
         filename += suffix
     
+    headers = {
+        'Content-Type': 'text/plain',
+        'Transfer-Encoding': 'chunked',
+    }
     # no filtering has been applied
     if filtering_options['indel'] == 'both' and filtering_options['min_maf'] == 0.0 and filtering_options['max_maf'] == 0.5:
-        return Response(
-            getUnfilteredFunction(dir, phenocode, suffix)
-        )    
+        return Response(getUnfilteredFunction(dir, phenocode, suffix), headers = headers)
         
     # if filtering has been applied, this gets far more complicated
     # as we need to send a modified file that has been filtered.
-    return Response(
-        getFilteredFunction(dir, phenocode, filtering_options, suffix)
-    )
+    return Response(getFilteredFunction(dir, phenocode, filtering_options, suffix), headers = headers)
    
 def getFilteredFunction(dir, phenocode, filtering_options, suffix):
         
@@ -178,8 +178,11 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
             pl.col("alt").str.len_bytes() == 1,
         )
         
+    print("starting to yield filtered...")
+    print("\t".join(subset.columns) + "\n")
     yield "\t".join(subset.columns) + "\n"  # Header row
     for row in subset.iter_rows(named=False): # TODO: Can I do more than 1 row at a time to be faster?
+        print("\t".join(map(str, row)) + "\n")
         yield "\t".join(map(str, row)) + "\n"
     
 def getUnfilteredFunction(dir, phenocode, suffix):
@@ -271,7 +274,9 @@ def getUnfilteredFunction(dir, phenocode, suffix):
         .alias("maf")
     )
         
-    print("starting to yield...")
+    print("starting to yield unfiltered...")
+    print("\t".join(df.columns) + "\n")
     yield "\t".join(df.columns) + "\n"  # Header row
     for row in df.iter_rows(named=False): # TODO: Can I do more than 1 row at a time to be faster?
+        print("\t".join(map(str, row)) + "\n")
         yield "\t".join(map(str, row)) + "\n"
