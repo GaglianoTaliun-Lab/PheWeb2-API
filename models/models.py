@@ -1,6 +1,7 @@
 from models.locus_zoom_utils import get_pheno_region
 from flask import current_app, send_from_directory, send_file
 from models.gene_utils import get_gene_tuples
+from models.download_utils import getDownloadFunction
 
 import sqlite3
 import os
@@ -119,26 +120,14 @@ class Pheno:
         )
         return response
 
-    def get_sumstats(self, phenocode, suffix=None):
-        if not suffix:
-            return send_file(
-                current_app.config["PHENO_GZ_DIR"] + f"/{phenocode}.gz",
-                as_attachment=True,
-                download_name=f"{phenocode}.tsv.gz",
-            )
+    def get_sumstats(self, phenocode, filtering_options, suffix=None):
+            
+        #TODO:  here filter for stratified or not, then pass the wanted directory
+        dir = current_app.config
 
-        if "inter-" in suffix:
-            return send_file(
-                current_app.config["INTERACTION_DIR"] + f"/{phenocode}{suffix}.gz",
-                as_attachment=True,
-                download_name=f"{phenocode}{suffix}.tsv.gz",
-            )
-
-        return send_file(
-            current_app.config["PHENO_GZ_DIR"] + f"/{phenocode}{suffix}.gz",
-            as_attachment=True,
-            download_name=f"{phenocode}{suffix}.tsv.gz",
-        )
+        download_function = getDownloadFunction(dir, phenocode, filtering_options, suffix)
+ 
+        return download_function
 
     def get_region(self, phenocode, stratification, region):
         if stratification:
@@ -173,15 +162,6 @@ class Variant:
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
-
-
-# functions to create class (factory pattern)
-# def create_phenotypes() -> Phenotypes:
-
-#     with open(os.path.join(current_app.config['PHENOTYPES_DIR'], 'phenotypes.json'), 'r') as f:
-#             data = json.load(f)
-
-#     return Phenotypes(data)
 
 
 def create_genes() -> Genes:
