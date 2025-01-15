@@ -108,7 +108,7 @@ def run(argv: List[str]) -> None:
 
 def get_regions_on_chrom() -> Dict[str, List[Tuple[int, int]]]:
     gene_ranges_on_chrom: Dict[str, List[Tuple[int, int]]] = {}
-    for chrom, start, end, _ in get_padded_gene_tuples():
+    for chrom, start, end, _, _, _ in get_padded_gene_tuples():
         gene_ranges_on_chrom.setdefault(chrom, []).append((start, end))
     return {
         chrom: merged_intervals(gene_ranges)
@@ -166,13 +166,19 @@ def get_region_info(
     # { ('<phenocode>', '<genename>'): {'ac': 35, ... all per_pheno and per_assoc fields} }
 
     for variant in matrix_reader.get_region(chrom, start, end + 1):
-        genenames: List[str] = [
-            iv.data for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
+        # genenames: List[str] = [
+        #     iv.data for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
+        # ]
+        genenames_and_range: List[str, int, int] = [
+            # HX
+            # tree: start, end, genename, true_start, true_end
+            # last tree elements are data
+            (iv.data[0], iv.data[1], iv.data[2]) for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
         ]
 
         for phenocode, pheno in variant["phenos"].items():
             assert isinstance(pheno["pval"], float)
-            for genename in genenames:
+            for genename, true_start, true_end in genenames_and_range:
                 pheno_gene_pair = (phenocode, genename)
                 if (
                     pheno_gene_pair not in best_assoc_for_pheno_gene_pair
@@ -180,6 +186,11 @@ def get_region_info(
                     < best_assoc_for_pheno_gene_pair[pheno_gene_pair]["pval"]
                 ):
                     best_assoc_for_pheno_gene_pair[pheno_gene_pair] = pheno
+                # HX: add info of whether variant is in gene range and how far variant is from a gene
+                relative_distance_to_gene = variant["pos"] - true_start
+                is_in_real_range = true_start <= variant["pos"] <= true_end
+                pheno["distance_to_true_start"] = relative_distance_to_gene
+                pheno["is_in_real_range"] = is_in_real_range
 
     phenos_in_gene: Dict[str, List[Dict[str, Any]]] = {}
     for (phenocode, genename), assoc in best_assoc_for_pheno_gene_pair.items():
@@ -193,10 +204,10 @@ def get_region_info(
 @functools.lru_cache(None)
 def get_gene_intervaltree_for_chrom() -> Dict[str, IntervalTree]:
     tree_for_chrom = {}
-    for chrom, start, end, genename in get_padded_gene_tuples():
+    for chrom, start, end, genename, true_start, true_end in get_padded_gene_tuples():
         if chrom not in tree_for_chrom:
             tree_for_chrom[chrom] = IntervalTree()
-        tree_for_chrom[chrom].add(Interval(start, end, genename))
+        tree_for_chrom[chrom].add(Interval(start, end, genename, true_start, true_end))
     return tree_for_chrom
 
 
@@ -206,14 +217,15 @@ def order_and_truncate_phenos(phenos: List[Dict[str, Any]]) -> List[Dict[str, An
     #  - Always show the three strongest phenotypes (even if none are significant).
     #  - Look at the p-values of the 4th to 10th strongest phenotypes to decide how many of them to show.
     phenos.sort(key=lambda a: a["pval"])
-    biggest_idx_to_include = 2
-    for idx in range(biggest_idx_to_include, len(phenos)):
-        if phenos[idx]["pval"] < 5e-8:
-            biggest_idx_to_include = idx
-        elif idx < 10 and phenos[idx]["pval"] < 10 ** (
-            -4 - idx // 2
-        ):  # formula is arbitrary
-            biggest_idx_to_include = idx
-        else:
-            break
+    # biggest_idx_to_include = 2
+    biggest_idx_to_include = len(phenos) # HX: we get all the phenos instead of the top 3
+    # for idx in range(biggest_idx_to_include, len(phenos)):
+    #     if phenos[idx]["pval"] < 5e-8:
+    #         biggest_idx_to_include = idx
+    #     elif idx < 10 and phenos[idx]["pval"] < 10 ** (
+    #         -4 - idx // 2
+    #     ):  # formula is arbitrary
+    #         biggest_idx_to_include = idx
+    #     else:
+    #         break
     return phenos[: biggest_idx_to_include + 1]
