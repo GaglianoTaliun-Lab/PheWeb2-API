@@ -185,12 +185,12 @@ def get_region_info(
                     or pheno["pval"]
                     < best_assoc_for_pheno_gene_pair[pheno_gene_pair]["pval"]
                 ):
+                    # HX: add info of whether variant is in gene range and how far variant is from a gene
+                    relative_distance_to_gene = variant["pos"] - true_start
+                    is_in_real_range = true_start <= variant["pos"] <= true_end
+                    pheno["distance_to_true_start"] = relative_distance_to_gene
+                    pheno["is_in_real_range"] = is_in_real_range
                     best_assoc_for_pheno_gene_pair[pheno_gene_pair] = pheno
-                # HX: add info of whether variant is in gene range and how far variant is from a gene
-                relative_distance_to_gene = variant["pos"] - true_start
-                is_in_real_range = true_start <= variant["pos"] <= true_end
-                pheno["distance_to_true_start"] = relative_distance_to_gene
-                pheno["is_in_real_range"] = is_in_real_range
 
     phenos_in_gene: Dict[str, List[Dict[str, Any]]] = {}
     for (phenocode, genename), assoc in best_assoc_for_pheno_gene_pair.items():
