@@ -1,15 +1,20 @@
 # PheWeb 2.0 API
 This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) - a new version of the original [PheWeb](https://github.com/statgen/pheweb) tool for interactive querying, visualizing, and sharing summary-level results from GWAS/PheWAS studies. In the PheWeb 2.0, we de-coupled the data model and API from the UI to improve code maintenance and re-usability and allow new features such as on-the-fly GWAS/PheWAS results querying by other external resources and applications.
 
-## Running
+## Running (linux only)
 ```
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 pheweb-run
 ```
+
 get data through http://localhost:9099/ui/PATH/TO/ROUTES/
 e.g. to view phenotype table data, go to http://localhost:9099/ui/phenotypes
 
-
 ## Dependencies
+Python 3.12+ is required.
+All python package dependencies can be found in the requirements.txt
 
 ### Runtime Data
 The runtime data on disk needs to be present before running.
@@ -42,8 +47,6 @@ To run the data pre-processing, run (in the same folder as setup.py)
 
 `pip install -e .`
 
-with python >=3.12
-
 
 Then with your 'pheno-list.csv' properly filled out (see pheno-list-example.csv)`
 
@@ -59,4 +62,4 @@ Then:
 
 # Documentation
 
-In order to keep an orderly documention of this API, we have used Flask RESTX (https://github.com/python-restx/flask-restx)
+In order to keep an orderly documention of the API endpoints, we have used Flask RESTX (https://github.com/python-restx/flask-restx)

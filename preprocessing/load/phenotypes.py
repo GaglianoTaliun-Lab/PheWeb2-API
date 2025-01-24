@@ -62,7 +62,7 @@ def get_phenotypes_including_top_variants_stratified() -> Iterator[Dict[str, Any
 
         # if there's an interaction, add it to filename
         if pheno["interaction"]:
-            phenocode = phenocode + ".inter-" + pheno["interaction"]
+            phenocode = phenocode + ".interaction-" + pheno["interaction"]
 
         # if there's stratifications, add it to filename
         for strats in pheno["stratification"]:
