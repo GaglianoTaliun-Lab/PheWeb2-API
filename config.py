@@ -31,8 +31,6 @@ stratified = True
 
 pval_is_neglog10 = True
 
-show_manhattan_filter_button = True
-
 field_aliases = {
     "CHROM": "chrom",
     "GENPOS": "pos",

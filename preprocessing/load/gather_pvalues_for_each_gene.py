@@ -54,22 +54,6 @@ def run(argv: List[str]) -> None:
             print("{} is up-to-date!".format(str(out_filepath)))
             return
 
-        # Import data from a previous version of pheweb if it's around.
-        old_filepath = Path(
-            get_filepath("best-phenos-by-gene-old-json", must_exist=False)
-        )
-        if (
-            old_filepath.exists()
-            and matrix_filepath.stat().st_mtime < old_filepath.stat().st_mtime
-        ):
-            print(
-                "Migrating old {} to new {}".format(
-                    str(old_filepath), str(out_filepath)
-                )
-            )
-            with open(old_filepath) as f:
-                data = json.load(f)
-
         else:
             regions_on_chrom = get_regions_on_chrom()
             regions: List[Tuple[str, int, int]] = [
@@ -83,6 +67,9 @@ def run(argv: List[str]) -> None:
                 cmd="gather-pvalues-for-each-gene",
                 matrix_filepath=matrix_filepath,
             )
+            
+            print(f"{task_results=}")
+            
             best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
             for task_result in task_results:
                 assert task_result["type"] == "result"
@@ -99,7 +86,12 @@ def run(argv: List[str]) -> None:
                 "CREATE TABLE IF NOT EXISTS best_phenos_for_each_gene (gene TEXT PRIMARY KEY, json TEXT)"
             )
             db.executemany(
-                "INSERT INTO best_phenos_for_each_gene (gene, json) VALUES (?,?)",
+                """
+                INSERT INTO best_phenos_for_each_gene (gene, json)
+                VALUES (?, ?)
+                ON CONFLICT(gene) DO UPDATE SET
+                    json = json_patch(json, EXCLUDED.json)
+                """,
                 ((k, json.dumps(v)) for k, v in data.items()),
             )
         out_tmp_filepath.replace(out_filepath)

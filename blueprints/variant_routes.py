@@ -2,7 +2,7 @@ from flask import Blueprint, g
 from models import create_variant
 from flask_restx import Namespace, Resource
 
-bp = Blueprint("variant_routes", __name__)
+#bp = Blueprint("variant_routes", __name__)
 api = Namespace("variant", description="Routes related to variants")
 
 

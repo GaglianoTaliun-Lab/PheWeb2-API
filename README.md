@@ -3,7 +3,7 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 
 ## Running
 ```
-python app.py
+pheweb-run
 ```
 get data through http://localhost:9099/ui/PATH/TO/ROUTES/
 e.g. to view phenotype table data, go to http://localhost:9099/ui/phenotypes

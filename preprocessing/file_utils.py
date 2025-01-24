@@ -142,6 +142,9 @@ _pheno_filepaths: Dict[str, Callable[[str], str]] = {
     "interaction": (
         lambda phenocode: get_generated_path("interaction", "{}.gz".format(phenocode))
     ),
+    "interaction_tbi": (
+        lambda phenocode: get_generated_path("interaction", "{}.gz.tbi".format(phenocode))
+    ),
     "best_of_pheno": (lambda phenocode: get_generated_path("best_of_pheno", phenocode)),
     "manhattan": (
         lambda phenocode: get_generated_path("manhattan", "{}.json".format(phenocode))

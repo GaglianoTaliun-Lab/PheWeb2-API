@@ -55,7 +55,8 @@ def get_output_filepaths(pheno: dict) -> List[str]:
     return [
         get_pheno_filepath("pheno_gz", pheno["phenocode"], must_exist=False),
         get_pheno_filepath("pheno_gz_tbi", pheno["phenocode"], must_exist=False),
-        # add interaction directory here? why or why not?
+        get_pheno_filepath("interaction", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath("interaction_tbi", pheno["phenocode"], must_exist=False),
     ]
 
 
