@@ -29,9 +29,6 @@ def run(argv: List[str]) -> None:
     # Check whether we're already up-to-date.
     out_filepath = Path(get_filepath("best-phenos-by-gene-sqlite3", must_exist=False))
 
-    # TODO: if stratified, perform all functions below in a for loop
-
-    # Do NOT add interaction results to the matrix.
     if conf.stratified():
         matrix_filepaths = []
         stratification_paths = set(get_stratification_paths(get_phenolist()))
