@@ -15,3 +15,4 @@ pheno-list.json
 
 generated-by-pheweb*/
 run_process.sh
+*.log

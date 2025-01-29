@@ -1,4 +1,9 @@
-from ..utils import PheWebError, get_phenocode_with_stratifications
+
+from ..utils import (
+    PheWebError,
+    get_phenocode_with_stratifications,
+    get_phenocode_with_suffixes,
+)
 from .. import conf
 from ..file_utils import (
     VariantFileReader,
@@ -27,20 +32,33 @@ def run(argv: List[str]) -> None:
     args = parser.parse_args(argv)
 
     phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    
+    interaction_phenos = []
+    non_interaction_phenos = []
 
     # For each pheno in phenos, we need to update the phenocode if stratified.
     for pheno in phenos:
         if pheno["interaction"] is not None:
-            pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-        if conf.stratified():
+            pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
+            interaction_phenos.append(pheno)
+        elif conf.stratified():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+            non_interaction_phenos.append(pheno)
 
     parallelize_per_pheno(
         get_input_filepaths=get_input_filepaths,
         get_output_filepaths=get_output_filepaths,
         convert=convert,
         cmd="augment-pheno",
-        phenos=phenos,
+        phenos=non_interaction_phenos,
+    )
+
+    parallelize_per_pheno(
+        get_input_filepaths=get_input_filepaths,
+        get_output_filepaths=get_output_filepaths_interaction,
+        convert=convert,
+        cmd="augment-pheno",
+        phenos=interaction_phenos,
     )
 
 
@@ -50,14 +68,17 @@ def get_input_filepaths(pheno: dict) -> List[str]:
         get_filepath("sites"),
     ]
 
-
 def get_output_filepaths(pheno: dict) -> List[str]:
     return [
         get_pheno_filepath("pheno_gz", pheno["phenocode"], must_exist=False),
         get_pheno_filepath("pheno_gz_tbi", pheno["phenocode"], must_exist=False),
-        # add interaction directory here? why or why not?
     ]
-
+    
+def get_output_filepaths_interaction(pheno : dict) -> List[str]:
+    return [
+        get_pheno_filepath("interaction", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath("interaction_tbi", pheno["phenocode"], must_exist=False),  
+    ]
 
 def convert(pheno: Dict[str, Any], ignore=None) -> None:
     parsed_filepath = get_pheno_filepath("parsed", pheno["phenocode"])
