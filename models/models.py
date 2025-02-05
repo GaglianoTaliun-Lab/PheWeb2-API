@@ -152,12 +152,16 @@ class Pheno:
 
 
 class Variant:
-    def __init__(self, data: list = None):
+    def __init__(self, stratifications: list = None, categories: list = None):
         self.variants = {}
-        self.stratifications = data
+        self.stratifications = stratifications
+        self.categories = categories
 
     def get_stratifications(self):
         return self.stratifications
+    
+    def get_categories(self):
+        return self.categories
 
     def get_variant(self, variant_code, stratification):
         reader = PhewasMatrixReader(variant_code, stratification)
@@ -220,14 +224,15 @@ def create_variant() -> Variant:
         # TODO: logger instead of print?
         print(e)
         return None
+    
+    stratifications = set()
+    categories = set()
+    for pheno in data:
+        if "stratification" in pheno:
+            stratifications.add(".".join(pheno["stratification"].values()))
+        if "category" in pheno:
+            categories.add(pheno['category'])
+            
+    stratifications, categories = list(stratifications), list(categories)
 
-    stratifications: list = list(
-        set(
-            [
-                ".".join(pheno["stratification"].values())
-                for pheno in data
-                if "stratification" in pheno
-            ]
-        )
-    )
-    return Variant(stratifications)
+    return Variant(stratifications, categories)

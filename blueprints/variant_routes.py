@@ -48,3 +48,22 @@ class StratificationList(Resource):
         return {
             "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."
         }, 404
+        
+        
+@api.route("/category_list")
+class CategoryList(Resource):
+    def get(self):
+        """
+        Get all categories within the data for the PheWAS plot.
+        """
+        if "variant" not in g:
+            g.variant = create_variant()
+
+        cat_list = g.variant.get_categories()
+
+        if cat_list:
+            return cat_list, 200
+
+        return {
+            "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."
+        }, 404
