@@ -37,9 +37,10 @@ class Genes:
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
-            os.path.join(
-                current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
-            )
+            "/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
+            # os.path.join(
+            #     current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
+            # )
         )
         connection.row_factory = sqlite3.Row  # each row as dictionary
         return connection

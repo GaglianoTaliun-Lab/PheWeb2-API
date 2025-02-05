@@ -183,10 +183,13 @@ def get_gene_tuples() -> ty.Iterator[ty.Tuple[str, int, int, str]]:
         yield (chrom, start, end, genename)
 
 
-def get_padded_gene_tuples() -> ty.Iterator[ty.Tuple[str, int, int, str]]:
+def get_padded_gene_tuples() -> ty.Iterator[ty.Tuple[str, int, int, str, int, int]]:
     for chrom, start, end, genename, ensg in get_gene_tuples_with_ensg():
+        # HX: here we want to keep the true range of a gene for further calculation
+        #     true range at the end to make sure they are not used for checking range
+        true_start, true_end = start, end
         start, end = pad_gene(start, end)
-        yield (chrom, start, end, genename)
+        yield (chrom, start, end, genename, true_start, true_end)
 
 
 def get_phenocode_with_stratifications(pheno: dict) -> str:
