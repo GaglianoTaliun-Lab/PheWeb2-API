@@ -8,7 +8,7 @@ import json
 
 
 class PhewasMatrixReader:
-    def __init__(self, variant_code, stratification):
+    def __init__(self, variant_code, stratification, all_phenos : dict):
         parts = variant_code.split("-")
         if len(parts) != 4:
             raise ValueError("variant_code should be 'chr-pos-ref-alt'")
@@ -29,6 +29,7 @@ class PhewasMatrixReader:
         )
         self.phenotype_data_with_index = {}
         self.get_phenotypes_data()
+        self.all_phenos = all_phenos
 
     def get_phenotypes_data(self):
         try:
@@ -119,7 +120,7 @@ class PhewasMatrixReader:
                             pheno_basic_info = pheno_list[0]
                         else:
                             pheno_basic_info = None
-                        pheno_data = {
+                        pheno_data = { #TODO : make this flexible for other stratification options?
                             "phenocode": phenocode_parts[0],
                             "stratification": {
                                 "ancestry": phenocode_parts[1]
@@ -145,12 +146,34 @@ class PhewasMatrixReader:
                             if pheno_basic_info is not None
                             else None,
                         }
+                        subset_pheno = {'phenocode':pheno_data['phenocode'],
+                                        'category' : pheno_data['category'], 
+                                        'phenostring':pheno_data['phenostring']}
+                        
+                        if subset_pheno in self.all_phenos:
+                            self.all_phenos.remove(subset_pheno)
                         for field, idx in fields.items():
                             try:
                                 pheno_data[field] = float(row_data[idx])
                             except ValueError:
                                 pheno_data[field] = row_data[idx]
                         self.data["phenos"].append(pheno_data)
+
+                    for unseen_pheno in self.all_phenos:
+                        self.data['phenos'].append({
+                            "phenocode": unseen_pheno['phenocode'],
+                            "stratification": self.data['phenos'][0]['stratification'],
+                            "category": unseen_pheno['category'],
+                            "phenostring": unseen_pheno['phenostring'],
+                            "num_samples": 0,
+                            "num_controls": '',
+                            "num_cases": '',
+                            "test" : '',
+                            "pval" : 1,
+                            "beta" : '',
+                            "sebeta" : '',
+                            "af" : None,
+                        })
                     return self.data
 
         return None
