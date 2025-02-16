@@ -17,6 +17,7 @@ class PhewasMatrixReader:
             "pos": int(parts[1]),
             "ref": parts[2],
             "alt": parts[3],
+            "rsids" : [],
             "phenos": [],
         }
         tsvpath = f"matrix.{stratification}.tsv.gz"
@@ -97,6 +98,8 @@ class PhewasMatrixReader:
                 pos = int(row_data[self._colidxs["pos"]])
                 ref = row_data[self._colidxs["ref"]]
                 alt = row_data[self._colidxs["alt"]]
+                
+                self.data['rsids'] = row_data[self._colidxs["rsids"]]
 
                 if (
                     chrom == self.data["chrom"]
@@ -169,7 +172,7 @@ class PhewasMatrixReader:
                             "num_controls": '',
                             "num_cases": '',
                             "test" : '',
-                            "pval" : 1,
+                            "pval" : -1,
                             "beta" : '',
                             "sebeta" : '',
                             "af" : None,
