@@ -18,7 +18,7 @@ from typing import Dict, Any, List, Iterator
 
 def get_hits(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
     if pheno["interaction"] is not None:
-        pheno["phenocode"] += ".inter-" + pheno["interaction"]
+        pheno["phenocode"] += ".interaction-" + pheno["interaction"]
     if conf.stratified():
         pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
 

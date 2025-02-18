@@ -37,9 +37,10 @@ class Genes:
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
-            os.path.join(
-                current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
-            )
+            "/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
+            # os.path.join(
+            #     current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
+            # )
         )
         connection.row_factory = sqlite3.Row  # each row as dictionary
         return connection
@@ -121,12 +122,14 @@ class Pheno:
         return response
 
     def get_sumstats(self, phenocode, filtering_options, suffix=None):
-            
+        
+        
         #TODO:  here filter for stratified or not, then pass the wanted directory
         dir = current_app.config
 
         download_function = getDownloadFunction(dir, phenocode, filtering_options, suffix)
- 
+
+        
         return download_function
 
     def get_region(self, phenocode, stratification, region):
@@ -150,12 +153,16 @@ class Pheno:
 
 
 class Variant:
-    def __init__(self, data: list = None):
+    def __init__(self, stratifications: list = None, categories: list = None):
         self.variants = {}
-        self.stratifications = data
+        self.stratifications = stratifications
+        self.categories = categories
 
     def get_stratifications(self):
         return self.stratifications
+    
+    def get_categories(self):
+        return self.categories
 
     def get_variant(self, variant_code, stratification):
         reader = PhewasMatrixReader(variant_code, stratification)
@@ -218,14 +225,15 @@ def create_variant() -> Variant:
         # TODO: logger instead of print?
         print(e)
         return None
+    
+    stratifications = set()
+    categories = set()
+    for pheno in data:
+        if "stratification" in pheno:
+            stratifications.add(".".join(pheno["stratification"].values()))
+        if "category" in pheno:
+            categories.add(pheno['category'])
+            
+    stratifications, categories = list(stratifications), list(categories)
 
-    stratifications: list = list(
-        set(
-            [
-                ".".join(pheno["stratification"].values())
-                for pheno in data
-                if "stratification" in pheno
-            ]
-        )
-    )
-    return Variant(stratifications)
+    return Variant(stratifications, categories)

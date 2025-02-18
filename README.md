@@ -6,7 +6,7 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python app.py
+pheweb-run
 ```
 
 get data through http://localhost:9099/ui/PATH/TO/ROUTES/

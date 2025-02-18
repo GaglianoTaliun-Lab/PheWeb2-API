@@ -416,6 +416,7 @@ class PerPhenoParallelizer(Parallelizer):
     def should_process_pheno(self, pheno, get_input_filepaths, get_output_filepaths):
         input_filepaths = get_input_filepaths(pheno)
         output_filepaths = get_output_filepaths(pheno)
+        
         if isinstance(input_filepaths, str):
             input_filepaths = [input_filepaths]
         if isinstance(output_filepaths, str):
@@ -428,6 +429,16 @@ class PerPhenoParallelizer(Parallelizer):
                         " or ".join(output_filepaths), fp
                     )
                 )
+                
+        # print(f"""
+        #       DEBUG : should process pheno? (should return false)
+        #       1 : {any(not os.path.exists(fp) for fp in output_filepaths)}
+        #       2 : {max(map(mtime, input_filepaths)) > min(map(mtime, output_filepaths))}
+              
+        #       input_filepaths : {input_filepaths}
+        #       output_filepaths : {output_filepaths}
+        #       """, flush = True)
+    
         return any(not os.path.exists(fp) for fp in output_filepaths) or max(
             map(mtime, input_filepaths)
         ) > min(map(mtime, output_filepaths))

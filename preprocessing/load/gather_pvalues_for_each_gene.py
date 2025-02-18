@@ -17,6 +17,7 @@ import functools
 from pathlib import Path
 from intervaltree import IntervalTree, Interval
 from typing import List, Any, Dict, Tuple
+import copy
 
 
 def run(argv: List[str]) -> None:
@@ -28,9 +29,6 @@ def run(argv: List[str]) -> None:
     # Check whether we're already up-to-date.
     out_filepath = Path(get_filepath("best-phenos-by-gene-sqlite3", must_exist=False))
 
-    # TODO: if stratified, perform all functions below in a for loop
-
-    # Do NOT add interaction results to the matrix.
     if conf.stratified():
         matrix_filepaths = []
         stratification_paths = set(get_stratification_paths(get_phenolist()))
@@ -46,29 +44,14 @@ def run(argv: List[str]) -> None:
 
     out_tmp_filepath = Path(get_tmp_path(out_filepath))
 
-    for matrix_filepath in matrix_filepaths:
+    best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
+    for i, matrix_filepath in enumerate(matrix_filepaths):
         if (
             out_filepath.exists()
             and matrix_filepath.stat().st_mtime < out_filepath.stat().st_mtime
         ):
             print("{} is up-to-date!".format(str(out_filepath)))
-            return
-
-        # Import data from a previous version of pheweb if it's around.
-        old_filepath = Path(
-            get_filepath("best-phenos-by-gene-old-json", must_exist=False)
-        )
-        if (
-            old_filepath.exists()
-            and matrix_filepath.stat().st_mtime < old_filepath.stat().st_mtime
-        ):
-            print(
-                "Migrating old {} to new {}".format(
-                    str(old_filepath), str(out_filepath)
-                )
-            )
-            with open(old_filepath) as f:
-                data = json.load(f)
+            # return
 
         else:
             regions_on_chrom = get_regions_on_chrom()
@@ -83,32 +66,34 @@ def run(argv: List[str]) -> None:
                 cmd="gather-pvalues-for-each-gene",
                 matrix_filepath=matrix_filepath,
             )
-            best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
+            # best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
             for task_result in task_results:
                 assert task_result["type"] == "result"
                 partial_best_phenos_for_gene = task_result["value"]
                 for genename, best_phenos in partial_best_phenos_for_gene.items():
-                    assert genename not in best_phenos_for_gene
-                    best_phenos_for_gene[genename] = best_phenos
-            data = best_phenos_for_gene
-
-        out_tmp_filepath = Path(get_tmp_path(out_filepath))
-        db = sqlite3.connect(str(out_tmp_filepath))
-        with db:
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS best_phenos_for_each_gene (gene TEXT PRIMARY KEY, json TEXT)"
-            )
-            db.executemany(
-                "INSERT INTO best_phenos_for_each_gene (gene, json) VALUES (?,?)",
-                ((k, json.dumps(v)) for k, v in data.items()),
-            )
-        out_tmp_filepath.replace(out_filepath)
+                    # assert genename not in best_phenos_for_gene
+                    if genename in best_phenos_for_gene:
+                        best_phenos_for_gene[genename].extend(best_phenos)
+                    else:
+                        best_phenos_for_gene[genename] = best_phenos
+    data = best_phenos_for_gene
+    out_tmp_filepath = Path(get_tmp_path(out_filepath))
+    db = sqlite3.connect(str(out_tmp_filepath))
+    with db:
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS best_phenos_for_each_gene (gene TEXT PRIMARY KEY, json TEXT)"
+        )
+        db.executemany(
+            "INSERT INTO best_phenos_for_each_gene (gene, json) VALUES (?,?)",
+            ((k, json.dumps(v)) for k, v in data.items()),
+        )
+    out_tmp_filepath.replace(out_filepath)
     print("Done making best-pheno-for-each-gene at {}".format(str(out_filepath)))
 
 
 def get_regions_on_chrom() -> Dict[str, List[Tuple[int, int]]]:
     gene_ranges_on_chrom: Dict[str, List[Tuple[int, int]]] = {}
-    for chrom, start, end, _ in get_padded_gene_tuples():
+    for chrom, start, end, _, _, _ in get_padded_gene_tuples():
         gene_ranges_on_chrom.setdefault(chrom, []).append((start, end))
     return {
         chrom: merged_intervals(gene_ranges)
@@ -166,20 +151,30 @@ def get_region_info(
     # { ('<phenocode>', '<genename>'): {'ac': 35, ... all per_pheno and per_assoc fields} }
 
     for variant in matrix_reader.get_region(chrom, start, end + 1):
-        genenames: List[str] = [
-            iv.data for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
+        # genenames: List[str] = [
+        #     iv.data for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
+        # ]
+        genenames_and_range = [
+            # HX
+            # tree: start, end, (genename, true_start, true_end)
+            # last tree elements are data
+            (iv.data[0], iv.data[1], iv.data[2]) for iv in tree_for_chrom[variant["chrom"]].at(variant["pos"])
         ]
-
         for phenocode, pheno in variant["phenos"].items():
             assert isinstance(pheno["pval"], float)
-            for genename in genenames:
+            for genename, true_start, true_end in genenames_and_range:
                 pheno_gene_pair = (phenocode, genename)
                 if (
                     pheno_gene_pair not in best_assoc_for_pheno_gene_pair
-                    or pheno["pval"]
-                    < best_assoc_for_pheno_gene_pair[pheno_gene_pair]["pval"]
+                    or pheno["pval"] < best_assoc_for_pheno_gene_pair[pheno_gene_pair]["pval"]
                 ):
-                    best_assoc_for_pheno_gene_pair[pheno_gene_pair] = pheno
+                    # HX: add info of whether variant is in gene range and how far variant is from a gene
+                    pheno_copy = copy.deepcopy(pheno)
+                    relative_distance_to_gene = variant["pos"] - true_start
+                    is_in_real_range = true_start <= variant["pos"] <= true_end
+                    pheno_copy["distance_to_true_start"] = relative_distance_to_gene
+                    pheno_copy["is_in_real_range"] = is_in_real_range
+                    best_assoc_for_pheno_gene_pair[pheno_gene_pair] = pheno_copy
 
     phenos_in_gene: Dict[str, List[Dict[str, Any]]] = {}
     for (phenocode, genename), assoc in best_assoc_for_pheno_gene_pair.items():
@@ -193,10 +188,11 @@ def get_region_info(
 @functools.lru_cache(None)
 def get_gene_intervaltree_for_chrom() -> Dict[str, IntervalTree]:
     tree_for_chrom = {}
-    for chrom, start, end, genename in get_padded_gene_tuples():
+    for chrom, start, end, genename, true_start, true_end in get_padded_gene_tuples():
         if chrom not in tree_for_chrom:
             tree_for_chrom[chrom] = IntervalTree()
-        tree_for_chrom[chrom].add(Interval(start, end, genename))
+        # Interval from intervaltree can only take 3 args
+        tree_for_chrom[chrom].add(Interval(start, end, (genename, true_start, true_end)))
     return tree_for_chrom
 
 
@@ -205,15 +201,15 @@ def order_and_truncate_phenos(phenos: List[Dict[str, Any]]) -> List[Dict[str, An
     #  - Always show all significant phenotypes (with pvalue < 5e-8).
     #  - Always show the three strongest phenotypes (even if none are significant).
     #  - Look at the p-values of the 4th to 10th strongest phenotypes to decide how many of them to show.
-    phenos.sort(key=lambda a: a["pval"])
-    biggest_idx_to_include = 2
-    for idx in range(biggest_idx_to_include, len(phenos)):
-        if phenos[idx]["pval"] < 5e-8:
-            biggest_idx_to_include = idx
-        elif idx < 10 and phenos[idx]["pval"] < 10 ** (
-            -4 - idx // 2
-        ):  # formula is arbitrary
-            biggest_idx_to_include = idx
-        else:
-            break
-    return phenos[: biggest_idx_to_include + 1]
+    phenos.sort(key=lambda a: a["pval"]) # HX: we get all the phenos instead of the top 3
+    # biggest_idx_to_include = 2 
+    # for idx in range(biggest_idx_to_include, len(phenos)):
+    #     if phenos[idx]["pval"] < 5e-8:
+    #         biggest_idx_to_include = idx
+    #     elif idx < 10 and phenos[idx]["pval"] < 10 ** (
+    #         -4 - idx // 2
+    #     ):  # formula is arbitrary
+    #         biggest_idx_to_include = idx
+    #     else:
+    #         break
+    return phenos
