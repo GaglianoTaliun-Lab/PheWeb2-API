@@ -2,7 +2,7 @@ from flask import Blueprint, g
 from models import create_variant
 from flask_restx import Namespace, Resource
 
-bp = Blueprint("variant_routes", __name__)
+#bp = Blueprint("variant_routes", __name__)
 api = Namespace("variant", description="Routes related to variants")
 
 
@@ -44,6 +44,25 @@ class StratificationList(Resource):
 
         if strat_list:
             return strat_list, 200
+
+        return {
+            "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."
+        }, 404
+        
+        
+@api.route("/category_list")
+class CategoryList(Resource):
+    def get(self):
+        """
+        Get all categories within the data for the PheWAS plot.
+        """
+        if "variant" not in g:
+            g.variant = create_variant()
+
+        cat_list = g.variant.get_categories()
+
+        if cat_list:
+            return cat_list, 200
 
         return {
             "message": "Could not fetch the list of stratifications within data. Please check phenotypes.json file."

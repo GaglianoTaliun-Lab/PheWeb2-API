@@ -66,10 +66,12 @@ setup(
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
-    packages=["preprocessing"],
+    packages=["preprocessing", "blueprints", "models"],
+    py_modules=["app", "config"],
     entry_points={
         "console_scripts": [
             "pheweb=preprocessing.command_line:main",
+            "pheweb-run=app:main",
             #'detect-ref=pheweb.load.detect_ref:main',
         ]
     },

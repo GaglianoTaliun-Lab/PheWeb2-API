@@ -7,13 +7,28 @@ def main(args : dict) -> None:
     
     folder = args.folder
     
+    # read in categories if file exists
+    if (args.categories):
+        cats = pl.read_csv(
+            args.categories,
+            schema_overrides={
+                "phenocode" : pl.Utf8,
+                "category" : pl.Utf8
+            }
+        )
+        
+    if (args.labels):
+        labels = pl.read_csv(
+            args.labels,
+            quote_char='"',
+            encoding="utf8-lossy"
+        )
+        
     phenocode_list = []
-    phenostring_list = [] # we can use the phenostrings from old GWAS
     file_list = []
     num_samples_list = []
     num_cases_list = []
     num_controls_list = []
-    category_list = [] #TODO : cross reference with given category list (or use from old GWAS)
     interaction_list = []
     sex_list = []
     ancestry_list = []
@@ -74,8 +89,6 @@ def main(args : dict) -> None:
     for root, _, files in tqdm(os.walk(step2_folder), desc= "Processing step 2 files"):
         for file in files:
             phenocode_list.append(file.split('.')[0])
-            phenostring_list.append(None)
-            category_list.append(None)
             file_list.append(os.path.join(root, file))
             
             ancestry_list.append(args.ancestry)
@@ -84,18 +97,15 @@ def main(args : dict) -> None:
             
             if args.interaction:
                 phenocode_list.append(file.split('.')[0])
-                phenostring_list.append(None)
-                category_list.append(None)
                 file_list.append(os.path.join(root, file))
                 
                 ancestry_list.append(args.ancestry)
                 interaction_list.append(args.interaction)
                 sex_list.append(args.sex)
-            
-    return pl.DataFrame(
+                
+    df = pl.DataFrame(
         {
             "phenocode" : phenocode_list,
-            "phenostring" : phenostring_list,
             "assoc_files" : file_list,
             "num_samples" : num_samples_list,
             "num_cases" : num_cases_list,
@@ -104,13 +114,23 @@ def main(args : dict) -> None:
             "stratification.sex" : sex_list,
             "stratification.ancestry" : ancestry_list,
         }
-    )
+    ) 
+    
+    if (args.categories):
+        df = df.join(cats, on="phenocode", how="left")
+        
+    if (args.labels):
+        df = df.join(labels, on="phenocode", how="left")
+        
+    return df
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-f', '--folder', type = str, required = True, help="Name of the top level results folder for both steps.\n* E.i. should only contain genomic_predictions/ and GWAS/")
     parser.add_argument('-c', '--csv', type = str, default=None, required = False, help="Name of pheno-list.csv where results will be appended to. Default: will create one.")
+    parser.add_argument('-l', '--labels', type=str, default=None, required=False, help="File containing all labels and phenocodes as seperate columns.")
+    parser.add_argument('-ct','--categories', type=str, default=None, required = False, help="A file containing categories for given traits.")
     parser.add_argument('-b', '--binary', action='store_true', help="Are the files binary? No flag if continuous")
     parser.add_argument('-s', '--sex', type = str, default=None, required = False, help="Sex stratification (e.g. male). Default = 'both'")
     parser.add_argument('-a', '--ancestry', type = str, default=None, required = False, help="Ancestry stratification (e.g. european). Default = 'european'")

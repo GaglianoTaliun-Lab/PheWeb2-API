@@ -53,22 +53,6 @@ def run(argv: List[str]) -> None:
             print("{} is up-to-date!".format(str(out_filepath)))
             # return
 
-        # Import data from a previous version of pheweb if it's around.
-        old_filepath = Path(
-            get_filepath("best-phenos-by-gene-old-json", must_exist=False)
-        )
-        if (
-            old_filepath.exists()
-            and matrix_filepath.stat().st_mtime < old_filepath.stat().st_mtime
-        ):
-            print(
-                "Migrating old {} to new {}".format(
-                    str(old_filepath), str(out_filepath)
-                )
-            )
-            with open(old_filepath) as f:
-                data = json.load(f)
-
         else:
             regions_on_chrom = get_regions_on_chrom()
             regions: List[Tuple[str, int, int]] = [

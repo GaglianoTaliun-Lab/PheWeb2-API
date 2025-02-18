@@ -25,8 +25,12 @@ api.add_namespace(phenotype_routes.api, path="/phenotypes")
 api.add_namespace(gene_routes.api, path="/gene")
 api.add_namespace(variant_routes.api, path="/variant")
 
-if __name__ == "__main__":
+def main():
     port = int(os.environ.get("PORT", 9099))
     app.run(
         host="127.0.0.1", port=port, debug=True
     )  # Remove debug=True when in production.
+
+if __name__ == "__main__":
+    main()
+
