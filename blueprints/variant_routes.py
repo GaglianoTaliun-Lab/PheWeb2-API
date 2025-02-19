@@ -22,7 +22,7 @@ class Variant(Resource):
             g.variant = create_variant()
 
         variant_phewas = g.variant.get_variant(variant_code, stratification)
-
+        
         if variant_phewas:
             return variant_phewas
         else:
