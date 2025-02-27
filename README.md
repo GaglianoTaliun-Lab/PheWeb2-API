@@ -5,6 +5,13 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 Python 3.12+ is required (all python package dependencies can be found in the `requirements.txt`)
 Linux-Based Environment
 
+## Installation
+```
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## Preprocessing
 
 ### GWAS Summary Statistics
@@ -88,9 +95,6 @@ please refer the `sample_config.py` for more examples
 
 ## Running Backend Server
 ```
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 pheweb-run
 ```
 
