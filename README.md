@@ -1,5 +1,5 @@
 # PheWeb 2.0 API
-This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) - a new version of the original [PheWeb](https://github.com/statgen/pheweb) tool for interactive querying, visualizing, and sharing summary-level results from GWAS/PheWAS studies. In the PheWeb 2.0, we de-coupled the data model and API from the UI to improve code maintenance and re-usability and allow new features such as on-the-fly GWAS/PheWAS results querying by other external resources and applications.
+This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) - an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) tool for interactive querying, visualizing, and sharing summary-level results from GWAS/PheWAS studies, which offers intuitive and efficient support for stratified results. In PheWeb 2.0, we de-coupled the data model and API from the UI to improve code maintenance and re-usability and allow new features such as on-the-fly GWAS/PheWAS results querying by other external resources and applications. 
 
 ## Dependencies
 Python 3.12+ is required (all python package dependencies can be found in the `requirements.txt`)
@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ### GWAS Summary Statistics
 Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
 
-Specifically, you must have
+Specifically, summary statisitcs must contain:
 
 | column description | name       | allowed values              |
 | ------------------ | ---------- | --------------------------- |
@@ -36,13 +36,13 @@ Any field can be null if it is one of ['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan
 
 If you wish to pre-process interaction results via Regenie output, you need to set 'interaction_aliases' to the value you gave regenie for the interaction testing and remap it to a value of your choice.
 
-See sample_config.py for an example
+See sample_config.py for an example.
 
 ### Pheno-list{.csv, .json}
 
 We highly recommend creating a pheno-list.csv file, then converting to pheno-list.json. 
 
-Here are the required and optional columns in your pheno-list.csv file.
+Here are the required and optional columns for the pheno-list.csv file:
  
 | column description                                  | value         | allowed values                      | required? |
 | --------------------------------------------------- | ------------- | ----------------------------------- | --------- |
@@ -56,8 +56,8 @@ Here are the required and optional columns in your pheno-list.csv file.
 | Variable of Interaction Testing                     | interaction   | string                              | false     |
 | Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
 
-You can see pheno-list-example.csv for an example.
-Then with your 'pheno-list.csv' properly filled out, run:
+Refer to pheno-list-example.csv for an example.
+Then with 'pheno-list.csv', run:
 
 `pheweb phenolist import-phenolist "/path/to/pheno-list.csv"`
 
@@ -90,7 +90,7 @@ BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated_b
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
 ...
 ```
-please refer the `sample_config.py` for more examples
+please refer the `sample_config.py` for more examples.
 
 
 ## Running Backend Server
