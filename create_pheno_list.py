@@ -130,10 +130,10 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--folder', type = str, required = True, help="Name of the top level results folder for both steps.\n* E.i. should only contain genomic_predictions/ and GWAS/")
     parser.add_argument('-c', '--csv', type = str, default=None, required = False, help="Name of pheno-list.csv where results will be appended to. Default: will create one.")
     parser.add_argument('-l', '--labels', type=str, default=None, required=False, help="File containing all labels and phenocodes as seperate columns.")
-    parser.add_argument('-ct','--categories', type=str, default=None, required = False, help="A file containing categories for given traits.")
+    parser.add_argument('-ct', '--categories', type=str, default=None, required = False, help="A file containing categories for given traits.")
     parser.add_argument('-b', '--binary', action='store_true', help="Are the files binary? No flag if continuous")
-    parser.add_argument('-s', '--sex', type = str, default=None, required = False, help="Sex stratification (e.g. male). Default = 'both'")
-    parser.add_argument('-a', '--ancestry', type = str, default=None, required = False, help="Ancestry stratification (e.g. european). Default = 'european'")
+    parser.add_argument('-s', '--sex', type = str, default='combined', required = False, help="Sex stratification (e.g. male). Default = 'combined'")
+    parser.add_argument('-a', '--ancestry', type = str, default='european', required = False, help="Ancestry stratification (e.g. european). Default = 'european'")
     parser.add_argument('-i', '--interaction', type = str, default=None, required = False, help="Interaction variable (e.g. BSEX). Default = '' ")
     parser.add_argument('-o', '--output', type=str, default="", required=False, help="Output folder. Default is current folder.")
 
@@ -141,5 +141,12 @@ if __name__ == "__main__":
     
     df = main(args)
     
-    # todo - check if we need to overrite the csv
+    #TODO - check if we need to overrite the csv
     df.write_csv(os.path.join(args.output, "pheno-list.csv"), separator=",")
+    
+    
+# Example running: 
+
+"""
+python create_pheno_list.py -f /home/justb11/scratch/sex-stratified-pheweb/Regenie/results/continuous/both_2 -l phenocode_labels.csv -ct pheno_categories.csv -i BSEX
+"""
