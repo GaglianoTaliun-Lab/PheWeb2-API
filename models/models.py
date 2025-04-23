@@ -145,7 +145,6 @@ class Pheno:
 
     def get_gwas_missing(self, gwas_missing_data):
         # TODO: process data using SNPFetcher
-        print("get_gwas_missing triggered")
         fetcher = SNPFetcher(current_app.config["PHENO_GZ_DIR"])
         response = fetcher.process_keys(gwas_missing_data)
 
@@ -153,10 +152,11 @@ class Pheno:
 
 
 class Variant:
-    def __init__(self, stratifications: list = None, categories: list = None):
+    def __init__(self, stratifications: list = None, categories: list = None, all_phenos : list = None):
         self.variants = {}
         self.stratifications = stratifications
         self.categories = categories
+        self.all_phenos = all_phenos
 
     def get_stratifications(self):
         return self.stratifications
@@ -165,7 +165,7 @@ class Variant:
         return self.categories
 
     def get_variant(self, variant_code, stratification):
-        reader = PhewasMatrixReader(variant_code, stratification)
+        reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos)
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
@@ -228,12 +228,21 @@ def create_variant() -> Variant:
     
     stratifications = set()
     categories = set()
+    all_phenos = []
     for pheno in data:
         if "stratification" in pheno:
             stratifications.add(".".join(pheno["stratification"].values()))
         if "category" in pheno:
             categories.add(pheno['category'])
+        pheno_subset = {
+            'phenocode' : pheno['phenocode'],
+            'category' : pheno['category'],
+            'phenostring' : pheno['phenostring']
+            }
+        
+        if pheno_subset not in all_phenos:
+            all_phenos.append(pheno_subset)        
             
-    stratifications, categories = list(stratifications), list(categories)
+    stratifications, categories, all_phenos = list(stratifications), list(categories), list(all_phenos)
 
-    return Variant(stratifications, categories)
+    return Variant(stratifications, categories, all_phenos)
