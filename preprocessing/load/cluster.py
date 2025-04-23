@@ -59,6 +59,7 @@ def run(argv: List[str]) -> None:
         "--step", choices=["parse", "augment-phenos", "manhattan", "qq"], required=True
     )
     parser.add_argument("--N_per_job", default=5)
+    parser.add_argument("--account", help="Slurm account to use")
     args = parser.parse_args(argv)
 
     def should_process(pheno: Dict[str, Any]) -> bool:
@@ -94,14 +95,21 @@ def run(argv: List[str]) -> None:
     if not idxs:
         print("All phenos are up-to-date!")
         exit(0)
-
+    
     jobs = chunked(idxs, args.N_per_job)
     batch_filepath = get_dated_tmp_path("{}-{}".format(args.engine, args.step)) + ".sh"
     tmp_path = get_tmp_path(args.step)
     mkdir_p(tmp_path)
+    # specify the account for slurm
+    slurm_header = header_template[args.engine]
+    if args.engine == "slurm" and args.account:  
+        slurm_header = slurm_header.replace(
+            "#!/bin/bash\n",
+            "#!/bin/bash\n#SBATCH --account={}\n".format(args.account)
+        )
     with open(batch_filepath, "w") as f:
         f.write(
-            header_template[args.engine].format(
+            slurm_header.format(
                 n_jobs_m1=len(jobs) - 1, n_jobs=len(jobs), tmp_path=tmp_path
             )
         )
