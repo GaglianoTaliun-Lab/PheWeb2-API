@@ -274,7 +274,7 @@ class MissingGWAS(Resource):
 
             # print(results)
 
-            # # Debugging prints to console
+            # Debugging prints to console
             # print("input")
             # for key, snp_list in data.items():
             #     print(f"{key}: {len(snp_list)} elements")

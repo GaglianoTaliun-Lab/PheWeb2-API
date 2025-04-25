@@ -31,7 +31,7 @@ mccabe==0.7.0+computecanada
 numpy==1.26.4+computecanada
 ordered_set==4.1.0+computecanada
 packaging==24.2+computecanada
--e git+https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API@8102f20ff5d03c8724410d06583bdaf00388aa1a#egg=PheWeb
+-e git+https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API@65c898b9ef879f8bb18f305983375d5679a92630#egg=PheWeb
 platformdirs==4.3.6+computecanada
 pluggy==1.5.0+computecanada
 polars==1.0.0+computecanada
