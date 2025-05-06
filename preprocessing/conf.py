@@ -228,6 +228,9 @@ def get_num_procs(cmd: Optional[str] = None) -> int:
 def get_assoc_min_maf() -> float:
     return _get_config_float("assoc_min_maf", 0)
 
+def get_min_imp_quality() -> float:
+    return _get_config_float("MIN_IMP_QUALITY", 0.3)
+
 
 def get_field_aliases() -> Dict[str, str]:
     return overrides.get("field_aliases", parse_utils.default_field_aliases)

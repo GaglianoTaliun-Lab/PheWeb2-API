@@ -1,4 +1,4 @@
-from ..utils import get_phenolist
+from ..utils import get_phenolist, get_phenocode_with_stratifications
 from .. import conf
 from ..file_utils import get_tmp_path, get_dated_tmp_path
 from .load_utils import PerPhenoParallelizer
@@ -58,11 +58,12 @@ def run(argv: List[str]) -> None:
     parser.add_argument(
         "--step", choices=["parse", "augment-phenos", "manhattan", "qq"], required=True
     )
-    parser.add_argument("--N_per_job", default=5)
+    parser.add_argument("--N_per_job", default=3) # default is 3 to avoid IO restictions
     parser.add_argument("--account", help="Slurm account to use")
     args = parser.parse_args(argv)
 
     def should_process(pheno: Dict[str, Any]) -> bool:
+        # print(pheno)
         if args.step == "parse":
             from . import parse_input_files
 
@@ -90,8 +91,14 @@ def run(argv: List[str]) -> None:
             get_input_filepaths=get_input_filepaths,
             get_output_filepaths=get_output_filepaths,
         )
-
-    idxs = [i for i, pheno in enumerate(get_phenolist()) if should_process(pheno)]
+    phenolist = get_phenolist()
+    for pheno in phenolist:
+        if pheno["interaction"] is not None:
+            pheno["phenocode"] += ".interaction-" + pheno["interaction"]
+        if conf.stratified():
+            pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+            
+    idxs = [i for i, pheno in enumerate(phenolist) if should_process(pheno)]
     if not idxs:
         print("All phenos are up-to-date!")
         exit(0)

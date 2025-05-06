@@ -77,6 +77,7 @@ class PhenoReader:
         # also sets `self._fields`
 
         assoc_files = [{"filepath": filepath} for filepath in filepaths]
+        # print(assoc_files)
 
         for assoc_file in assoc_files:
             ar = AssocFileReader(assoc_file["filepath"], self._pheno)
@@ -193,6 +194,9 @@ class AssocFileReader:
                     variant = self._parse_variant(values, colnames, colidx_for_field)
 
                     test_value = variant.get("test", "")
+                    
+                    # print(f"variant: {variant}")
+                    # print(f"{self._interaction=} , {pre_mapped_interaction=}, {test_value=}")
 
                     if self._interaction:
                         if (
@@ -210,6 +214,11 @@ class AssocFileReader:
                     # Retrieve and check minor allele frequency (MAF) early to avoid unnecessary processing
                     maf = get_maf(variant, self._pheno)
                     if maf is not None and maf < minimum_maf:
+                        continue
+
+                    # Retrieve and check imputation quality
+                    imp_quality = variant.get("imp_quality")
+                    if imp_quality is not None and imp_quality < conf.get_min_imp_quality():
                         continue
 
                     # Parse marker ID only if necessary

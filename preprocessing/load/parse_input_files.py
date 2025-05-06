@@ -13,6 +13,7 @@ from .load_utils import parallelize_per_pheno, indent, get_phenos_subset
 import itertools
 import argparse
 from typing import List, Dict, Any, Iterator
+import uuid
 
 
 def run(argv: List[str]) -> None:
@@ -48,7 +49,11 @@ def run(argv: List[str]) -> None:
         if not value["succeeded"]
     }
     if failed_results:
-        failed_filepath = get_generated_path("tmp", "parse-failures.txt")
+        # failed_filepath = get_generated_path("tmp", f"parse-failures-{}.txt") #TODO: generate a unique filename for each slurm job?
+        run_id = uuid.uuid4().hex[:8]
+        failed_filepath = get_generated_path("tmp", f"parse-failures-{run_id}.txt")
+        print(f"Failed filepath: {failed_filepath}")
+
         write_json(
             filepath=failed_filepath + ".json",
             data=failed_results,
@@ -64,8 +69,9 @@ def run(argv: List[str]) -> None:
 
         succeeded_phenos = [p for p in phenos if p["phenocode"] not in failed_results]
         succeeded_filepath = get_generated_path(
-            "tmp", "pheno-list-successful-only.json"
+            "tmp", f"pheno-list-successful-only-{run_id}.json"
         )
+        print(f"Succeeded-only filepath: {succeeded_filepath}")
         write_json(
             filepath=succeeded_filepath, data=succeeded_phenos, indent=1, sort_keys=True
         )

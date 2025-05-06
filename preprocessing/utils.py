@@ -196,6 +196,7 @@ def get_phenocode_with_stratifications(pheno: dict) -> str:
     phenocode = pheno["phenocode"]
     for stratification in pheno["stratification"]:
         phenocode += "." + pheno["stratification"][stratification]
+    
     return phenocode
 
 

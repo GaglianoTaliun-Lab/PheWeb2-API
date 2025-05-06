@@ -18,3 +18,4 @@ run_process.sh
 *.log
 
 pheno-list*
+test*

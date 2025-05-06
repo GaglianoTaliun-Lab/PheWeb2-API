@@ -100,6 +100,10 @@ def main(args : dict) -> None:
     for root, _, files in tqdm(os.walk(folder), desc= "Processing GWAS results files"):
         for file in files:
             phenotype_name = file.split('.')[0]
+            if args.test:
+                top20_phenocodes = pd.read_csv(args.test, header=None)[0].astype(str).tolist()
+                if phenotype_name not in top20_phenocodes:
+                    continue
             phenocode_list.append(phenotype_name)
             file_list.append(os.path.join(root, file))
 
@@ -164,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--ancestry', type = str, default='european', required = False, help="Ancestry stratification (e.g. european). Default = 'european'")
     parser.add_argument('-i', '--interaction', type = str, default=None, required = False, help="Interaction variable (e.g. BSEX). Default = '' ")
     parser.add_argument('-o', '--output', type=str, default="", required=False, help="Output folder. Default is current folder.")
+    parser.add_argument('-t', '--test', type=str, default=None, required=False, help="List of phenotypes that used to generate the top 20 phenotypes for testing")
 
     args = parser.parse_args()
     

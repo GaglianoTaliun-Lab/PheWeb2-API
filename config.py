@@ -20,7 +20,6 @@ MANHATTAN_PEAK_PVAL_THRESHOLD = 1e-6
 MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 
-# CORS_ORIGINS = ['http://localhost:8099']
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 
 hg_build_number = 38
@@ -35,10 +34,15 @@ field_aliases = {
     "ALLELE0": "ref",
     "ALLELE1": "alt",
     "A1FREQ": "af",
+    "INFO": "imp_quality", # rsq of imputation in RENENIE results
     "BETA": "beta",
     "SE": "sebeta",
     "LOG10P": "pval",
     "TEST": "test",
 }
 
-interaction_aliases = {"BSEX": "sex"}
+interaction_aliases = {"sex": "sex"}
+
+# Filtering parameters
+MIN_IMP_QUALITY = 0.3
+
