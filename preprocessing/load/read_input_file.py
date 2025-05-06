@@ -215,6 +215,8 @@ class AssocFileReader:
                             continue
                         
                         mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
+                        print(f"{mac=}")
+                        print(f"{conf.get_interaction_mac_threshold()}")
                         if conf.get_interaction_mac_threshold() is not None and mac < conf.get_interaction_mac_threshold():
                             continue
                         

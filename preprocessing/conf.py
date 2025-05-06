@@ -229,7 +229,7 @@ def get_assoc_min_maf() -> float:
     return _get_config_float("assoc_min_maf", 0)
 
 def get_min_imp_quality() -> float:
-    return _get_config_float("min_imp_quality", 0.3)
+    return _get_config_float("MIN_IMP_QUALITY", 0.3)
 
 def get_field_aliases() -> Dict[str, str]:
     return overrides.get("field_aliases", parse_utils.default_field_aliases)
@@ -361,7 +361,7 @@ def should_show_manhattan_filter_consequence() -> bool:
     return _get_config_bool("show_manhattan_filter_consequence", False)
 
 def get_interaction_mac_threshold() -> int:
-    return _get_config_optional_int("interaction_mac_threshold")
+    return _get_config_optional_int("INTERACTION_MAC_THRESHOLD")
 
 def get_interaction_maf_threshold() -> float:
-    return _get_config_optional_int("interaction_maf_threshold")
+    return _get_config_optional_int("INTERACTION_MAF_THRESHOLD")
