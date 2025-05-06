@@ -135,10 +135,10 @@ class SNPFetcher:
             dict: missing SNP info list, format {stratification: [SNP GWAS info]}
         """
         results = {}
-        print("Processing keys")
+        # print("Processing keys")
 
         for key, snp_list in api_data.items():
-            print(f"Fetching SNPs for {key}")
+            # print(f"Fetching SNPs for {key}")
             try:
                 snp_info = self.fetch_snp_info_with_tbi(key, snp_list)
                 results[key] = snp_info
