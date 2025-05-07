@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=".env")
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+
 BASE_DIR = os.getenv("BASE_DIR")
 
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
@@ -20,7 +22,9 @@ MANHATTAN_PEAK_PVAL_THRESHOLD = 1e-6
 MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+# Filtering parameters
+MIN_IMP_QUALITY = 0.3
+INTERACTION_MAC_THRESHOLD = 160
 
 hg_build_number = 38
 
@@ -34,7 +38,8 @@ field_aliases = {
     "ALLELE0": "ref",
     "ALLELE1": "alt",
     "A1FREQ": "af",
-    "INFO": "imp_quality", # rsq of imputation in RENENIE results
+    "INFO": "imp_quality",
+    "N": "n_samples",
     "BETA": "beta",
     "SE": "sebeta",
     "LOG10P": "pval",
@@ -43,6 +48,5 @@ field_aliases = {
 
 interaction_aliases = {"sex": "sex"}
 
-# Filtering parameters
-MIN_IMP_QUALITY = 0.3
+
 

@@ -77,7 +77,7 @@ class PhenoReader:
         # also sets `self._fields`
 
         assoc_files = [{"filepath": filepath} for filepath in filepaths]
-        # print(assoc_files)
+        #print(assoc_files)
 
         for assoc_file in assoc_files:
             ar = AssocFileReader(assoc_file["filepath"], self._pheno)
@@ -139,7 +139,12 @@ class AssocFileReader:
             ]
 
         interaction_aliases = conf.get_interaction_aliases()
-        pre_mapped_interaction = {v: k for k, v in interaction_aliases.items()}
+        if interaction_aliases is not None:
+            pre_mapped_interaction = {v: k for k, v in interaction_aliases.items()}
+        else:
+            pre_mapped_interaction = {self._interaction : self._interaction}
+            
+        #print(f"{pre_mapped_interaction=}")
 
         with read_maybe_gzip(self.filepath) as f:
             try:
@@ -195,8 +200,8 @@ class AssocFileReader:
 
                     test_value = variant.get("test", "")
                     
-                    # print(f"variant: {variant}")
-                    # print(f"{self._interaction=} , {pre_mapped_interaction=}, {test_value=}")
+                    #print(f"variant: {variant}")
+                    #print(f"{self._interaction=} , {pre_mapped_interaction=}, {test_value=}")
 
                     if self._interaction:
                         if (
@@ -204,6 +209,15 @@ class AssocFileReader:
                             not in test_value
                         ):
                             continue
+                        
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and conf.get_interaction_maf_threshold() and maf < conf.get_interaction_maf_threshold():
+                            continue
+                        
+                        mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
+                        if conf.get_interaction_mac_threshold() is not None and mac < conf.get_interaction_mac_threshold():
+                            continue
+                        
                     elif test_value not in {"ADD", "ADD-CONDTL"}:
                         continue
 
@@ -211,10 +225,11 @@ class AssocFileReader:
                     if not variant.get("pval"):
                         continue
 
-                    # Retrieve and check minor allele frequency (MAF) early to avoid unnecessary processing
-                    maf = get_maf(variant, self._pheno)
-                    if maf is not None and maf < minimum_maf:
-                        continue
+                    # Retrieve and check minor allele frequency (MAF) of non-interaction testing early to avoid unnecessary processing
+                    if not self._interaction:
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and maf < minimum_maf:
+                            continue
 
                     # Retrieve and check imputation quality
                     imp_quality = variant.get("imp_quality")
