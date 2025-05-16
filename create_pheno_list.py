@@ -100,6 +100,9 @@ def main(args : dict) -> None:
     for root, _, files in tqdm(os.walk(folder), desc= "Processing GWAS results files"):
         for file in files:
             phenotype_name = file.split('.')[0]
+            if phenotype_name in {"ADM_DCS_AGE_COM", "AGE_NMBR_COM"}:
+                continue
+            
             if args.test:
                 top20_phenocodes = pd.read_csv(args.test, header=None)[0].astype(str).tolist()
                 if phenotype_name not in top20_phenocodes:

@@ -26,6 +26,9 @@ MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 MIN_IMP_QUALITY = 0.3
 INTERACTION_MAC_THRESHOLD = 160
 
+# Path to the file containing the R2/Imputation Quality values (optional)
+R2_FILE = os.getenv("R2_DIR")
+
 hg_build_number = 38
 
 stratified = True
@@ -38,7 +41,11 @@ field_aliases = {
     "ALLELE0": "ref",
     "ALLELE1": "alt",
     "A1FREQ": "af",
-    "INFO": "imp_quality",
+    # Add this field if you have imputation quality scores in the GWAS results
+    # "INFO": "imp_quality",
+    # Start your custom field (e.g. imp_quality) with "file://" to load from a file (accept pvar or vcf files)
+    # "file://path/file.pvar,R2": "imp_quality",
+    f"file://{R2_FILE},R2": "imp_quality",
     "N": "n_samples",
     "BETA": "beta",
     "SE": "sebeta",

@@ -63,9 +63,15 @@ def set_override(key: str, value: Any) -> None:
                         field_name, alias, list(parse_utils.fields)
                     )
                 )
+        # value = {
+        #     alias.lower(): field_name.lower() for alias, field_name in value.items()
+        # }
         value = {
-            alias.lower(): field_name.lower() for alias, field_name in value.items()
+            (alias if alias.startswith("file://") else alias.lower()):
+            (field_name if alias.startswith("file://") else field_name.lower())
+            for alias, field_name in value.items()
         }
+
         overrides[key] = {**parse_utils.default_field_aliases, **value}
     else:
         overrides[key] = value

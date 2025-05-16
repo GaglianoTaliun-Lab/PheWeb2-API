@@ -7,7 +7,7 @@ from ..file_utils import (
     get_filepath,
     get_pheno_filepath,
 )
-from .read_input_file import PhenoReader
+from .read_input_file import PhenoReader, R2FileReader
 from .load_utils import parallelize_per_pheno, indent, get_phenos_subset
 
 import itertools
@@ -121,7 +121,7 @@ def convert(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
     try:
         # if conf.stratified():
         #     pheno['phenocode'] = get_phenocode_with_stratifications(pheno)
-
+        
         with VariantFileWriter(
             get_pheno_filepath("parsed", pheno["phenocode"], must_exist=False)
         ) as writer:
