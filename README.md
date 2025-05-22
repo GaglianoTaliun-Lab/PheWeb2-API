@@ -73,13 +73,13 @@ in the base directory of PheWeb. (Parent directory of preprocessing/)
 You must have pheno-list.json inside the base directory.
 
 ## Runtime Data
-After pre-processing, you will get a folder called `generated_by_pheweb/`, which contains the data for the API application.
+After pre-processing, you will get a folder called `generated-by-pheweb/`, which contains the data necessary for the API application (if pheweb process ran without error).
 
 Ensure these folders (with data) are present before running the backend / API.
 
 ```
 CLSA_PheWeb_data
-└── generated_by_pheweb
+└── generated-by-pheweb
     ├── manhattan
         ├── ... 
     ├── qq
@@ -91,15 +91,22 @@ CLSA_PheWeb_data
 
 The paths to the runtime data needs to be specified in the config.py
 ```py
-BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated_by_pheweb')
+BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated-by-pheweb')
 
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
 ...
 ```
 please refer the `sample_config.py` for more examples.
 
+Alternatively, BASE_DIR can be defined in an `.env` file, with a definition such as:
+
+`BASE_DIR=/path/to/generated-by-pheweb`
+
 
 ## Running Backend Server
+
+To run the API indefinitely, run the command: 
+
 ```
 pheweb-run
 ```
@@ -107,6 +114,7 @@ pheweb-run
 get data through http://localhost:9099/PATH/TO/ROUTES/
 
 e.g. to view phenotype table data, go to http://localhost:9099/phenotypes
+
 
 ## Documentation
 
