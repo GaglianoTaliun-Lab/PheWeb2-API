@@ -64,12 +64,18 @@ Then with 'pheno-list.csv', run:
 to create `pheno-list.json`.
 
 
-To pre-process all files to properly work with the backend server, run:
+To pre-process all files to properly work with the backend server, run
 
 `pheweb process`
 
+in the base directory of PheWeb. (Parent directory of preprocessing/)
+
+You must have pheno-list.json inside the base directory.
+
 ## Runtime Data
-After pre-processing, these folders (with data) need to be present before running.
+After pre-processing, you will get a folder called `generated_by_pheweb/`, which contains the data for the API application.
+
+Ensure these folders (with data) are present before running the backend / API.
 
 ```
 CLSA_PheWeb_data
