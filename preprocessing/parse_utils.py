@@ -177,6 +177,18 @@ per_assoc_fields: Dict[str, Dict[str, Any]] = {
         "nullable": True,
         "display": "Tstat",
     },
+    "imp_quality": {
+        "type": float,
+        "sigfigs": 2,
+        "nullable": True,
+        "display": "IMP_QUALITY",
+    },
+    "n_samples": {
+        "type": int,
+        "nullable": True,
+        "range": [0, None],
+        "display": "#samples",
+    },
 }
 
 per_pheno_fields: Dict[str, Dict[str, Any]] = {

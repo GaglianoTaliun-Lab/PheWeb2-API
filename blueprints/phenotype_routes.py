@@ -7,14 +7,14 @@ bp = Blueprint("phenotype_routes", __name__)
 api = Namespace("phenotypes", description="Routes related to phenotypes")
 
 
-@api.route("/", doc={"description": "Retrieve the all phenotype descriptions"})
-@api.route(
-    "/phenotypes_list", doc={"description": "Retrieve the all phenotype descriptions"}
-)
 # @api.route( #TODO : remove this for consistency
 #     "/phenotypes_list/<phenocode>",
 #     doc={"description": "Retrieve all phenotype descriptions for specified phenocode"},
 # )
+@api.route("/", doc={"description": "Retrieve the all phenotype descriptions"})
+@api.route(
+    "/phenotypes_list", doc={"description": "Retrieve the all phenotype descriptions"}
+)
 @api.route(
     "/<phenocode>/phenotypes_list",
     doc={"description": "Retrieve all phenotype descriptions for specified phenocode"},
@@ -30,6 +30,7 @@ class PhenotypeList(Resource):
             g.pheno = create_phenotypes_list()
 
         result = g.pheno.get_phenotypes_list(phenocode)
+                
         if result:
             return result
         else:
@@ -274,12 +275,12 @@ class MissingGWAS(Resource):
             # print(results)
 
             # Debugging prints to console
-            print("input")
-            for key, snp_list in data.items():
-                print(f"{key}: {len(snp_list)} elements")
-            print("\noutput")
-            for key, snp_list in results.items():
-                print(f"{key}: {len(snp_list)} elements")
+            # print("input")
+            # for key, snp_list in data.items():
+            #     print(f"{key}: {len(snp_list)} elements")
+            # print("\noutput")
+            # for key, snp_list in results.items():
+            #     print(f"{key}: {len(snp_list)} elements")
 
             processed_data = {
                 "message": "success",

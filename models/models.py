@@ -37,10 +37,9 @@ class Genes:
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
-            "/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
-            # os.path.join(
-            #     current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
-            # )
+            os.path.join(
+                current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
+            )
         )
         connection.row_factory = sqlite3.Row  # each row as dictionary
         return connection
@@ -145,7 +144,6 @@ class Pheno:
 
     def get_gwas_missing(self, gwas_missing_data):
         # TODO: process data using SNPFetcher
-        print("get_gwas_missing triggered")
         fetcher = SNPFetcher(current_app.config["PHENO_GZ_DIR"])
         response = fetcher.process_keys(gwas_missing_data)
 
@@ -153,10 +151,12 @@ class Pheno:
 
 
 class Variant:
-    def __init__(self, stratifications: list = None, categories: list = None):
+    def __init__(self, stratifications: list = None, categories: list = None, all_phenos : list = None, stratification_categories : list = None):
         self.variants = {}
         self.stratifications = stratifications
+        self.stratification_categories = stratification_categories
         self.categories = categories
+        self.all_phenos = all_phenos
 
     def get_stratifications(self):
         return self.stratifications
@@ -165,7 +165,7 @@ class Variant:
         return self.categories
 
     def get_variant(self, variant_code, stratification):
-        reader = PhewasMatrixReader(variant_code, stratification)
+        reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos, self.stratification_categories)
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
@@ -227,13 +227,25 @@ def create_variant() -> Variant:
         return None
     
     stratifications = set()
+    stratification_categories = set()
     categories = set()
+    all_phenos = []
+    
     for pheno in data:
         if "stratification" in pheno:
+            stratification_categories = list(pheno["stratification"].keys())
             stratifications.add(".".join(pheno["stratification"].values()))
         if "category" in pheno:
             categories.add(pheno['category'])
+        pheno_subset = {
+            'phenocode' : pheno['phenocode'],
+            'category' : pheno['category'],
+            'phenostring' : pheno['phenostring']
+            }
+        
+        if pheno_subset not in all_phenos:
+            all_phenos.append(pheno_subset)        
             
-    stratifications, categories = list(stratifications), list(categories)
+    stratifications, categories, all_phenos = list(stratifications), list(categories), list(all_phenos)
 
-    return Variant(stratifications, categories)
+    return Variant(stratifications, categories, all_phenos, stratification_categories)

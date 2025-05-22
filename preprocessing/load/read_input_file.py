@@ -7,6 +7,8 @@ from .load_utils import get_maf
 import itertools
 import re
 import boltons.iterutils
+import os
+import pysam
 
 
 class PhenoReader:
@@ -17,16 +19,36 @@ class PhenoReader:
     """
 
     def __init__(self, pheno, minimum_maf=0):
+        field_aliases = conf.get_field_aliases()
+        for alias, field_name in field_aliases.items():
+            if isinstance(alias, str) and alias.startswith("file://") and field_name == "imp_quality":
+                try:
+                    file_path = alias.split(",")[0].split("file://")[1]
+                    file_field_to_read = alias.split(",")[1]
+                    print(f"[DEBUG]===> external file path: {file_path}")
+                    print(f"[DEBUG]===> external file field to read: {file_field_to_read}")
+                    self.r2_reader = R2FileReader(
+                        filepath=file_path,
+                        file_field_to_read=file_field_to_read,
+                        chr_to_read= None
+                    )
+                    self.use_external_r2 = True
+                except Exception as e:
+                    raise PheWebError(f"Failed to parse R2 file alias: {alias} — {e}")
+                break
+
         self._pheno = pheno
         self._minimum_maf = minimum_maf or 0
         self.fields, self.filepaths = self._get_fields_and_filepaths(
             pheno["assoc_files"]
         )
+        
 
     def get_variants(self):
+        print(f"[DEBUG]===> Getting variants for {self._pheno['phenocode']}...", flush=True)
         yield from self._order_refalt_lexicographically(
             itertools.chain.from_iterable(
-                AssocFileReader(filepath, self._pheno).get_variants(
+                AssocFileReader(filepath=filepath, pheno=self._pheno, r2_reader=self.r2_reader, use_external_r2=True).get_variants(
                     minimum_maf=self._minimum_maf
                 )
                 for filepath in self.filepaths
@@ -35,7 +57,7 @@ class PhenoReader:
 
     def get_info(self):
         infos = [
-            AssocFileReader(filepath, self._pheno).get_info()
+            AssocFileReader(filepath, self._pheno, r2_reader=None, use_external_r2=False).get_info()
             for filepath in self.filepaths
         ]
         for info in infos[1:]:
@@ -77,10 +99,13 @@ class PhenoReader:
         # also sets `self._fields`
 
         assoc_files = [{"filepath": filepath} for filepath in filepaths]
+        #print(assoc_files)
+        print(f"[DEBUG]===> Getting fields and filepaths for {self._pheno['phenocode']}...")
 
         for assoc_file in assoc_files:
-            ar = AssocFileReader(assoc_file["filepath"], self._pheno)
+            ar = AssocFileReader(assoc_file["filepath"], self._pheno, r2_reader=None, use_external_r2=False)
             v = next(ar.get_variants())
+            print(f"[DEBUG]===> {v=}")
             assoc_file["chrom"], assoc_file["pos"] = v["chrom"], v["pos"]
             assoc_file["fields"] = list(v)
         assert boltons.iterutils.same(af["fields"] for af in assoc_files)
@@ -115,10 +140,13 @@ class AssocFileReader:
     # TODO: use `pandas.read_csv(src_filepath, usecols=[...], converters={...}, iterator=True, verbose=True, na_values='.', sep=None)
     #   - first without `usecols`, to parse the column names, and then a second time with `usecols`.
 
-    def __init__(self, filepath, pheno):
+    def __init__(self, filepath, pheno, r2_reader=None, use_external_r2: bool = False):
         self.filepath = filepath
         self._pheno = pheno
         self._interaction = pheno["interaction"]
+        self.r2_reader = r2_reader
+        self.use_external_r2 = use_external_r2 # bool to indicate if the R2 values are read from an external file
+
 
     def get_variants(self, minimum_maf=0, use_per_pheno_fields=False):
         if use_per_pheno_fields:
@@ -138,7 +166,12 @@ class AssocFileReader:
             ]
 
         interaction_aliases = conf.get_interaction_aliases()
-        pre_mapped_interaction = {v: k for k, v in interaction_aliases.items()}
+        if interaction_aliases is not None:
+            pre_mapped_interaction = {v: k for k, v in interaction_aliases.items()}
+        else:
+            pre_mapped_interaction = {self._interaction : self._interaction}
+            
+        #print(f"{pre_mapped_interaction=}")
 
         with read_maybe_gzip(self.filepath) as f:
             try:
@@ -194,12 +227,45 @@ class AssocFileReader:
 
                     test_value = variant.get("test", "")
 
+                    current_chr = str(variant.get("chrom", ""))
+
+                    imp_quality = variant.get("imp_quality")
+                    # Retrieve and check imputation quality
+                    if imp_quality is None:
+                        if self.r2_reader is not None and self.use_external_r2 == True:
+                            # if external r2 file is provided, use the R2 value from the external file
+                            self.r2_reader.load_or_update_r2_file(current_chr)
+                            r2 = self.r2_reader.variants.get(f"{variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']}")
+                            if r2 is None:
+                                # print(f"{variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']}")
+                                continue
+                            if r2 < 0.3:
+                                # theoretically, the r2 value should be greater than 0.3 at this step
+                                print(f"[DEBUG]===> variant {variant['chrom']}:{variant['pos']}:{variant['ref']}:{variant['alt']} has r2 value {r2}, less than 0.3")
+                                continue
+                    else:
+                        if imp_quality == "NA" or not isinstance(imp_quality, float):
+                            continue
+                        elif imp_quality < conf.get_min_imp_quality():
+                            continue
+
+                    # print(f"{self._interaction=} , {pre_mapped_interaction=}, {test_value=}")
+
                     if self._interaction:
                         if (
                             f"ADD-INT_SNPx{pre_mapped_interaction[self._interaction]}"
                             not in test_value
                         ):
                             continue
+                        
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and conf.get_interaction_maf_threshold() and maf < conf.get_interaction_maf_threshold():
+                            continue
+                        
+                        mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
+                        if conf.get_interaction_mac_threshold() is not None and mac < conf.get_interaction_mac_threshold():
+                            continue
+                        
                     elif test_value not in {"ADD", "ADD-CONDTL"}:
                         continue
 
@@ -207,10 +273,11 @@ class AssocFileReader:
                     if not variant.get("pval"):
                         continue
 
-                    # Retrieve and check minor allele frequency (MAF) early to avoid unnecessary processing
-                    maf = get_maf(variant, self._pheno)
-                    if maf is not None and maf < minimum_maf:
-                        continue
+                    # Retrieve and check minor allele frequency (MAF) of non-interaction testing early to avoid unnecessary processing
+                    if not self._interaction:
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and maf < minimum_maf:
+                            continue
 
                     # Parse marker ID only if necessary
                     if marker_id_col is not None:
@@ -308,12 +375,17 @@ class AssocFileReader:
     def _parse_header(self, colnames, fieldnames_to_check):
         colidx_for_field = {}  # which column (by number, not name) holds the value for the field (the key)
         field_aliases = conf.get_field_aliases()  # {alias: field_name}
+        
         for colidx, colname in enumerate(colnames):
             if (
                 colname in field_aliases
                 and field_aliases[colname] in fieldnames_to_check
             ):
                 field_name = field_aliases[colname]
+                if any(alias.startswith("file://") for alias in field_aliases) and field_name == "imp_quality":
+                    # skip the imp_quality field if it is linked to a file, default using the INFO field
+                    continue
+
                 if field_name in colidx_for_field:
                     raise PheWebError(
                         "PheWeb found two different ways of mapping the field_name {!r} to the columns {!r}.\n".format(
@@ -379,3 +451,97 @@ class AssocFileReader:
         return chrom, int(pos), ref, alt
 
     parse_marker_id_regex = re.compile(r"([^:]+):([0-9]+)_([-ATCG\.]+)/([-ATCG\.\*]+)")
+
+class R2FileReader:
+    """
+    Reads R2 values from external vcf or pvar file and stores them in a dictionary.
+    """
+    def __init__(self, filepath, file_field_to_read, chr_to_read):
+        self.filepath = filepath
+        self.variants = dict()
+        self.file_field_to_read = file_field_to_read
+        if chr_to_read == '23':
+            self.chr_to_read = 'X'
+        else:
+            self.chr_to_read = chr_to_read
+        self.loaded_chr = None
+
+    def read_r2_file(self) -> None:
+        # print('>>>> external r2 file detected')
+        # print('===> Start reading r2 file...')
+        print(f"[DEBUG]===> Reading R2 file for chromosome {self.chr_to_read}...")
+        for fname in os.listdir(self.filepath):
+            
+            if not (fname.endswith(".pvar") or fname.endswith(".vcf.gz")):
+                continue
+            if not fname.startswith(f"chr{self.chr_to_read}."): # TODO: in documentation, the r2 file should have prefix chrX...pvar or chrX...vcf.gz
+                continue
+            print(f'===> Reading {fname}...')
+            full_path = os.path.join(self.filepath, fname)
+
+            if fname.endswith(".pvar"):
+                self.read_pvar_file(full_path)
+            else:
+                self.read_vcf_file(full_path)
+            self.loaded_chr = self.chr_to_read
+        
+        print(f"===> Successfully loaded {len(self.variants)} variants with R2 values")
+
+    def read_vcf_file(self, file: str) -> None: # TODO: make sure this function is sync.with the read_pvar_file 
+        with  pysam.VariantFile(file, drop_samples=True) as vcf:
+            for record in vcf.fetch():
+                assert not record.samples, f"Variant {record.id} unexpectedly has samples"
+                r2 = record.info.get(self.file_field_to_read)
+                if r2 is None or r2 < 0.3:
+                    continue
+                variant_id = f"{record.chrom}:{record.pos}:{record.ref}:{record.alts[0]}"
+                self.variants[variant_id] = r2
+    
+    def read_pvar_file(self, file: str) -> None:
+        with open(file, 'r') as f:
+            for line in f:
+                if line.startswith('##'):
+                    continue
+                if line.startswith('#CHROM'):
+                    fields_header = line.strip().split()
+                    continue  
+
+                fields = line.strip().split()
+                if len(fields) < 6:
+                    assert False, f"Malformed line: {line}"
+
+                info = fields[5]
+                info_fields = info.split(';')
+                r2_field = next((field for field in info_fields if field.startswith(f'{self.file_field_to_read}=')), None)
+
+                if r2_field is None:
+                    continue 
+
+                try:
+                    r2 = float(r2_field.split('=')[1])
+                except ValueError:
+                    # assert False, f"Invalid R2 value: {r2_field}"
+                    continue 
+
+                if r2 < 0.3:
+                    continue
+
+                chrom = fields[fields_header.index('#CHROM')]
+                if chrom.startswith('PAR') or chrom.startswith('X'):
+                    chrom = '23'
+                pos = fields[fields_header.index('POS')]
+                ref = fields[fields_header.index('REF')]
+                alt = fields[fields_header.index('ALT')].split(',')[0]
+
+                variant_id = f"{chrom}:{pos}:{ref}:{alt}"
+                self.variants[variant_id] = r2
+    
+    def load_or_update_r2_file(self, chr: str) -> None:
+        self.chr_to_read = chr if chr != '23' else 'X'
+        if self.loaded_chr == self.chr_to_read:
+            # print(f"[DEBUG]===> cached R2 for chromosome {self.chr_to_read}")
+            return
+        else:
+            print(f"===> Loading {self.file_field_to_read} for chromosome {self.chr_to_read}...")
+            self.read_r2_file()
+            
