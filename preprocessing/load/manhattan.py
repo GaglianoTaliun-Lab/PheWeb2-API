@@ -76,7 +76,11 @@ def run(argv: List[str]) -> None:
 
 
 def get_input_filepaths(pheno: dict) -> List[str]:
+    # make sure cluster can handle interaction files
+    if pheno.get("interaction") is not None:
+        return [get_pheno_filepath("interaction", pheno["phenocode"])]
     return [get_pheno_filepath("pheno_gz", pheno["phenocode"])]
+    # return [get_pheno_filepath("pheno_gz", pheno["phenocode"])]
 
 
 def get_input_filepaths_interaction(pheno: dict) -> List[str]:

@@ -53,4 +53,11 @@ field_aliases = {
     "TEST": "test",
 }
 
+<<<<<<< HEAD
 interaction_aliases = {"sex": "sex"}
+=======
+interaction_aliases = {"sex": "sex"}
+
+
+
+>>>>>>> f1d323d2dc3dea68bba79e6b4b1d33acd41af983

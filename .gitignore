@@ -15,4 +15,10 @@ pheno-list.json
 
 generated-by-pheweb*/
 run_process.sh
+
+pheno_categories.csv
+phenocode_labels.csv
 *.log
+
+pheno-list*
+test*

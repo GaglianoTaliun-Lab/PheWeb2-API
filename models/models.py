@@ -37,7 +37,6 @@ class Genes:
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
-            #"/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
             os.path.join(
                 current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
             )
@@ -155,9 +154,10 @@ class Pheno:
 
 
 class Variant:
-    def __init__(self, stratifications: list = None, categories: list = None, all_phenos : list = None):
+    def __init__(self, stratifications: list = None, categories: list = None, all_phenos : list = None, stratification_categories : list = None):
         self.variants = {}
         self.stratifications = stratifications
+        self.stratification_categories = stratification_categories
         self.categories = categories
         self.all_phenos = all_phenos
 
@@ -168,7 +168,7 @@ class Variant:
         return self.categories
 
     def get_variant(self, variant_code, stratification):
-        reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos)
+        reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos, self.stratification_categories)
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
@@ -230,10 +230,13 @@ def create_variant() -> Variant:
         return None
     
     stratifications = set()
+    stratification_categories = set()
     categories = set()
     all_phenos = []
+    
     for pheno in data:
         if "stratification" in pheno:
+            stratification_categories = list(pheno["stratification"].keys())
             stratifications.add(".".join(pheno["stratification"].values()))
         if "category" in pheno:
             categories.add(pheno['category'])
@@ -248,4 +251,4 @@ def create_variant() -> Variant:
             
     stratifications, categories, all_phenos = list(stratifications), list(categories), list(all_phenos)
 
-    return Variant(stratifications, categories, all_phenos)
+    return Variant(stratifications, categories, all_phenos, stratification_categories)

@@ -63,9 +63,15 @@ def set_override(key: str, value: Any) -> None:
                         field_name, alias, list(parse_utils.fields)
                     )
                 )
+        # value = {
+        #     alias.lower(): field_name.lower() for alias, field_name in value.items()
+        # }
         value = {
-            alias.lower(): field_name.lower() for alias, field_name in value.items()
+            (alias if alias.startswith("file://") else alias.lower()):
+            (field_name if alias.startswith("file://") else field_name.lower())
+            for alias, field_name in value.items()
         }
+
         overrides[key] = {**parse_utils.default_field_aliases, **value}
     else:
         overrides[key] = value
@@ -228,14 +234,15 @@ def get_num_procs(cmd: Optional[str] = None) -> int:
 def get_assoc_min_maf() -> float:
     return _get_config_float("assoc_min_maf", 0)
 
+def get_min_imp_quality() -> float:
+    return _get_config_float("MIN_IMP_QUALITY", 0.3)
 
 def get_field_aliases() -> Dict[str, str]:
     return overrides.get("field_aliases", parse_utils.default_field_aliases)
 
 
 def get_interaction_aliases() -> Dict[str, str]:
-    return overrides.get("interaction_aliases", {})
-
+    return overrides.get("interaction_aliases", None)
 
 ## Manhattan / top-hits / top-loci config
 def get_within_pheno_mask_around_peak() -> int:
@@ -358,3 +365,9 @@ def should_show_manhattan_filter_button() -> bool:
 
 def should_show_manhattan_filter_consequence() -> bool:
     return _get_config_bool("show_manhattan_filter_consequence", False)
+
+def get_interaction_mac_threshold() -> int:
+    return _get_config_optional_int("INTERACTION_MAC_THRESHOLD")
+
+def get_interaction_maf_threshold() -> float:
+    return _get_config_optional_int("INTERACTION_MAF_THRESHOLD")

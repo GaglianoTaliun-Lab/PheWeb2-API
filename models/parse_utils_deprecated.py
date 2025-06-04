@@ -1,6 +1,8 @@
+# TODO: deprecate this file, use preprocessing/parse_utils.py instead
+# TODO: remove this file after 2025-06-01; avoid DRY
+
 from . import utils
-from .utils import PheWebError
-from . import conf
+from flask import current_app
 # import sys
 
 import typing as ty
@@ -15,7 +17,7 @@ def scientific_int(s: str) -> int:
         x = float(s)
         if x.is_integer():
             return int(x)
-        raise PheWebError("invalid scientific_int: {!r}".format(s))
+        raise Exception("invalid scientific_int: {!r}".format(s))
 
 
 null_values = [
@@ -84,7 +86,7 @@ per_variant_fields: Dict[str, Dict[str, Any]] = {
     "consequence": {
         "from_assoc_files": False,
     },
-    "test": {"aliases": ["TEST"]}
+    "test": {"aliases": ["TEST"]},
 }
 
 per_assoc_fields: Dict[str, Dict[str, Any]] = {
@@ -177,17 +179,6 @@ per_assoc_fields: Dict[str, Dict[str, Any]] = {
         "nullable": True,
         "display": "Tstat",
     },
-    "imp_quality": {
-        "type": float,
-        "nullable": True,
-        "display": "IMP_QUALITY",
-    },
-    "n_samples": {
-        "type": int,
-        "nullable": True,
-        "range": [0, None],
-        "display": "#samples",
-    },
 }
 
 per_pheno_fields: Dict[str, Dict[str, Any]] = {
@@ -239,7 +230,7 @@ class Field:
         if (
             "could_be_neglog10" in self._d
             and self._d["could_be_neglog10"]
-            and conf.pval_is_neglog10()
+            and current_app.config["PVAL_IS_NEGLOG10"]
         ):
             x = 10**-x
 
@@ -255,7 +246,7 @@ class Field:
             elif 0.5 <= x <= 1:
                 x = 1 - utils.round_sig(1 - x, self._d["proportion_sigfigs"])
             else:
-                raise utils.PheWebError(
+                raise Exception(
                     "cannot use proportion_sigfigs on a number outside [0-1]"
                 )
         if "decimals" in self._d:
@@ -271,7 +262,7 @@ class Field:
 
 # Check that field_names are lowercase
 if any(not field_name.islower() for field_name in fields):
-    raise PheWebError(
+    raise Exception(
         "All field names must be lowercase, but these aren't: {}".format(
             [fn for fn in fields if not fn.islower()]
         )
@@ -293,7 +284,7 @@ for field_name, field_dict in fields.items():
             alias in default_field_aliases
             and default_field_aliases[alias] != field_name
         ):
-            raise PheWebError(
+            raise Exception(
                 "The field_alias {!r} points to two fields: {!r} and {!r}".format(
                     alias, field_name, default_field_aliases[alias]
                 )
