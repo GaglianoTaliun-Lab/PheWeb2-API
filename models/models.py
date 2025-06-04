@@ -37,10 +37,10 @@ class Genes:
     def connect_to_sqlite(self):
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
-            "/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
-            # os.path.join(
-            #     current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
-            # )
+            #"/home/xiaoh11/scratch/PheWeb2.0-API/generated-by-pheweb/best-phenos-by-gene.sqlite3"
+            os.path.join(
+                current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
+            )
         )
         connection.row_factory = sqlite3.Row  # each row as dictionary
         return connection
@@ -144,9 +144,12 @@ class Pheno:
         return get_pheno_region(phenocode, chrom, pos_start, pos_end)
 
     def get_gwas_missing(self, gwas_missing_data):
-        # TODO: process data using SNPFetcher
+        #print(f"{gwas_missing_data=}")
+        #print(f"{'6-162025704-T-G' in gwas_missing_data['GS_EXAM_MAX_COM.all.male']}")
         fetcher = SNPFetcher(current_app.config["PHENO_GZ_DIR"])
         response = fetcher.process_keys(gwas_missing_data)
+        
+        #print(f"{response=}")
 
         return response
 

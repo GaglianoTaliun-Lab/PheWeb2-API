@@ -200,6 +200,23 @@ class AssocFileReader:
                             not in test_value
                         ):
                             continue
+                        
+                        
+                        if conf.get_interaction_maf_threshold() and conf.get_interaction_mac_threshold():
+                            raise ValueError(
+                                (
+                                    "Both MAC and MAF threshold are set, which is not allowed. Only set one and re-run."
+                                )
+                            )
+                            
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and conf.get_interaction_maf_threshold() and maf < conf.get_interaction_maf_threshold():
+                            continue
+                        
+                        mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
+                        if conf.get_interaction_mac_threshold() is not None and mac < conf.get_interaction_mac_threshold():
+                            continue
+                        
                     elif test_value not in {"ADD", "ADD-CONDTL"}:
                         continue
 
@@ -207,9 +224,27 @@ class AssocFileReader:
                     if not variant.get("pval"):
                         continue
 
-                    # Retrieve and check minor allele frequency (MAF) early to avoid unnecessary processing
-                    maf = get_maf(variant, self._pheno)
-                    if maf is not None and maf < minimum_maf:
+                    # Retrieve and check minor allele frequency (MAF) of non-interaction testing early to avoid unnecessary processing
+                    if not self._interaction:
+                        maf = get_maf(variant, self._pheno)
+                        if maf is not None and maf < minimum_maf:
+                            continue
+
+                    # Retrieve and check imputation quality
+                    imp_quality = variant.get("imp_quality")
+                    #print(imp_quality)
+                    
+                    #TODO: remove if NA?
+                    if imp_quality is None or imp_quality == "NA" or imp_quality == "":
+                        print(imp_quality)
+                        
+                        print(imp_quality is None)
+                        print(imp_quality == "NA")
+                        print(imp_quality == "")
+                        print("continuing")
+                        continue
+                    
+                    if imp_quality is not None and imp_quality < conf.get_min_imp_quality():
                         continue
 
                     # Parse marker ID only if necessary

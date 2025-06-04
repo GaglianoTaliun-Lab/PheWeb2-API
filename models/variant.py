@@ -118,11 +118,15 @@ class PhewasMatrixReader:
                             phenocode_parts[1],
                             phenocode_parts[2],
                         )
+                        
                         pheno_list = self.phenotype_data_with_index.get(key, [])
+                        #print(pheno_list)
                         if pheno_list:
                             pheno_basic_info = pheno_list[0]
                         else:
                             pheno_basic_info = None
+                            
+                        #print(pheno_basic_info)
                         pheno_data = { #TODO : make this flexible for other stratification options?
                             "phenocode": phenocode_parts[0],
                             "stratification": {
@@ -159,9 +163,15 @@ class PhewasMatrixReader:
                             try:
                                 pheno_data[field] = float(row_data[idx])
                             except ValueError:
-                                pheno_data[field] = row_data[idx]
+                                if field == "pval": 
+                                    #pass
+                                    pheno_data[field] = -1
+                                else:
+                                    pheno_data[field] = row_data[idx]
+
                         self.data["phenos"].append(pheno_data)
 
+                    #print(self.all_phenos)
                     for unseen_pheno in self.all_phenos:
                         self.data['phenos'].append({
                             "phenocode": unseen_pheno['phenocode'],

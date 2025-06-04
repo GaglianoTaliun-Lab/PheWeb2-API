@@ -65,12 +65,6 @@ class TopHits(Resource):
     "/interaction_list",
     doc={"description": "Retrieve all interaction result descriptions"},
 )
-# @api.route( #TODO: remove this for consistency
-#     "/interaction_list/<phenocode>",
-#     doc={
-#         "description": "Retrieve interaction result description(s) for specified phenocode"
-#     },
-# )
 @api.route(
     "/<phenocode>/interaction_list",
     doc={
@@ -269,19 +263,8 @@ class MissingGWAS(Resource):
             if "pheno" not in g:
                 g.pheno = create_phenotypes_list()
 
-            # process data using SNPFetcher
+            # process data using SNPFetcher            
             results = g.pheno.get_gwas_missing(data)
-
-            # print(results)
-
-            # # Debugging prints to console
-            # print("input")
-            # for key, snp_list in data.items():
-            #     print(f"{key}: {len(snp_list)} elements")
-            # print("\noutput")
-            # for key, snp_list in results.items():
-            #     print(f"{key}: {len(snp_list)} elements")
-
             processed_data = {
                 "message": "success",
                 "data": results,

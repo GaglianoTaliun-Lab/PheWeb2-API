@@ -84,7 +84,7 @@ per_variant_fields: Dict[str, Dict[str, Any]] = {
     "consequence": {
         "from_assoc_files": False,
     },
-    "test": {"aliases": ["TEST"]},
+    "test": {"aliases": ["TEST"]}
 }
 
 per_assoc_fields: Dict[str, Dict[str, Any]] = {
@@ -177,6 +177,17 @@ per_assoc_fields: Dict[str, Dict[str, Any]] = {
         "nullable": True,
         "display": "Tstat",
     },
+    "imp_quality": {
+        "type": float,
+        "sigfigs": 3,
+        "nullable": True,
+        "display": "imp_quality",
+    },
+    "n_samples" : {
+        "type": int,
+        "nullable": True,
+        "display": "n",
+    }
 }
 
 per_pheno_fields: Dict[str, Dict[str, Any]] = {

@@ -26,7 +26,7 @@ api.add_namespace(gene_routes.api, path="/gene")
 api.add_namespace(variant_routes.api, path="/variant")
 
 def main():
-    port = int(os.environ.get("PORT", 9099))
+    port = int(os.environ.get("PORT", 9543))
     app.run(
         host="127.0.0.1", port=port, debug=True
     )  # Remove debug=True when in production.
