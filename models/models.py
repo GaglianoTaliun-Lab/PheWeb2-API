@@ -143,9 +143,12 @@ class Pheno:
         return get_pheno_region(phenocode, chrom, pos_start, pos_end)
 
     def get_gwas_missing(self, gwas_missing_data):
-        # TODO: process data using SNPFetcher
+        #print(f"{gwas_missing_data=}")
+        #print(f"{'6-162025704-T-G' in gwas_missing_data['GS_EXAM_MAX_COM.all.male']}")
         fetcher = SNPFetcher(current_app.config["PHENO_GZ_DIR"])
         response = fetcher.process_keys(gwas_missing_data)
+        
+        #print(f"{response=}")
 
         return response
 

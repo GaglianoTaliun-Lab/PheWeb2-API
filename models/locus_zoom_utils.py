@@ -96,8 +96,7 @@ def IndexedVariantFileReader(phenocode: str):
 
     for field in fields:
         assert (
-            field in parse_utils.per_variant_fields
-            or field in parse_utils.per_assoc_fields
+            field in parse_utils.per_variant_fields or field in parse_utils.per_assoc_fields
         ), field
     colidxs = {field: idx for idx, field in enumerate(fields)}
     with pysam.TabixFile(filepath, parser=None) as tabix_file:

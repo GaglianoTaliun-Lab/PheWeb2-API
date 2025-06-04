@@ -84,7 +84,7 @@ per_variant_fields: Dict[str, Dict[str, Any]] = {
     "consequence": {
         "from_assoc_files": False,
     },
-    "test": {"aliases": ["TEST"]},
+    "test": {"aliases": ["TEST"]}
 }
 
 per_assoc_fields: Dict[str, Dict[str, Any]] = {
@@ -179,7 +179,6 @@ per_assoc_fields: Dict[str, Dict[str, Any]] = {
     },
     "imp_quality": {
         "type": float,
-        "sigfigs": 2,
         "nullable": True,
         "display": "IMP_QUALITY",
     },

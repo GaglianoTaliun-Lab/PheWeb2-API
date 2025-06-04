@@ -111,35 +111,78 @@ class PhewasMatrixReader:
                     for phenocode, fields in self.phenotype_fields.items():
                         # Split the phenocode into base + stratification values
                         phenocode_parts = phenocode.split(".")
-                        base_phenocode = phenocode_parts[0]
-                        strat_values = phenocode_parts[1:]
-
-                        # Sort strat keys alphabetically for consistency with the index
-                        strat_keys = sorted(self.phenotype_strat_keys)  # This must be set elsewhere
-                        stratification = {
-                            key: strat_values[i] if i < len(strat_values) else None
-                            for i, key in enumerate(strat_keys)
-                        }
-
-                        key = (base_phenocode,) + tuple(stratification[k] for k in strat_keys)
+                        # pheno_basic_info = self.phenotype_data_with_index.get((phenocode_parts[0],phenocode_parts[1],phenocode_parts[2]), [])[0]
+                        key = (
+                            phenocode_parts[0],
+                            phenocode_parts[1],
+                            phenocode_parts[2],
+                        )
+                        
                         pheno_list = self.phenotype_data_with_index.get(key, [])
-                        pheno_basic_info = pheno_list[0] if pheno_list else None
-
-                        pheno_data = {
-                            "phenocode": base_phenocode,
-                            "stratification": stratification,
-                            "category": pheno_basic_info.get("category") if pheno_basic_info else None,
-                            "phenostring": pheno_basic_info.get("phenostring") if pheno_basic_info else None,
-                            "num_samples": pheno_basic_info.get("num_samples") if pheno_basic_info else None,
-                            "num_controls": pheno_basic_info.get("num_controls") if pheno_basic_info else None,
-                            "num_cases": pheno_basic_info.get("num_cases") if pheno_basic_info else None,
+                        #print(pheno_list)
+                        if pheno_list:
+                            pheno_basic_info = pheno_list[0]
+                        else:
+                            pheno_basic_info = None
+                            
+                        #print(pheno_basic_info)
+                        pheno_data = { #TODO : make this flexible for other stratification options?
+                            "phenocode": phenocode_parts[0],
+                            "stratification": {
+                                "ancestry": phenocode_parts[1]
+                                if len(phenocode_parts) > 1
+                                else None,
+                                "sex": phenocode_parts[2]
+                                if len(phenocode_parts) > 2
+                                else None,
+                            },
+                            "category": pheno_basic_info["category"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "phenostring": pheno_basic_info["phenostring"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_samples": pheno_basic_info["num_samples"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_controls": pheno_basic_info["num_controls"]
+                            if pheno_basic_info is not None
+                            else None,
+                            "num_cases": pheno_basic_info["num_cases"]
+                            if pheno_basic_info is not None
+                            else None,
                         }
+# =======
+#                         base_phenocode = phenocode_parts[0]
+#                         strat_values = phenocode_parts[1:]
 
-                        subset_pheno = {
-                            'phenocode': pheno_data['phenocode'],
-                            'category': pheno_data['category'],
-                            'phenostring': pheno_data['phenostring'],
-                        }
+#                         # Sort strat keys alphabetically for consistency with the index
+#                         strat_keys = sorted(self.phenotype_strat_keys)  # This must be set elsewhere
+#                         stratification = {
+#                             key: strat_values[i] if i < len(strat_values) else None
+#                             for i, key in enumerate(strat_keys)
+# >>>>>>> f1d323d2dc3dea68bba79e6b4b1d33acd41af983
+#                         }
+
+#                         key = (base_phenocode,) + tuple(stratification[k] for k in strat_keys)
+#                         pheno_list = self.phenotype_data_with_index.get(key, [])
+#                         pheno_basic_info = pheno_list[0] if pheno_list else None
+
+#                         pheno_data = {
+#                             "phenocode": base_phenocode,
+#                             "stratification": stratification,
+#                             "category": pheno_basic_info.get("category") if pheno_basic_info else None,
+#                             "phenostring": pheno_basic_info.get("phenostring") if pheno_basic_info else None,
+#                             "num_samples": pheno_basic_info.get("num_samples") if pheno_basic_info else None,
+#                             "num_controls": pheno_basic_info.get("num_controls") if pheno_basic_info else None,
+#                             "num_cases": pheno_basic_info.get("num_cases") if pheno_basic_info else None,
+#                         }
+
+#                         subset_pheno = {
+#                             'phenocode': pheno_data['phenocode'],
+#                             'category': pheno_data['category'],
+#                             'phenostring': pheno_data['phenostring'],
+#                         }
 
                         if subset_pheno in self.all_phenos:
                             self.all_phenos.remove(subset_pheno)
@@ -148,10 +191,15 @@ class PhewasMatrixReader:
                             try:
                                 pheno_data[field] = float(row_data[idx])
                             except ValueError:
-                                pheno_data[field] = row_data[idx]
+                                if field == "pval": 
+                                    #pass
+                                    pheno_data[field] = -1
+                                else:
+                                    pheno_data[field] = row_data[idx]
 
                         self.data["phenos"].append(pheno_data)
 
+                    #print(self.all_phenos)
                     for unseen_pheno in self.all_phenos:
                         self.data['phenos'].append({
                             "phenocode": unseen_pheno['phenocode'],

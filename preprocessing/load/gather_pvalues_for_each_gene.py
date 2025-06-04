@@ -60,6 +60,9 @@ def run(argv: List[str]) -> None:
                 for chrom, regions in regions_on_chrom.items()
                 for (start, end) in regions
             ]
+            
+            print(f"{len(regions)=}")
+            
             task_results = Parallelizer().run_multiple_tasks(
                 tasks=regions,
                 do_multiple_tasks=process_regions,

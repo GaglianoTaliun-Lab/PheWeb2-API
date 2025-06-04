@@ -244,6 +244,13 @@ class AssocFileReader:
                         ):
                             continue
                         
+                        if conf.get_interaction_maf_threshold() and conf.get_interaction_mac_threshold():
+                            raise ValueError(
+                                (
+                                    "Both MAC and MAF threshold are set, which is not allowed. Only set one and re-run."
+                                )
+                            )
+                            
                         maf = get_maf(variant, self._pheno)
                         if maf is not None and conf.get_interaction_maf_threshold() and maf < conf.get_interaction_maf_threshold():
                             continue

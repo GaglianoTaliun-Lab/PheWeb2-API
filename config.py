@@ -54,6 +54,3 @@ field_aliases = {
 }
 
 interaction_aliases = {"sex": "sex"}
-
-
-

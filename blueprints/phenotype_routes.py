@@ -64,9 +64,19 @@ class TopHits(Resource):
             return {"message": "Internal server error."}, 500
 
 
-@api.route("/interaction")
-@api.route("/interaction_list")
-@api.route("/<phenocode>/interaction_list")
+@api.route(
+    "/interaction", doc={"description": "Retrieve all interaction result descriptions"}
+)
+@api.route(
+    "/interaction_list",
+    doc={"description": "Retrieve all interaction result descriptions"},
+)
+@api.route(
+    "/<phenocode>/interaction_list",
+    doc={
+        "description": "Retrieve interaction result description(s) for specified phenocode"
+    },
+)
 class InteractionList(Resource):
     def get(self, phenocode=None):
         try:
@@ -177,8 +187,12 @@ class MissingGWAS(Resource):
             pheno_service = get_pheno_service()
             results = pheno_service.get_gwas_missing(data)
 
-            return {"message": "success", "data": results}, 200
-        except PhenotypeServiceNotAvailable as e:
-            return {"message": str(e)}, 404
+            # process data using SNPFetcher            
+            results = g.pheno.get_gwas_missing(data)
+            processed_data = {
+                "message": "success",
+                "data": results,
+            }
+            return processed_data, 200
         except Exception as e:
             return {"data": [], "message": str(e)}, 500

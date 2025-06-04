@@ -90,10 +90,12 @@ class SNPFetcher:
                                     "alt": record_data[3],
                                     "rsids": record_data[4],
                                     "nearest_genes": record_data[5],
-                                    "pval": record_data[-4],
-                                    "beta": record_data[-3],
-                                    "sebeta": record_data[-2],
-                                    "af": record_data[-1],
+                                    "pval": record_data[-6],
+                                    "beta": record_data[-5],
+                                    "sebeta": record_data[-4],
+                                    "af": record_data[-3],
+                                    "imp_quality": record_data[-2],
+                                    "n_samples":record_data[-1]
                                 }
                             )
                     # if any((int(snp.split('-')[1]) == int(pos) and record_data[2] == snp.split('-')[2] and record_data[3] == snp.split('-')[3]) for snp in snps):
