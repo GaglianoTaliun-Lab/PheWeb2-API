@@ -44,7 +44,10 @@ field_aliases = {
     ...
 }
 ```
-*** However, we strongly recommend you to access the imputation quality scores from external files, especially if you are using REGENIE to generate the GWAS results. We strongly recommend to use the VCF files (input of GWAS) as the source of the imputation quality scores.*** You can set it up in the `config.py` by
+***
+However, we strongly recommend you to access the imputation quality scores from external files, especially if you are using REGENIE to generate the GWAS results. We strongly recommend to use the VCF files (input of GWAS) as the source of the imputation quality scores.
+***
+You can set it up in the `config.py` by
 ```
 MIN_IMP_QUALITY = # your imputation quality threshold
 field_aliases = {
