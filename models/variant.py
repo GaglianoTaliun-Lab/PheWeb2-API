@@ -151,6 +151,7 @@ class PhewasMatrixReader:
                             "num_cases": pheno_basic_info["num_cases"]
                             if pheno_basic_info is not None
                             else None,
+                        }
 # =======
 #                         base_phenocode = phenocode_parts[0]
 #                         strat_values = phenocode_parts[1:]
