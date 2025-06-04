@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any, Iterator
-from . import parse_utils
+from preprocessing import parse_utils
 from flask import current_app
 import math
 from contextlib import contextmanager

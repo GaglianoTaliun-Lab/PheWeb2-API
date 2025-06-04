@@ -32,6 +32,29 @@ Specifically, summary statisitcs must contain:
 
 Any field can be null if it is one of ['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan', 'NaN', '-NaN', 'null', 'NULL']. If a required field is null, the variant gets dropped.
 
+### Imputation Quality Filtering
+In the preprocessing, you can filter out variants that have imputation quality lower than a customized threshold. To implement this, you can use specific field from the GWAS results (e.g., the INFO field in REGENIE output). You can specify the imputation quality field and threshold in the `config.py` by
+```
+MIN_IMP_QUALITY = # your imputation quality threshold
+field_aliases = {
+    ...
+    # Add this field if you have imputation quality scores in the GWAS results
+    # e.g., if the imputation quality field in the GWAS results is called 'INFO'
+    "INFO": "imp_quality",
+    ...
+}
+```
+*** However, we strongly recommend you to access the imputation quality scores from external files, especially if you are using REGENIE to generate the GWAS results. We strongly recommend to use the VCF files (input of GWAS) as the source of the imputation quality scores.*** You can set it up in the `config.py` by
+```
+MIN_IMP_QUALITY = # your imputation quality threshold
+field_aliases = {
+    ...
+    # Start your custom field (e.g. imp_quality) with "file://" to load from a file (accept vcf files for imputation quality). Separate the file path the the field of interest by ','
+    "file://path/file.vcf.gz,R2": "imp_quality",
+    ...
+}
+```
+
 ### Interaction Testing
 
 If you wish to pre-process interaction results via Regenie output, you need to set 'interaction_aliases' to the value you gave regenie for the interaction testing and remap it to a value of your choice.
@@ -64,22 +87,16 @@ Then with 'pheno-list.csv', run:
 to create `pheno-list.json`.
 
 
-To pre-process all files to properly work with the backend server, run
+To pre-process all files to properly work with the backend server, run:
 
 `pheweb process`
 
-in the base directory of PheWeb. (Parent directory of preprocessing/)
-
-You must have pheno-list.json inside the base directory.
-
 ## Runtime Data
-After pre-processing, you will get a folder called `generated-by-pheweb/`, which contains the data necessary for the API application (if pheweb process ran without error).
-
-Ensure these folders (with data) are present before running the backend / API.
+After pre-processing, these folders (with data) need to be present before running.
 
 ```
 CLSA_PheWeb_data
-└── generated-by-pheweb
+└── generated_by_pheweb
     ├── manhattan
         ├── ... 
     ├── qq
@@ -91,22 +108,15 @@ CLSA_PheWeb_data
 
 The paths to the runtime data needs to be specified in the config.py
 ```py
-BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated-by-pheweb')
+BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated_by_pheweb')
 
 PHENOTYPES_DIR = os.path.join(BASE_DIR)
 ...
 ```
 please refer the `sample_config.py` for more examples.
 
-Alternatively, BASE_DIR can be defined in an `.env` file, with a definition such as:
-
-`BASE_DIR=/path/to/generated-by-pheweb`
-
 
 ## Running Backend Server
-
-To run the API indefinitely, run the command: 
-
 ```
 pheweb-run
 ```
@@ -114,7 +124,6 @@ pheweb-run
 get data through http://localhost:9099/PATH/TO/ROUTES/
 
 e.g. to view phenotype table data, go to http://localhost:9099/phenotypes
-
 
 ## Documentation
 
