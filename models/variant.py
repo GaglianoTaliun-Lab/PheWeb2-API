@@ -178,11 +178,11 @@ class PhewasMatrixReader:
 #                             "num_cases": pheno_basic_info.get("num_cases") if pheno_basic_info else None,
 #                         }
 
-#                         subset_pheno = {
-#                             'phenocode': pheno_data['phenocode'],
-#                             'category': pheno_data['category'],
-#                             'phenostring': pheno_data['phenostring'],
-#                         }
+                        subset_pheno = {
+                            'phenocode': pheno_data['phenocode'],
+                            'category': pheno_data['category'],
+                            'phenostring': pheno_data['phenostring'],
+                        }
 
                         if subset_pheno in self.all_phenos:
                             self.all_phenos.remove(subset_pheno)
