@@ -22,6 +22,7 @@ manhattan
 top_hits
 qq
 phenotypes
+best-of-pheno
 pheno_correlation
 """.split("\n")
 scripts = [script for script in scripts if script]
