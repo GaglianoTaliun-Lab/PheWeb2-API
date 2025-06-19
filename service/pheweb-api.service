@@ -1,0 +1,16 @@
+[Unit]
+Description=PheWeb2.0 Python API Service
+After=network.target
+
+[Service]
+Type=simple
+User=/your/username
+WorkingDirectory=/path/to/your/pheweb-api/dir
+ExecStart=/path/to/your/venv/.venv/bin/python /path/to/your/pheweb-api/dir/app.py
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+pheweb.service (END)
