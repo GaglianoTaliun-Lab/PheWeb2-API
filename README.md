@@ -14,6 +14,8 @@ pip install -r requirements.txt
 
 ## Preprocessing
 
+
+
 ### GWAS Summary Statistics
 Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
 
@@ -66,7 +68,12 @@ See sample_config.py for an example.
 
 ### Pheno-list{.csv, .json}
 
+Like the `config.py` file, a pheno-list.json file MUST be in the base directory of the PheWeb-API before running any command.
+- `PheWeb2.0-API/config.py`
+- `PheWeb2.0-API/pheno-list.json`
+
 We highly recommend creating a pheno-list.csv file, then converting to pheno-list.json. 
+
 
 Here are the required and optional columns for the pheno-list.csv file:
  
