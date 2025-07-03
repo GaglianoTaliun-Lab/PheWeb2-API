@@ -52,6 +52,7 @@ def should_run() -> bool:
         Path(get_filepath(name, must_exist=False))
         for name in ["top-hits", "top-hits-1k", "top-hits-tsv"]
     ]
+    print(f"{output_filepaths=}")
     if not all(fp.exists() for fp in output_filepaths):
         return True
     oldest_output_mtime = min(fp.stat().st_mtime for fp in output_filepaths)

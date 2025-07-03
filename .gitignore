@@ -14,6 +14,8 @@ pheno-list.csv
 pheno-list.json
 
 generated-by-pheweb*/
+preprocessing/requirements.txt
+requirements_old.txt
 run_process.sh
 
 pheno_categories.csv
@@ -24,3 +26,6 @@ pheno-list*
 test*
 src/
 browser*
+
+generated-by-pheweb.tar.gz
+

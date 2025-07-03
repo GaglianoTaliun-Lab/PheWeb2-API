@@ -23,10 +23,9 @@ from typing import List, Callable, Dict, Union, Iterator, Optional, Any
 
 
 def get_generated_path(*path_parts: str) -> str:
-    path = os.path.join(conf.get_data_dir(), "generated-by-pheweb", *path_parts)
+    path = os.path.join(conf.get_generated_by_pheweb_dir(), *path_parts)
     make_basedir(path)
     return path
-
 
 dbsnp_version = "154"
 genes_version = "37"
