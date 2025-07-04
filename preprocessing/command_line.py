@@ -57,6 +57,7 @@ for submodule in """
  wsgi
  top_loci
  detect_ref
+ generate_variant_db
 """.split():
 
     def f(submodule: str, argv: List[str]) -> None:
@@ -127,6 +128,9 @@ Subcommands:
 
     pheweb conf
         Show configuration.
+
+    pheweb generate_variant_db
+        Generate variant database for autocomplete.
 
 """.format(version.version)
     )

@@ -91,7 +91,7 @@ class InteractionList(Resource):
             return {"message": "Internal server error."}, 500
 
 
-@api.route("/<phenocode>/<stratification>")
+@api.route("/<phenocode>/<stratification>/manhattan")
 class Pheno(Resource):
     def get(self, phenocode, stratification=None):
         try:
