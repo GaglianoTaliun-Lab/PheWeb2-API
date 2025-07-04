@@ -90,8 +90,8 @@ setup(
         "pysam==0.22.1",
         "intervaltree==3.1.0",
         "tqdm==4.66.4",
-        "scipy==1.13.1",
-        "numpy==1.26.4",
+        "scipy==1.15.1",
+        "numpy==2.2.2",
         "requests[security]==2.32.3",
         "gunicorn==22.0.0",
         "boltons==24.0.0",
@@ -100,5 +100,9 @@ setup(
         "gevent==24.2.1",
         "psutil==6.0.0",
         "markupsafe==2.1.5",  # flask 1.1 uses jinja 2.x which breaks with markupsafe>2.0.1.  Pinning all deps might be better.
+        "python_dotenv==1.0.1",
+        "intervaltree==3.1.0",
+        "ipython==8.12.3",
+        "ordered_set==4.1.0"
     ],
 )
