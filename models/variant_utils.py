@@ -1,7 +1,6 @@
 import gzip
 import os
 from flask import current_app
-import numpy as np
 import sqlite3
 import csv
 from functools import lru_cache
@@ -10,13 +9,10 @@ import tqdm
 class VariantLoading:
     def __init__(self, file_path):
         self.variants = {}
-        self.variant_coordinates = np.array([])
-        self.variant_info = []
-        self.rsid_coordinates = np.array([])
         self.file_path = file_path
 
         self.db_path = os.path.join(file_path, "variants.db")
-        self.load_or_create_variant_db(self.db_path)
+        self.load_or_create_variant_db(file_path)
     
     def load_or_create_variant_db(self, file_path):
         
