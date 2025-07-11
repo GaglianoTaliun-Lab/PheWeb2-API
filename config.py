@@ -14,6 +14,7 @@ PHENO_GZ_DIR = os.path.join(BASE_DIR, "pheno_gz")
 BEST_OF_PHENO_DIR = os.path.join(BASE_DIR, "best_of_pheno")
 PHEWAS_MATRIX_DIR = os.path.join(BASE_DIR, "matrix-stratified")
 INTERACTION_DIR = os.path.join(BASE_DIR, "interaction")
+SITES_DIR = os.path.join(BASE_DIR, "sites")
 
 ## Manhattan / top-hits / top-loci config
 MANHATTAN_NUM_UNBINNED = 500

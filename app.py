@@ -1,9 +1,10 @@
 import os
 from flask import Flask
 from flask_restx import Api
-from blueprints import phenotype_routes, gene_routes, variant_routes
+from blueprints import phenotype_routes, gene_routes, variant_routes, autocomplete
 from flask_cors import CORS
 from dotenv import load_dotenv
+from models.variant_utils import VariantLoading
 
 load_dotenv()
 
@@ -24,8 +25,11 @@ api = Api(
 api.add_namespace(phenotype_routes.api, path="/phenotypes")
 api.add_namespace(gene_routes.api, path="/gene")
 api.add_namespace(variant_routes.api, path="/variant")
+api.add_namespace(autocomplete.api, path="/autocomplete")
 
 def main():
+    app.config["VARIANTS"] = VariantLoading(file_path=app.config["SITES_DIR"])
+    
     port = int(os.environ.get("PORT", 9543))
     app.run(
         host="127.0.0.1", port=port, debug=True

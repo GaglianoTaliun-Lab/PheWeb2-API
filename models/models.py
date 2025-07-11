@@ -8,6 +8,7 @@ import os
 import json
 from .variant import PhewasMatrixReader
 from .gwas_missing import SNPFetcher
+import gzip
 
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -66,6 +67,27 @@ class Genes:
         chrom, start, end = self.gene_region_mapping[gene]
 
         return chrom, start, end
+    
+    def get_all_genes(self):
+        # Fetch all gene names from the sqlite3 database
+        connection = self.connect_to_sqlite()
+        cursor = connection.cursor()
+        cursor.execute("SELECT gene FROM best_phenos_for_each_gene")
+        results = cursor.fetchall()
+        connection.close()
+
+        # Return a list of gene names
+        gene_dict = {}
+        if results:
+            for row in results:
+                gene_dict[row["gene"]] = {
+                    "chrom": self.gene_region_mapping[row["gene"]][0],
+                    "start": self.gene_region_mapping[row["gene"]][1],
+                    "stop": self.gene_region_mapping[row["gene"]][2],
+                }
+            return gene_dict
+        else:
+            pass
 
 
 class Pheno:
@@ -78,6 +100,15 @@ class Pheno:
         self.pheno = {}
         self.phenotypes_list = phenotypes_list
         self.interaction_list = interaction_list
+    
+    def get_all_pheno_names(self):
+        pheno_dict = {}
+        for pheno in self.phenotypes_list:
+            pheno_dict[pheno["phenocode"]] = {
+                "phenostring": pheno["phenostring"],
+                "feature": "pheno"
+            }
+        return pheno_dict
 
     def get_phenotypes_list(self, phenocode=None):
         if not phenocode:
@@ -169,6 +200,24 @@ class Variant:
         reader.read_matrix()
         response = reader.find_matching_row()
         return response
+    
+    def get_all_variants(self):
+        try:
+            self.variants = {}
+            file_path = os.path.join(current_app.config["SITES_DIR"], "sites.tsv")
+            with gzip.open(file_path, "rt") as f:
+                header = next(f)
+                for line in f:
+                    fields = line.strip().split("\t")
+                    variant_id = f'{fields[0]}-{fields[1]}-{fields[2]}-{fields[3]}'
+                    rsid = fields[4]
+                    self.variants[variant_id] = rsid
+                print("DEBUG: variants loaded")
+                return self.variants
+        except Exception as e:
+            print("DEBUG: error", e)
+            return {}
+
 
 
 def create_genes() -> Genes:
