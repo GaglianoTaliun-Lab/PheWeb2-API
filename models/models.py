@@ -153,12 +153,9 @@ class Pheno:
 
     def get_sumstats(self, phenocode, filtering_options, suffix=None):
         
-        
-        #TODO:  here filter for stratified or not, then pass the wanted directory
         dir = current_app.config
 
         download_function = getDownloadFunction(dir, phenocode, filtering_options, suffix)
-
         
         return download_function
 

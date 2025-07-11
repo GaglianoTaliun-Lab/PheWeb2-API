@@ -103,6 +103,7 @@ setup(
         "python_dotenv==1.0.1",
         "intervaltree==3.1.0",
         "ipython==8.12.3",
-        "ordered_set==4.1.0"
+        "ordered_set==4.1.0",
+        "polars==1.28.1"
     ],
 )

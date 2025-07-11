@@ -137,6 +137,7 @@ class SumStats(Resource):
             }
             pheno_service = get_pheno_service()
             result = pheno_service.get_sumstats(phenocode, filtering_options, stratification)
+            print(result)
             return result
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404

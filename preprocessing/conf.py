@@ -148,6 +148,11 @@ def _get_config_bool(key: str, default: bool) -> bool:
     _check_overrides_type(key, bool)
     return overrides.get(key, default)
 
+def get_generated_by_pheweb_dir() -> str:
+    if 'BASE_DIR' in os.environ:
+        return os.path.abspath(os.environ['BASE_DIR'])
+    else:
+        return os.path.join(get_data_dir(), "generated-by-pheweb")
 
 # Core config
 def get_data_dir() -> str:
@@ -156,6 +161,7 @@ def get_data_dir() -> str:
     else:
         data_dir = _get_config_str("data_dir", os.path.curdir)
     data_dir = os.path.abspath(data_dir)
+    
     if not _mkdir_and_check_readable(data_dir):
         raise PheWebError(
             "PheWeb cannot use data_dir {!r}, because it either can't create it or can't read it.".format(
