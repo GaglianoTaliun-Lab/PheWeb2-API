@@ -1,88 +1,48 @@
-from flask import Blueprint, jsonify, g, request, current_app
-from models import create_phenotypes_list, create_genes, create_variant
-from models.utils import extract_variants
-from flask_restx import Namespace, Resource, reqparse
+from flask import Blueprint, request, current_app
+from flask_restx import Namespace, Resource
 import re
 
 
 bp = Blueprint("autocomplete", __name__)
 api = Namespace("autocomplete", description="Routes related to autocomplete")
 
-
-class PhenotypeServiceNotAvailable(Exception):
-    pass
-class GenesServiceNotAvailable(Exception):
-    pass
-class VariantServiceNotAvailable(Exception):
-    pass
-
-def get_genes_service():
-    if "genes" not in g:
-        g.genes = create_genes()
-        if g.genes is None:
-            raise GenesServiceNotAvailable(
-                "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
-    return g.genes
-
-def fuzzy_search_genes(gene_dict, query, max_results=5):
-    query = query.upper()
-    result = []
-    for gene, val in gene_dict.items():
-        if query in gene.upper():
-            result.append({
-                "gene": gene,
-                "chrom": val["chrom"],
-                "start": val["start"],
-                "stop": val["stop"],
-                "feature": "gene"
-            })
-    return result[:max_results]
     
-
 def search_gene_names(query):
-    genes_service = get_genes_service()
-    gene_dict = genes_service.get_all_genes()
-    return fuzzy_search_genes(gene_dict, query)
-
-
-def get_pheno_service():
-    if "pheno" not in g:
-        g.pheno = create_phenotypes_list()
-        if g.pheno is None:
-            raise PhenotypeServiceNotAvailable(
-                "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
-    return g.pheno
-
-
-def fuzzy_search_pheno(pheno_dict, query, max_results=15):
-    query_lower = query.lower()
-    result = []
-
-    for phenocode, val in pheno_dict.items():
-        phenostring = val["phenostring"]
-        if query_lower in phenocode.lower() or query_lower in phenostring.lower():
-            result.append({
-                "phenocode": phenocode,
-                "phenostring": phenostring,
-                "feature": "pheno"
-            })
-
-    return result[:max_results]
+    autocomplete_service = current_app.config["AUTOCOMPLETE"]
+    results = autocomplete_service.query_genes(query)
+    # print(f"DEBUG: results: {results}")
+    output = []
+    for gene, chrom, start, stop in results:
+        output.append({
+            "gene": gene,
+            "chrom": chrom,
+            "start": start,
+            "stop": stop,
+            "feature": "gene"
+        })
+    return output
 
 
 def search_pheno_names(query):
-    pheno_service = get_pheno_service()
-    pheno_dict = pheno_service.get_all_pheno_names()
-    return fuzzy_search_pheno(pheno_dict, query)
+    autocomplete_service = current_app.config["AUTOCOMPLETE"]
+    results = autocomplete_service.query_phenotypes(query)
+    # print(f"DEBUG: results: {results}")
+    output = []
+    for phenocode, phenostring in results:
+        output.append({
+            "phenocode": phenocode,
+            "phenostring": phenostring,
+            "feature": "pheno"
+        })
+    return output
 
 
 def search_variant_names(query):
     print("DEBUG: search_variant_names called")
-    variant_service = current_app.config["VARIANTS"]
-    results = variant_service.query_variants(query)
-    print("DEBUG: results", results)
+    print(f"DEBUG: query: {query}")
+    autocomplete_service = current_app.config["AUTOCOMPLETE"]
+    results = autocomplete_service.query_variants(query)
+    # print("DEBUG: results", results)
     output = []
     for rsid, variant_id in results:
         output.append({

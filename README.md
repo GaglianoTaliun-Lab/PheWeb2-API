@@ -103,9 +103,9 @@ To pre-process all files to properly work with the backend server, run:
 
 To manually enable the autocomplete functionality of searching variant id or rsid, please run:
 
-`pheweb generate-variant-db`
+`pheweb generate-autocomplete-db`
 
-to create `variants.db`. Alternative option: the `variant.db` will be created when you first run the api.
+to create `autocomplete.db`. Alternative option: the `autocomplete.db` will be created when you first run the api.
 
 ## Runtime Data
 After pre-processing, these folders (with data) need to be present before running.
