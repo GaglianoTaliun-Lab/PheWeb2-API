@@ -70,20 +70,20 @@ def extract_standard_variant_id(query):
 
 def aggregate(raw_query):
     query = raw_query.lstrip()
-    if query.lower().startswith("chr"):
-        return {"suggestions": search_variant_names(query.lower()[3:])}
-    standard_variant_id = extract_standard_variant_id(query)
-    if standard_variant_id:
-        return {"suggestions": search_variant_names(standard_variant_id)}
-    if query.lower().startswith("rs"):
+    if "-" in query or ":" in query:
+        standard_variant_id = extract_standard_variant_id(query)
+        if standard_variant_id:
+            return {"suggestions": search_variant_names(standard_variant_id)}
+    elif query.lower().startswith("rs"):
         return {"suggestions": search_variant_names(query.lower())}
     
-    if(query == ""):
+    elif query == "":
         return({"suggestions": []})
-    pheno_results = search_pheno_names(query)
-    gene_results = search_gene_names(query)
-    all_results = [*pheno_results, *gene_results]
-    return {"suggestions": all_results}
+    else:
+        pheno_results = search_pheno_names(query)
+        gene_results = search_gene_names(query)
+        all_results = [*pheno_results, *gene_results]
+        return {"suggestions": all_results}
 
 
 
