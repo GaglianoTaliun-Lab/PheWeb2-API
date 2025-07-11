@@ -25,7 +25,6 @@ def getDownloadFunction(dir, phenocode, filtering_options, suffix=None):
    
 
 def getFilteredFunction(dir, phenocode, filtering_options, suffix):
-    print("getFilteredFunction called")
     
     column_dtypes = {
         0: str,   # chrom
@@ -39,6 +38,8 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
         8: float, # beta
         9: float, # sebeta
         10: float, # af
+        11: float, # imp_quality
+        12: int, # n_samples
     }
 
     def process_and_filter_chunk(chunk, header):
@@ -79,6 +80,7 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
 
     def read_in_chunks(file_path, chunk_size=1_000_000, header=None):
         total_rows = 0
+                
         while True:
             chunk = pl.read_csv(
                 file_path, 
@@ -110,19 +112,6 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
     header_chunk = pl.read_csv(
         file_path,
         separator="\t",
-        dtypes={  # Ensure the proper data types for the columns
-            "chrom": str,
-            "pos": int,
-            "ref": str,
-            "alt": str,
-            "rsids": str,
-            "nearest_genes": str,
-            "test" : str,
-            "pval": float,
-            "beta": float,
-            "sebeta": float,
-            "af": float,
-        },
         n_rows=1
     )
     header = header_chunk.columns
@@ -139,7 +128,6 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
             yield "\t".join(map(str, row)) + "\n"
 
 def getUnfilteredFunction(dir, phenocode, suffix):
-    print("getUnfilteredFunction called")
     
     column_dtypes = {
         0: str,   # chrom
@@ -153,6 +141,8 @@ def getUnfilteredFunction(dir, phenocode, suffix):
         8: float, # beta
         9: float, # sebeta
         10: float, # af
+        11: float, # imp_quality
+        12: int, # n_samples
     }
     
     def process_chunk(chunk, header):
@@ -196,26 +186,11 @@ def getUnfilteredFunction(dir, phenocode, suffix):
     header_chunk = pl.read_csv(
         file_path,
         separator="\t",
-        dtypes={  # Ensure the proper data types for the columns
-            "chrom": str,
-            "pos": int,
-            "ref": str,
-            "alt": str,
-            "rsids": str,
-            "nearest_genes": str,
-            "test": str,
-            "pval": float,
-            "beta": float,
-            "sebeta": float,
-            "af": float,
-        },
         n_rows=1  # Read only the first row for header
     )
     header = header_chunk.columns 
     chunk_size = 1_000_000  
     
-    print(header)
-
     # Yield the header only once
     yield "\t".join(header) + "\n"
 
