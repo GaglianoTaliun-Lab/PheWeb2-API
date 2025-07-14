@@ -151,7 +151,9 @@ class AutocompleteLoading:
                 CREATE TABLE IF NOT EXISTS variants (
                     id INTEGER PRIMARY KEY,
                     rsid TEXT,
-                    variant_id TEXT       
+                    variant_id TEXT,
+                    chrom TEXT,
+                    pos INTEGER
                 )
             """)
 
@@ -167,7 +169,7 @@ class AutocompleteLoading:
                     alt = row["alt"]
                     rsid = row["rsids"].split(",")[0] if row["rsids"] else None
                     variant_id = f"{chrom}-{pos}-{ref}-{alt}"
-                    rows.append((rsid, variant_id))
+                    rows.append((rsid, variant_id, chrom, int(pos)))
 
             print(f"DEBUG: Inserting {len(rows)} rows into database")
             print(f"DEBUG: Example row: {rows[0]}")
@@ -177,13 +179,16 @@ class AutocompleteLoading:
             for i in tqdm.tqdm(range(0, len(rows), batch_size), desc="Inserting data"):
                 batch = rows[i:i+batch_size]
                 cur.executemany(
-                    "INSERT INTO variants (rsid, variant_id) VALUES (?, ?)", batch
+                    "INSERT INTO variants (rsid, variant_id, chrom, pos) VALUES (?, ?, ?, ?)", batch
                 )
             conn.commit()
 
             print("DEBUG: Creating indexes for rsid and variant_id...")
             cur.execute("CREATE INDEX idx_variant_id ON variants(variant_id)")
             cur.execute("CREATE INDEX idx_rsid ON variants(rsid)")
+            cur.execute("CREATE INDEX idx_chrom ON variants(chrom)")
+            cur.execute("CREATE INDEX idx_pos ON variants(pos)")
+            # cur.execute("CREATE INDEX idx_pos_str ON variants(pos_str)")
             conn.commit()
 
             print(f"DEBUG: Database creation complete. Entries loaded.")
@@ -280,7 +285,7 @@ class AutocompleteLoading:
 
 
     # @lru_cache(maxsize=1000)
-    def query_variants(self, prefix, max_results=4):
+    def query_variants(self, prefix: str, chrom: str = None, pos: int = None, max_results=4):
         # db_path = self.db_path
         # conn = sqlite3.connect(db_path)
         # cur = conn.cursor()
@@ -289,39 +294,64 @@ class AutocompleteLoading:
         try:
             cur = self.connection.cursor()
             # print(f"DEBUG: cursor created")
-            cur.execute("SELECT rsid, variant_id FROM variants LIMIT 5")
+            cur.execute("SELECT rsid, variant_id FROM variants LIMIT 1")
             sample_rows = cur.fetchall()
-            # print(f"DEBUG: Sample rsids in DB: {sample_rows}")
+            print(f"DEBUG: Sample rsids in DB: {sample_rows}")
         except Exception as e:
             print(f"DEBUG: Error querying variants: {e}")
             raise e
         
-
-
         try:
-            exact = prefix
-            like_pattern = prefix + "%"
+            print(f"DEBUG: chrom: {chrom}, pos: {pos}")
 
-            cur.execute("""
-                SELECT rsid, variant_id FROM variants
-                WHERE rsid = ? OR variant_id = ?
-            """, (exact, exact))
-            exact_matches = cur.fetchall()
-            if len(exact_matches) != 0:
-                return exact_matches
+            if chrom and pos:
+                pos_window = 10
+                pos_min = int(pos) - pos_window
+                pos_max = int(pos) + pos_window
+                exact = prefix
+                like_pattern = prefix + "%"
+                cur.execute("""
+                    SELECT rsid, variant_id FROM variants
+                    WHERE chrom = ? and variant_id = ?
+                """, (chrom, exact))
+                exact_matches = cur.fetchall()
+                if len(exact_matches) != 0:
+                    return exact_matches
+                else:
+                    similar_matches = []
+                    cur.execute("""
+                        SELECT rsid, variant_id FROM variants
+                        WHERE chrom = ? and variant_id LIKE ?
+                        AND variant_id != ?
+                        LIMIT ?
+                    """, (chrom, like_pattern, exact, max_results))
+                    similar_matches = cur.fetchall()
+                    return similar_matches
+
             else:
-                similar_matches = []
+                exact = prefix
+                like_pattern = prefix + "%"
 
                 cur.execute("""
                     SELECT rsid, variant_id FROM variants
-                    WHERE (rsid LIKE ? OR variant_id LIKE ?)
-                    AND rsid != ?
-                    AND variant_id != ?
-                    LIMIT ?
-                """, (like_pattern, like_pattern, exact, exact, max_results))
-                similar_matches = cur.fetchall()
+                    WHERE rsid = ? OR variant_id = ?
+                """, (exact, exact))
+                exact_matches = cur.fetchall()
+                if len(exact_matches) != 0:
+                    return exact_matches
+                else:
+                    similar_matches = []
 
-            return similar_matches
+                    cur.execute("""
+                        SELECT rsid, variant_id FROM variants
+                        WHERE (rsid LIKE ? OR variant_id LIKE ?)
+                        AND rsid != ?
+                        AND variant_id != ?
+                        LIMIT ?
+                    """, (like_pattern, like_pattern, exact, exact, max_results))
+                    similar_matches = cur.fetchall()
+
+                return similar_matches
 
         except Exception as e:
             print(f"DEBUG: Error querying variants: {e}")

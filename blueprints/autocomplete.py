@@ -37,11 +37,15 @@ def search_pheno_names(query):
     return output
 
 
-def search_variant_names(query):
+def search_variant_names(query, chrom=None, pos=None):
     print("DEBUG: search_variant_names called")
     print(f"DEBUG: query: {query}")
     autocomplete_service = current_app.config["AUTOCOMPLETE"]
-    results = autocomplete_service.query_variants(query)
+    if chrom and pos:
+        results = autocomplete_service.query_variants(query, chrom=chrom, pos=pos)
+        print(f"DEBUG: variant query results: {results}")
+    else:
+        results = autocomplete_service.query_variants(query)
     # print("DEBUG: results", results)
     output = []
     for rsid, variant_id in results:
@@ -66,14 +70,47 @@ def extract_standard_variant_id(query):
         alt = match.group("alt")
         return f"{chrom}-{pos}-{ref}-{alt}"
     return None
+
+def extract_partial_variant_id(query):
+    query = query.strip().upper()
+    
+    full_pattern = re.compile(
+        r"^(CHR)?(?P<chrom>\d+|X|Y|MT)[:\-](?P<pos>\d+)[:\-](?P<ref>[ACGT]+)[:\-](?P<alt>[ACGT]+)$"
+    )
+    ref_pattern = re.compile(
+        r"^(CHR)?(?P<chrom>\d+|X|Y|MT)[:\-](?P<pos>\d+)[:\-](?P<ref>[ACGT]+)$"
+    )
+    pos_pattern = re.compile(
+        r"^(CHR)?(?P<chrom>\d+|X|Y|MT)[:\-](?P<pos>\d+)$"
+    )
+
+    for pattern in [full_pattern, ref_pattern, pos_pattern]:
+        match = pattern.match(query)
+        if match:
+            chrom = match.group("chrom").lstrip("CHR")
+            pos = match.group("pos")
+            ref = match.groupdict().get("ref")
+            alt = match.groupdict().get("alt")
+            
+            variant_parts = [chrom, pos]
+            if ref:
+                variant_parts.append(ref)
+            if alt:
+                variant_parts.append(alt)
+            return ['-'.join(variant_parts), chrom, pos]
+
+    return None
+
     
 
 def aggregate(raw_query):
     query = raw_query.lstrip()
     if "-" in query or ":" in query:
-        standard_variant_id = extract_standard_variant_id(query)
-        if standard_variant_id:
-            return {"suggestions": search_variant_names(standard_variant_id)}
+        print("DEBUG: query contains - or :")
+        partial_variant_id_list = extract_partial_variant_id(query)
+        print(f"DEBUG: partial_variant_id_list: {partial_variant_id_list}")
+        if partial_variant_id_list:
+            return {"suggestions": search_variant_names(partial_variant_id_list[0], chrom=partial_variant_id_list[1], pos=int(partial_variant_id_list[2]))}
     elif query.lower().startswith("rs"):
         return {"suggestions": search_variant_names(query.lower())}
     
