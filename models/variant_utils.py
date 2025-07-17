@@ -35,7 +35,8 @@ class VariantLoading:
             CREATE TABLE IF NOT EXISTS variants (
                 id INTEGER PRIMARY KEY,
                 rsid TEXT,
-                variant_id TEXT
+                variant_id TEXT,
+                nearest_genes TEXT
             )
             """)
 
@@ -51,7 +52,8 @@ class VariantLoading:
                     alt = row["alt"]
                     rsid = row["rsids"].split(",")[0] if row["rsids"] else None
                     variant_id = f"{chrom}-{pos}-{ref}-{alt}"
-                    rows.append((rsid, variant_id))
+                    nearest_genes = row["nearest_genes"]
+                    rows.append((rsid, variant_id, nearest_genes))
 
             print(f"DEBUG: Inserting {len(rows)} rows into database")
             print(f"DEBUG: Example row: {rows[0]}")
@@ -61,7 +63,7 @@ class VariantLoading:
             for i in tqdm.tqdm(range(0, len(rows), batch_size), desc="Inserting data"):
                 batch = rows[i:i+batch_size]
                 cur.executemany(
-                    "INSERT INTO variants (rsid, variant_id) VALUES (?, ?)", batch
+                    "INSERT INTO variants (rsid, variant_id, nearest_genes) VALUES (?, ?, ?)", batch
                 )
             conn.commit()
 

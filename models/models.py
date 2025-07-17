@@ -199,21 +199,35 @@ class Variant:
         reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos, self.stratification_categories)
         reader.read_matrix()
         response = reader.find_matching_row()
+        # print("DEBUG: response", response)
         return response
     
-    def get_all_variants(self):
+    def get_nearest_genes(self, variant_code):
         try:
-            self.variants = {}
-            file_path = os.path.join(current_app.config["SITES_DIR"], "sites.tsv")
-            with gzip.open(file_path, "rt") as f:
-                header = next(f)
-                for line in f:
-                    fields = line.strip().split("\t")
-                    variant_id = f'{fields[0]}-{fields[1]}-{fields[2]}-{fields[3]}'
-                    rsid = fields[4]
-                    self.variants[variant_id] = rsid
-                print("DEBUG: variants loaded")
-                return self.variants
+            db_path = os.path.join(current_app.config["SITES_DIR"], "variants.db")
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            cur.execute("SELECT nearest_genes FROM variants WHERE variant_id = ?", (variant_code,))
+            nearest_genes = cur.fetchone()[0].split(",")
+            print("DEBUG: nearest_genes", nearest_genes)
+            print("DEBUG: type of nearest_genes", type(nearest_genes))
+            conn.close()
+            return {"nearest_genes": nearest_genes} if nearest_genes else None
+        except Exception as e:
+            print("DEBUG: error", e)
+            return {}
+    
+    def get_variant_rsid(self, variant_code):
+        try:
+            db_path = os.path.join(current_app.config["SITES_DIR"], "autocomplete.db")
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            cur.execute("SELECT rsid FROM variants WHERE variant_id = ?", (variant_code,))
+            rsid = cur.fetchone()
+            print("DEBUG: rsid", rsid)
+            print("DEBUG: type of rsid", type(rsid))
+            conn.close()
+            return {"rsid": rsid} if rsid else None
         except Exception as e:
             print("DEBUG: error", e)
             return {}

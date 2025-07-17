@@ -73,3 +73,29 @@ class CategoryList(Resource):
         except Exception:
             logging.exception("Error in /category_list")
             return {"message": "Internal server error."}, 500
+
+@api.route("/rsid/<variant_code>")
+class Rsid(Resource):
+    def get(self, variant_code):
+        try:
+            variant_service = get_variant_service()
+            rsid = variant_service.get_variant_rsid(variant_code)
+            return rsid, 200
+        except VariantServiceNotAvailable as e:
+            return {"message": str(e)}, 404
+        except Exception:
+            logging.exception("Error in /rsid endpoint")
+            return {"message": "Internal server error."}, 500
+
+@api.route("/nearest_genes/<variant_code>")
+class NearestGenes(Resource):
+    def get(self, variant_code, stratification="european.male"):
+        try:
+            variant_service = get_variant_service()
+            nearest_genes = variant_service.get_nearest_genes(variant_code)
+            return nearest_genes, 200
+        except VariantServiceNotAvailable as e:
+            return {"message": str(e)}, 404
+        except Exception:
+            logging.exception("Error in /nearest_genes endpoint")
+            return {"message": "Internal server error."}, 500

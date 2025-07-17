@@ -93,6 +93,12 @@ class PhewasMatrixReader:
     # def get_phenocodes(self):
     #     return list(self._colidxs_for_pheno)
 
+    def get_nearest_genes(self):
+        with pysam.TabixFile(self.filepath) as tbx:
+            for row in tbx.fetch(self.data["chrom"], self.data["pos"] - 1, self.data["pos"]):
+                row_data = row.split("\t")
+                return row_data[self._colidxs.get("nearest_genes")]
+
     def find_matching_row(self):
         with pysam.TabixFile(self.filepath) as tbx:
             for row in tbx.fetch(self.data["chrom"], self.data["pos"] - 1, self.data["pos"]):

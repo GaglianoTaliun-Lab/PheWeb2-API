@@ -1,5 +1,5 @@
 from flask import Flask
-from models.autocomplete_util import AutocompleteLoading
+from models.variant_utils import VariantLoading
 import os
 
 def run(argv):
@@ -8,5 +8,5 @@ def run(argv):
 
     print(f"DEBUG: Loading variant data from {app.config['SITES_DIR']}")
     with app.app_context():
-        AutocompleteLoading(app.config["SITES_DIR"])
-    print("DEBUG: Autocomplete DB creation complete.")
+        VariantLoading(app.config["SITES_DIR"])
+    print("DEBUG: Variant DB creation complete.")
