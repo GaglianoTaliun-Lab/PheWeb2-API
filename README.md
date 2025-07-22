@@ -5,10 +5,22 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 Python 3.12+ is required (all python package dependencies can be found in the `requirements.txt`)
 Linux-Based Environment
  
-## Installation
+## 1. Installation
+
+Clone this repository:
+```
+git clone https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API.git
+python -m venv .venv
+```
+
+Create and activate Python virtual environment:
 ```
 python -m venv .venv
 source .venv/bin/activate
+```
+
+Install the required Python packages:
+```
 pip install -r requirements.txt
 ```
  
