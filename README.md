@@ -4,7 +4,7 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 > [!NOTE]
 > The code was developed and tested with Python 3.12+ on Linux-based OS.
  
-## 1. Installation
+## 1. Install
 
 Clone this repository:
 ```
@@ -22,6 +22,14 @@ Install the required Python packages:
 ```
 pip install -r requirements.txt
 ```
+
+## 2. Run using the example data
+
+Download and unarchive the example data:
+```
+tar -xzvf example_regenie.tar.gz
+```
+
 
 ## 2. Required GWAS/PheWAS summary statistics
 Each GWAS/PheWAS summary statistics file must contain the following minimal information:
