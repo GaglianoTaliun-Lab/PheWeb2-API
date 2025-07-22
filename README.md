@@ -9,7 +9,7 @@ This is an implementation of the data model and API for [PheWeb 2.0](https://git
 Clone this repository:
 ```
 git clone https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API.git
-python -m venv .venv
+cd PheWeb2.0-API
 ```
 
 Create and activate Python virtual environment:
