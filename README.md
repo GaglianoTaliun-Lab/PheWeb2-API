@@ -22,16 +22,9 @@ Install the required Python packages:
 ```
 pip install -r requirements.txt
 ```
- 
-## Preprocessing
 
-
- 
-### GWAS Summary Statistics
-Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
-
-Specifically, summary statisitcs must contain:
-
+## 2. Required GWAS/PheWAS summary statistics
+Each GWAS/PheWAS summary statistics file must contain the following minimal information:
 | column description | name       | allowed values              |
 | ------------------ | ---------- | --------------------------- |
 | Chromosome         | CHROM      | 1-23                        |
@@ -44,6 +37,12 @@ Specifically, summary statisitcs must contain:
 | Statistical Test   | TEST       | anything                    | 
 
 Any field can be null if it is one of ['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan', 'NaN', '-NaN', 'null', 'NULL']. If a required field is null, the variant gets dropped.
+
+> [!NOTE]
+> Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
+
+## Preprocessing
+
  
 ### Imputation Quality Filtering
 In the preprocessing, you can filter out variants that have imputation quality lower than a customized threshold. To implement this, you can use specific field from the GWAS results (e.g., the INFO field in REGENIE output). You can specify the imputation quality field and threshold in the `config.py` by
