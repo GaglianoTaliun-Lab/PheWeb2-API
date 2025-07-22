@@ -1,9 +1,8 @@
 # PheWeb 2.0 API
 This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb 2.0 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
  
-## Dependencies
-Python 3.12+ is required (all python package dependencies can be found in the `requirements.txt`)
-Linux-Based Environment
+> [!NOTE]
+> The code was developed and tested with Python 3.12+ on Linux-based OS.
  
 ## 1. Installation
 
