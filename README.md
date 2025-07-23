@@ -36,6 +36,11 @@ tar -xzvf example_regenie.tar.gz
 pheweb2 phenolist import-phenolist pheno-list-example.csv 
 ```
 
+3. Ingest the example data into PheWeb2:
+```
+pheweb2 process
+```
+
 ## 2. Required GWAS/PheWAS summary statistics
 Each GWAS/PheWAS summary statistics file must contain the following minimal information:
 | column description | name       | allowed values              |
