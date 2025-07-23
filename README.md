@@ -30,6 +30,10 @@ Download and unarchive the example data:
 tar -xzvf example_regenie.tar.gz
 ```
 
+Generate JSON file describing the phenotypes:
+```
+pheweb2 phenolist import-phenolist pheno-list-example.csv 
+```
 
 ## 2. Required GWAS/PheWAS summary statistics
 Each GWAS/PheWAS summary statistics file must contain the following minimal information:
