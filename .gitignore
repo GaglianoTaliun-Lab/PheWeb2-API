@@ -29,3 +29,4 @@ browser*
 
 generated-by-pheweb.tar.gz
 
+tests/example_data/BLD_nonHDL_COM.regenie.gz
