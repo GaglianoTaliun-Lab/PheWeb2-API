@@ -18,9 +18,9 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the required Python packages:
+Install PheWeb2 Python package and its dependencies:
 ```
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## 2. Run using the example data
