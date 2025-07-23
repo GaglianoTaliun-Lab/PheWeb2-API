@@ -41,6 +41,8 @@ pheweb2 phenolist import-phenolist pheno-list-example.csv
 pheweb2 process
 ```
 
+## 3. Run using your own data
+
 ## 2. Required GWAS/PheWAS summary statistics
 Each GWAS/PheWAS summary statistics file must contain the following minimal information:
 | column description | name       | allowed values              |
