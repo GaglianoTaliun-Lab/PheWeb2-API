@@ -1,36 +1,37 @@
-# PheWeb 2.0 API
-This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb 2.0 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
- 
-> [!NOTE]
-> The code was developed and tested with Python 3.12+ on Linux-based OS.
- 
+# PheWeb2 API
+This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
+  
 ## 1. Install
 
-Clone this repository:
+> [!NOTE]
+> The code was developed and tested with Python 3.12+ on Linux-based OS.
+
+You can install PheWeb2 and all required dependencies within a virtual environment using the following steps:
+1. Clone this repository:
 ```
 git clone https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API.git
 cd PheWeb2.0-API
 ```
-
-Create and activate Python virtual environment:
+2. Create and activate Python virtual environment:
 ```
 python -m venv .venv
 source .venv/bin/activate
 ```
-
-Install PheWeb2 Python package and its dependencies:
+3. Install PheWeb2 Python package and its dependencies:
 ```
 pip install -e .
 ```
 
 ## 2. Run using the example data
+To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
-Download and unarchive the example data:
+1. Download and unarchive the example data (~13 GB):
 ```
+wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
 tar -xzvf example_regenie.tar.gz
 ```
 
-Generate JSON file describing the phenotypes:
+2. Generate JSON file describing the phenotypes:
 ```
 pheweb2 phenolist import-phenolist pheno-list-example.csv 
 ```
