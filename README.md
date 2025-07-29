@@ -1,5 +1,5 @@
 # PheWeb2 API
-This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
+This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
   
 ## 1. Install
 
@@ -9,8 +9,8 @@ This is an implementation of the data model and API for [PheWeb2](https://github
 You can install PheWeb2 and all required dependencies within a virtual environment using the following steps:
 1. Clone this repository:
 ```
-git clone https://github.com/GaglianoTaliun-Lab/PheWeb2.0-API.git
-cd PheWeb2.0-API
+git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git
+cd PheWeb2-API
 ```
 2. Create and activate Python virtual environment:
 ```
