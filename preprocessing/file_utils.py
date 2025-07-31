@@ -27,8 +27,8 @@ def get_generated_path(*path_parts: str) -> str:
     make_basedir(path)
     return path
 
-dbsnp_version = "154"
-genes_version = "37"
+dbsnp_version = "157"
+genes_version = "48"
 
 
 def get_filepath(kind: str, *, must_exist: bool = True) -> str:

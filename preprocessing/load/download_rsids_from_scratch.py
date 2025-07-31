@@ -26,7 +26,7 @@ def download_rsids_for_build(hg_build_number: int) -> None:
                     dbsnp_version
                 )
             elif hg_build_number == 38:
-                url = "https://ftp.ncbi.nih.gov/snp/redesign/archive/b{}/VCF/GCF_000001405.38.gz".format(
+                url = "https://ftp.ncbi.nih.gov/snp/redesign/archive/b{}/VCF/GCF_000001405.40.gz".format(
                     dbsnp_version
                 )
             else:

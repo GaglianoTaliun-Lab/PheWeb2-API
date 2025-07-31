@@ -36,8 +36,8 @@ def get_rsids_for_build(hg_build_number: int) -> None:
             )
         )
 
-    # Download from https://resources.pheweb.org/
-    url = "https://resources.pheweb.org/{}".format(dest_filepath.name)
+    # Download from PheWeb 2 public pucket
+    url = "https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/{}".format(dest_filepath.name)
     print("Downloading {} from {}".format(dest_filepath, url))
     dest_tmp_filepath = Path(get_tmp_path(dest_filepath))
     try:

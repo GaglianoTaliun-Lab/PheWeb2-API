@@ -203,7 +203,7 @@ def is_allowed_to_download() -> bool:
 
 ## Loading config
 def get_hg_build_number() -> int:
-    ret = _get_config_int("hg_build_number", 19)
+    ret = _get_config_int("HG_BUILD_NUMBER", 19)
     if ret not in [19, 38]:
         raise PheWebError(
             "hg_build_number must be either 19 or 38, not {!r}".format(ret)

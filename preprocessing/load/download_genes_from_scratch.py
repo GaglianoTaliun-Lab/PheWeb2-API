@@ -65,6 +65,7 @@ sRNA
 TEC
 vaultRNA
 vault_RNA
+artifact
 """.split()
 ).union(good_genetypes)
 
