@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # to install: `pip3 install -e .`
 # to install latest from pypi: `pip3 install --upgrade --upgrade-strategy eager --no-cache-dir pheweb`
 # to upload to pypi: `./setup.py publish`
@@ -12,16 +13,16 @@ import sys
 
 if sys.platform.startswith("win"):
     raise Exception(
-        "PheWeb doesn't support Windows, because pysam doesn't support windows."
+        "PheWeb2 doesn't support Windows."
     )
 if sys.version_info.major <= 2:
     print(
-        "PheWeb requires Python 3.  Please use Python 3 by installing it with `pip3 install pheweb` or `python3 -m pip install pheweb`."
+        "PheWeb2 requires Python 3."
     )
     sys.exit(1)
 if sys.version_info < (3, 12):
     print(
-        "PheWeb requires Python 3.12 or newer.  Use Miniconda or Homebrew or another solution to install a newer Python."
+        "PheWeb2 requires Python 3.12 or newer."
     )
     sys.exit(1)
 
@@ -48,13 +49,11 @@ if sys.argv[-1] in ["publish", "pub"]:
 
 
 setup(
-    name="PheWeb",
-    version=version,
-    description="A tool for building PheWAS websites from association files",
-    long_description="Please see the README `on github <https://github.com/statgen/pheweb>`__",
-    author="Peter VandeHaar",
-    author_email="pjvh@umich.edu",
-    url="https://github.com/statgen/pheweb",
+    name = "PheWeb2",
+    version = version,
+    description = "A data model and API for building PheWeb websites from genome-wide and phenome-wide association files",
+    long_description = "Please see the README `on github <https://github.com/GaglianoTaliun-Lab/PheWeb2-API>`__",
+    url="https://github.com/GaglianoTaliun-Lab/PheWeb2-API",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: Unix",
@@ -70,9 +69,8 @@ setup(
     py_modules=["app", "config"],
     entry_points={
         "console_scripts": [
-            "pheweb=preprocessing.command_line:main",
-            "pheweb-run=app:main",
-            #'detect-ref=pheweb.load.detect_ref:main',
+            "pheweb2=preprocessing.command_line:main",
+            "pheweb2-api=app:main",
         ]
     },
     include_package_data=True,
@@ -83,9 +81,17 @@ setup(
         "cffi==1.16.0",
     ],
     install_requires=[
+        "astroid==3.3.5",
         "Flask==3.0.3",
         "Flask-Compress==1.15",
+        "Flask-Cors==5.0.0",
         "Flask-Login==0.6.3",
+        "flask-restx==1.3.0",
+        "gunicorn==22.0.0",
+        "psutil==6.0.0",
+        "setuptools==75.5.0",
+        "tomlkit==0.13.2",
+        "zope.event==5.0",
         "rauth==0.7.3",
         "pysam==0.22.1",
         "intervaltree==3.1.0",
@@ -93,13 +99,11 @@ setup(
         "scipy==1.15.1",
         "numpy==2.2.2",
         "requests[security]==2.32.3",
-        "gunicorn==22.0.0",
         "boltons==24.0.0",
         "cffi==1.16.0",  # in both `setup_requires` and `install_requires` as per <https://github.com/pypa/setuptools/issues/391>
         "wget==3.2",
         "gevent==24.2.1",
-        "psutil==6.0.0",
-        "markupsafe==2.1.5",  # flask 1.1 uses jinja 2.x which breaks with markupsafe>2.0.1.  Pinning all deps might be better.
+        #"markupsafe==2.1.5",  # flask 1.1 uses jinja 2.x which breaks with markupsafe>2.0.1.  Pinning all deps might be better.
         "python_dotenv==1.0.1",
         "intervaltree==3.1.0",
         "ipython==8.12.3",

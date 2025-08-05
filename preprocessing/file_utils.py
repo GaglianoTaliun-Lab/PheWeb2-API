@@ -23,12 +23,9 @@ from typing import List, Callable, Dict, Union, Iterator, Optional, Any
 
 
 def get_generated_path(*path_parts: str) -> str:
-    path = os.path.join(conf.get_generated_by_pheweb_dir(), *path_parts)
+    path = os.path.join(conf.get_pheweb_data_dir(), *path_parts)
     make_basedir(path)
     return path
-
-dbsnp_version = "157"
-genes_version = "48"
 
 
 def get_filepath(kind: str, *, must_exist: bool = True) -> str:
@@ -47,43 +44,43 @@ def get_filepath(kind: str, *, must_exist: bool = True) -> str:
 _single_filepaths: Dict[str, Callable[[], str]] = {
     # in data_dir:
     "correlations-raw": (
-        lambda: os.path.join(conf.get_data_dir(), "pheno-correlations.txt")
+        lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-correlations.txt")
     ),
-    "phenolist": (lambda: os.path.join(conf.get_data_dir(), "pheno-list.json")),
+    "phenolist": (lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-list.json")),
     # depend on hg_build_number, dbsnp_version, genes_version:
     "rsids": (
         lambda: get_generated_path(
             "resources/rsids-v{}-hg{}.tsv.gz".format(
-                dbsnp_version, conf.get_hg_build_number()
+                conf.get_dbsnp_version(), conf.get_hg_build_number()
             )
         )
     ),
     "rsids-hg19": (
         lambda: get_generated_path(
-            "resources/rsids-v{}-hg19.tsv.gz".format(dbsnp_version)
+            "resources/rsids-v{}-hg19.tsv.gz".format(conf.get_dbsnp_version())
         )
     ),
     "rsids-hg38": (
         lambda: get_generated_path(
-            "resources/rsids-v{}-hg38.tsv.gz".format(dbsnp_version)
+            "resources/rsids-v{}-hg38.tsv.gz".format(conf.get_dbsnp_version())
         )
     ),
     "genes": (
         lambda: get_generated_path(
             "resources/genes-v{}-hg{}.bed".format(
-                genes_version, conf.get_hg_build_number()
+                conf.get_gencode_version(), conf.get_hg_build_number()
             )
         )
     ),
     "genes-hg19": (
-        lambda: get_generated_path("resources/genes-v{}-hg19.bed".format(genes_version))
+        lambda: get_generated_path("resources/genes-v{}-hg19.bed".format(conf.get_gencode_version()))
     ),
     "genes-hg38": (
-        lambda: get_generated_path("resources/genes-v{}-hg38.bed".format(genes_version))
+        lambda: get_generated_path("resources/genes-v{}-hg38.bed".format(conf.get_gencode_version()))
     ),
     "gene-aliases-sqlite3": (
         lambda: get_generated_path(
-            "resources/gene_aliases-v{}.sqlite3".format(genes_version)
+            "resources/gene_aliases-v{}.sqlite3".format(conf.get_gencode_version())
         )
     ),
     # simple:

@@ -1,5 +1,6 @@
 import csv
 import typing as ty
+from preprocessing import conf
 from flask import current_app
 
 chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]
@@ -13,8 +14,7 @@ for alias, chrom in list(chrom_aliases.items()):
 
 def get_gene_tuples_with_ensg() -> ty.Iterator[ty.Tuple[str, int, int, str, str]]:
     with open(
-        # f'{current_app.config['BASE_DIR']}/resources/genes-v{37}-hg{38}.bed'
-        f"{current_app.config['BASE_DIR']}/resources/genes-v{37}-hg{38}.bed"
+        "{}/resources/genes-v{}-hg{}.bed".format(conf.get_pheweb_data_dir(), conf.get_gencode_version(), conf.get_hg_build_number())
     ) as f:  # TODO : this was flexible in the original pheweb
         for row in csv.reader(f, delimiter="\t"):
             assert row[0] in chrom_order, row[0]

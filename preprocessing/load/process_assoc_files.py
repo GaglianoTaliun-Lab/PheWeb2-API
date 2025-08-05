@@ -22,7 +22,7 @@ manhattan
 top_hits
 qq
 phenotypes
-best-of-pheno
+best_of_pheno
 pheno_correlation
 generate_variant_db
 generate_autocomplete_db

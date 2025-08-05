@@ -12,6 +12,8 @@ from flask import g
 
 class GenesServiceNotAvailable(Exception):
     pass
+
+
 def get_genes_service():
     if "genes" not in g:
         g.genes = create_genes()
@@ -24,6 +26,8 @@ def get_genes_service():
 
 class PhenotypeServiceNotAvailable(Exception):
     pass
+
+
 def get_pheno_service():
     if "pheno" not in g:
         g.pheno = create_phenotypes_list()
@@ -32,7 +36,6 @@ def get_pheno_service():
                 "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
             )
     return g.pheno
-
 
 
 class AutocompleteLoading:
@@ -202,7 +205,6 @@ class AutocompleteLoading:
     
     def load_or_create_autocomplete_db_genes_table(self):
         db_path = self.db_path
-        
         genes_service = get_genes_service()
         gene_dict = genes_service.get_all_genes()
         if gene_dict is None:

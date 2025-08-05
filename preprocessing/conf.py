@@ -148,18 +148,20 @@ def _get_config_bool(key: str, default: bool) -> bool:
     _check_overrides_type(key, bool)
     return overrides.get(key, default)
 
-def get_generated_by_pheweb_dir() -> str:
-    if 'BASE_DIR' in os.environ:
-        return os.path.abspath(os.environ['BASE_DIR'])
+
+def get_pheweb_data_dir() -> str:
+    if 'PHEWEB_DATA_DIR' in os.environ:
+        return os.path.abspath(os.environ['PHEWEBD_DATA_DIR'])
     else:
-        return os.path.join(get_data_dir(), "generated-by-pheweb")
+        return _get_config_str("PHEWEB_DATA_DIR", os.path.join(get_pheweb_base_dir(), "generated-by-pheweb"))
+
 
 # Core config
-def get_data_dir() -> str:
-    if "PHEWEB_DATADIR" in os.environ:
-        data_dir = os.environ["PHEWEB_DATADIR"]
+def get_pheweb_base_dir() -> str:
+    if "PHEWEB_BASE_DIR" in os.environ:
+        data_dir = os.environ["PHEWEB_BASE_DIR"]
     else:
-        data_dir = _get_config_str("data_dir", os.path.curdir)
+        data_dir = _get_config_str("PHEWEB_BASE_DIR", os.path.curdir)
     data_dir = os.path.abspath(data_dir)
     
     if not _mkdir_and_check_readable(data_dir):
@@ -214,6 +216,14 @@ def get_hg_build_number() -> int:
 def get_grch_build_number() -> int:
     hg = get_hg_build_number()
     return hg if hg >= 38 else 18 + hg
+
+
+def get_gencode_version() -> int:
+    return _get_config_int("GENCODE_VERSION", 47)
+
+
+def get_dbsnp_version() -> int:
+    return _get_config_int("DBSNP_VERSION", 157)
 
 
 def get_num_procs(cmd: Optional[str] = None) -> int:

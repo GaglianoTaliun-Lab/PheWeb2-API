@@ -11,16 +11,6 @@ import functools
 from typing import List, Dict, Callable
 
 
-# if sys.platform.startswith('win'):
-#     raise Exception("PheWeb doesn't support Windows, because pysam doesn't support windows.")
-# if sys.version_info.major <= 2:
-#     print("PheWeb requires Python 3.  Please use Python 3 by installing it with `pip3 install pheweb` or `python3 -m pip install pheweb`.")
-#     sys.exit(1)
-# if sys.version_info < (3, 6):
-#     print("PheWeb requires Python 3.6 or newer.  Use Miniconda or Homebrew or another solution to install a newer Python.")
-#     sys.exit(1)
-
-
 if "PHEWEB_IPDB" in os.environ:
     # from <http://ipython.readthedocs.io/en/stable/interactive/reference.html#post-mortem-debugging>
     from IPython.core import ultratb
@@ -109,31 +99,31 @@ def print_help_message() -> None:
 
     print(
         """\
-PheWeb {}
+PheWeb 2 API {}
 
 To see more information about a subcommand, run that command followed by `-h`.
 
 Subcommands:
 
-    pheweb phenolist
+    pheweb2 phenolist
         Prepare a list of phenotypes.
 
-    pheweb process
+    pheweb2 process
         Once a phenolist has been prepared, load all data to be ready to run the server.
 
-    pheweb serve
+    pheweb2 serve
         Host a webserver.
 
-    pheweb conf key=value ... <subcommand> <arg>...
+    pheweb2 conf key=value ... <subcommand> <arg>...
         Run `pheweb <subcommand> <arg>...` with some configuration changed, overriding values in `config.py`.
 
-    pheweb conf
+    pheweb2 conf
         Show configuration.
 
-    pheweb generate_autocomplete_db
+    pheweb2 generate_autocomplete_db
         Generate autocomplete database.
 
-    pheweb generate_variant_db
+    pheweb2 generate_variant_db
         Generate variant database.
 
 """.format(version.version)
@@ -154,7 +144,7 @@ def run(argv: List[str]) -> None:
 # this is in `entry_points` in setup.py:
 def main() -> None:
     # Load config.py
-    config_filepath = os.path.join(conf.get_data_dir(), "config.py")
+    config_filepath = os.path.join(conf.get_pheweb_base_dir(), "config.py")
     if os.path.isfile(config_filepath):
         conf.load_overrides_from_file(config_filepath)
     # Run

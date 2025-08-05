@@ -21,8 +21,9 @@ class PhenoReader:
     """
 
     def __init__(self, pheno, minimum_maf=0):
-        field_aliases = conf.get_field_aliases()
-        for alias, field_name in field_aliases.items():
+        self.r2_reader = None
+        self.use_external_r2 = False
+        for alias, field_name in conf.get_field_aliases().items():
             if isinstance(alias, str) and alias.startswith("file://") and field_name == "imp_quality":
                 try:
                     file_path = alias.split(",")[0].split("file://")[1]
@@ -46,7 +47,7 @@ class PhenoReader:
     def get_variants(self):
         yield from self._order_refalt_lexicographically(
             itertools.chain.from_iterable(
-                AssocFileReader(filepath=filepath, pheno=self._pheno, r2_reader=self.r2_reader, use_external_r2=True).get_variants(
+                AssocFileReader(filepath=filepath, pheno=self._pheno, r2_reader=self.r2_reader, use_external_r2=self.use_external_r2).get_variants(
                     minimum_maf=self._minimum_maf
                 )
                 for filepath in self.filepaths

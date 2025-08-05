@@ -1,15 +1,15 @@
 phenocode,phenostring,assoc_files,num_samples,num_cases,num_controls,category,interaction,stratification.sex,stratification.ancestry
-CCC_MACDEG_COM,Macular degeneration,/raw_data/interaction/_CCC_MACDEG_COM.txt.gz,24353,1035,23318,Diseases,,both,european
-CCC_MACDEG_COM,Macular degeneration,/raw_data/interaction/_CCC_MACDEG_COM.txt.gz,24353,1035,23318,Diseases,BSEX,both,european
-CCC_MACDEG_COM,Macular degeneration,/raw_data/female/_CCC_MACDEG_COM.txt.gz,12268,547,11721,Diseases,,female,european
-CCC_MACDEG_COM,Macular degeneration,/raw_data/male/_CCC_MACDEG_COM.txt.gz,12096,488,11608,Diseases,,male,european
-DIA_TYPE1_COM,Type 1 Diabetes,/raw_data/interaction/_DIA_TYPE1_COM.txt.gz,20369,135,20234,Diseases,,both,european
-DIA_TYPE1_COM,Type 1 Diabetes,/raw_data/interaction/_DIA_TYPE1_COM.txt.gz,20369,135,20234,Diseases,BSEX,both,european
-DIA_TYPE1_COM,Type 1 Diabetes,/raw_data/female/_DIA_TYPE1_COM.txt.gz,10498,64,10434,Diseases,,female,european
-DIA_TYPE1_COM,Type 1 Diabetes,/raw_data/male/_DIA_TYPE1_COM.txt.gz,9881,71,9810,Diseases,,male,european
-DIA_TYPE2_COM,Type 2 Diabetes,/raw_data/interaction/_DIA_TYPE2_COM.txt.gz,22364,2130,20234,Diseases,,both,european
-DIA_TYPE2_COM,Type 2 Diabetes,/raw_data/interaction/_DIA_TYPE2_COM.txt.gz,22364,2130,20234,Diseases,BSEX,both,european
-DIA_TYPE2_COM,Type 2 Diabetes,/raw_data/female/_DIA_TYPE2_COM.txt.gz,11314,880,10434,Diseases,,female,european
-DIA_TYPE2_COM,Type 2 Diabetes,/raw_data/male/_DIA_TYPE2_COM.txt.gz,11060,1250,9810,Diseases,,male,european
-WHO_MPAG_AG_COM,Age of Menopause Onset,/raw_data/no_interaction/_WHO_MPAG_AG_COM.txt.gz,7959,,,Reproduction,,both,european
-WHO_MPAG_AG_COM,Age of Menopause Onset,/raw_data/female/_WHO_MPAG_AG_COM.txt.gz,7963,,,Reproduction,,female,european
+CCC_MACDEG_COM,Macular degeneration,example_regenie/interaction/_CCC_MACDEG_COM.txt.gz,24353,1035,23318,Diseases,,both,european
+CCC_MACDEG_COM,Macular degeneration,example_regenie/interaction/_CCC_MACDEG_COM.txt.gz,24353,1035,23318,Diseases,sex,both,european
+CCC_MACDEG_COM,Macular degeneration,example_regenie/female/_CCC_MACDEG_COM.txt.gz,12268,547,11721,Diseases,,female,european
+CCC_MACDEG_COM,Macular degeneration,example_regenie/male/_CCC_MACDEG_COM.txt.gz,12096,488,11608,Diseases,,male,european
+DIA_TYPE1_COM,Type 1 Diabetes,example_regenie/interaction/_DIA_TYPE1_COM.txt.gz,20369,135,20234,Diseases,,both,european
+DIA_TYPE1_COM,Type 1 Diabetes,example_regenie/interaction/_DIA_TYPE1_COM.txt.gz,20369,135,20234,Diseases,sex,both,european
+DIA_TYPE1_COM,Type 1 Diabetes,example_regenie/female/_DIA_TYPE1_COM.txt.gz,10498,64,10434,Diseases,,female,european
+DIA_TYPE1_COM,Type 1 Diabetes,example_regenie/male/_DIA_TYPE1_COM.txt.gz,9881,71,9810,Diseases,,male,european
+DIA_TYPE2_COM,Type 2 Diabetes,example_regenie/interaction/_DIA_TYPE2_COM.txt.gz,22364,2130,20234,Diseases,,both,european
+DIA_TYPE2_COM,Type 2 Diabetes,example_regenie/interaction/_DIA_TYPE2_COM.txt.gz,22364,2130,20234,Diseases,sex,both,european
+DIA_TYPE2_COM,Type 2 Diabetes,example_regenie/female/_DIA_TYPE2_COM.txt.gz,11314,880,10434,Diseases,,female,european
+DIA_TYPE2_COM,Type 2 Diabetes,example_regenie/male/_DIA_TYPE2_COM.txt.gz,11060,1250,9810,Diseases,,male,european
+WHO_MPAG_AG_COM,Age of Menopause Onset,example_regenie/no_interaction/_WHO_MPAG_AG_COM.txt.gz,7959,,,Reproduction,,both,european
+WHO_MPAG_AG_COM,Age of Menopause Onset,example_regenie/female/_WHO_MPAG_AG_COM.txt.gz,7963,,,Reproduction,,female,european
