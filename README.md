@@ -36,9 +36,14 @@ tar -xzvf example_regenie.tar.gz
 pheweb2 phenolist import-phenolist pheno-list-example.csv 
 ```
 
-3. Ingest the example data into PheWeb2:
+3. Ingest the example data into PheWeb2 (this can take some time):
 ```
 pheweb2 process
+```
+
+4.  Launch PheWeb2 API endpoint:
+```
+pheweb2-api
 ```
 
 ## 3. Run using your own data
