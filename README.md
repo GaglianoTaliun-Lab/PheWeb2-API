@@ -1,26 +1,55 @@
-# PheWeb 2.0 API
-This is an implementation of the data model and API for [PheWeb 2.0](https://github.com/GaglianoTaliun-Lab/PheWeb2.0/tree/main) - an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) tool for interactive querying, visualizing, and sharing summary-level results from GWAS/PheWAS studies, which offers intuitive and efficient support for stratified results. In PheWeb 2.0, we de-coupled the data model and API from the UI to improve code maintenance and re-usability and allow new features such as on-the-fly GWAS/PheWAS results querying by other external resources and applications. 
- 
-## Dependencies
-Python 3.12+ is required (all python package dependencies can be found in the `requirements.txt`)
-Linux-Based Environment
- 
-## Installation
+# PheWeb2 API
+This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
+  
+## 1. Install
+
+> [!NOTE]
+> The code was developed and tested with Python 3.12+ on Linux-based OS.
+
+You can install PheWeb2 and all required dependencies within a virtual environment using the following steps:
+1. Clone this repository:
+```
+git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git
+cd PheWeb2-API
+```
+2. Create and activate Python virtual environment:
 ```
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 ```
- 
-## Preprocessing
+3. Install PheWeb2 Python package and its dependencies:
+```
+pip install -e .
+```
 
+## 2. Run using the example data
+To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
- 
-### GWAS Summary Statistics
-Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
+1. Download and unarchive the example data (~13 GB):
+```
+wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
+tar -xzvf example_regenie.tar.gz
+```
 
-Specifically, summary statisitcs must contain:
+2. Generate JSON file describing the phenotypes:
+```
+pheweb2 phenolist import-phenolist pheno-list-example.csv 
+```
 
+3. Ingest the example data into PheWeb2 (this can take some time):
+```
+pheweb2 process
+```
+
+4.  Launch PheWeb2 API endpoint:
+```
+pheweb2-api
+```
+
+## 3. Run using your own data
+
+## 2. Required GWAS/PheWAS summary statistics
+Each GWAS/PheWAS summary statistics file must contain the following minimal information:
 | column description | name       | allowed values              |
 | ------------------ | ---------- | --------------------------- |
 | Chromosome         | CHROM      | 1-23                        |
@@ -33,6 +62,12 @@ Specifically, summary statisitcs must contain:
 | Statistical Test   | TEST       | anything                    | 
 
 Any field can be null if it is one of ['', '.', 'NA', 'N/A', 'n/a', 'nan', '-nan', 'NaN', '-NaN', 'null', 'NULL']. If a required field is null, the variant gets dropped.
+
+> [!NOTE]
+> Currently, all preprocessing functions require output from [Regenie](https://rgcgithub.github.io/regenie/).
+
+## Preprocessing
+
  
 ### Imputation Quality Filtering
 In the preprocessing, you can filter out variants that have imputation quality lower than a customized threshold. To implement this, you can use specific field from the GWAS results (e.g., the INFO field in REGENIE output). You can specify the imputation quality field and threshold in the `config.py` by
