@@ -5,11 +5,11 @@ from . import parse_utils
 
 import os
 import boltons.fileutils
-from typing import Optional, Any, Dict, Tuple, List
+from typing import Optional, Any, Dict, Tuple, List, Set
 
 
 # All state lives in this dictionary.
-# PheWeb should run fine when this is empty.
+# PheWeb2  should run fine when this is empty.
 # Modify with `set_override(key,value)`.
 overrides: Dict[str, Any] = {}
 
@@ -73,6 +73,13 @@ def set_override(key: str, value: Any) -> None:
         }
 
         overrides[key] = {**parse_utils.default_field_aliases, **value}
+    elif key == "ASSOC_TEST_NAME":
+        if not isinstance(value, list):
+            raise PheWebError("ASSOC_TEST_NAME should be list, not {!r}".format(value))
+        for test_name in value:
+            if not isinstance(test_name, str):
+                raise PheWebError("Test name {!r} should be str.".format(test_name))
+        overrides[key] = set(value)
     else:
         overrides[key] = value
 
@@ -149,6 +156,7 @@ def _get_config_bool(key: str, default: bool) -> bool:
     return overrides.get(key, default)
 
 
+# Core config
 def get_pheweb_data_dir() -> str:
     if 'PHEWEB_DATA_DIR' in os.environ:
         return os.path.abspath(os.environ['PHEWEBD_DATA_DIR'])
@@ -156,21 +164,20 @@ def get_pheweb_data_dir() -> str:
         return _get_config_str("PHEWEB_DATA_DIR", os.path.join(get_pheweb_base_dir(), "generated-by-pheweb"))
 
 
-# Core config
 def get_pheweb_base_dir() -> str:
     if "PHEWEB_BASE_DIR" in os.environ:
-        data_dir = os.environ["PHEWEB_BASE_DIR"]
+        base_dir = os.environ["PHEWEB_BASE_DIR"]
     else:
-        data_dir = _get_config_str("PHEWEB_BASE_DIR", os.path.curdir)
-    data_dir = os.path.abspath(data_dir)
+        base_dir = _get_config_str("PHEWEB_BASE_DIR", os.path.curdir)
+    base_dir = os.path.abspath(base_dir)
     
-    if not _mkdir_and_check_readable(data_dir):
+    if not _mkdir_and_check_readable(base_dir):
         raise PheWebError(
-            "PheWeb cannot use data_dir {!r}, because it either can't create it or can't read it.".format(
-                data_dir
+            "PheWeb cannot use PHEWEB_BASE_DIR {!r}, because it either can't create it or can't read it.".format(
+                base_dir
             )
         )
-    return data_dir
+    return base_dir
 
 
 def get_cache_dir() -> Optional[str]:
@@ -247,18 +254,37 @@ def get_num_procs(cmd: Optional[str] = None) -> int:
 
 
 ## Parsing config
+def has_stratifications() -> bool:
+    return _get_config_bool("ENABLE_STRATIFICATIONS", True)
+
+
+def get_assoc_test_name() -> Set[str]:
+    return overrides.get("ASSOC_TEST_NAME", {"ADD"})
+
+
 def get_assoc_min_maf() -> float:
-    return _get_config_float("assoc_min_maf", 0)
+    return _get_config_float("ASSOC_MIN_MAF", 0)
+
+
+def get_interaction_test_name() -> str:
+    return _get_config_str("INTERACTION_TEST_NAME", "ADD-INT_SNPxVAR")
+
+
+def get_interaction_min_maf() -> float:
+    return _get_config_optional_float("INTERACTION_MIN_MAF")
+
+
+def get_interaction_min_mac() -> int:
+    return _get_config_optional_int("INTERACTION_MIN_MAC")
+
 
 def get_min_imp_quality() -> float:
     return _get_config_float("MIN_IMP_QUALITY", 0.3)
 
+
 def get_field_aliases() -> Dict[str, str]:
     return overrides.get("field_aliases", parse_utils.default_field_aliases)
 
-
-def get_interaction_aliases() -> Dict[str, str]:
-    return overrides.get("interaction_aliases", None)
 
 ## Manhattan / top-hits / top-loci config
 def get_within_pheno_mask_around_peak() -> int:
@@ -304,10 +330,6 @@ def pval_is_neglog10() -> bool:
 
 def get_pheno_correlations_pvalue_threshold() -> float:
     return _get_config_float("pheno_correlations_pvalue_threshold", 0.05)
-
-
-def stratified() -> bool:
-    return _get_config_bool("stratified", True)
 
 
 ## Serving config
@@ -382,8 +404,4 @@ def should_show_manhattan_filter_button() -> bool:
 def should_show_manhattan_filter_consequence() -> bool:
     return _get_config_bool("show_manhattan_filter_consequence", False)
 
-def get_interaction_mac_threshold() -> int:
-    return _get_config_optional_int("INTERACTION_MAC_THRESHOLD")
 
-def get_interaction_maf_threshold() -> float:
-    return _get_config_optional_int("INTERACTION_MAF_THRESHOLD")

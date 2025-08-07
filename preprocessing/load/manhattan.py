@@ -54,7 +54,7 @@ def run(argv: List[str]) -> None:
         if pheno["interaction"] is not None:
             pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
             interaction_phenos.append(pheno)
-        elif conf.stratified():
+        elif conf.has_stratifications():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             non_interaction_phenos.append(pheno)
 

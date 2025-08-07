@@ -29,7 +29,7 @@ def run(argv: List[str]) -> None:
     # Check whether we're already up-to-date.
     out_filepath = Path(get_filepath("best-phenos-by-gene-sqlite3", must_exist=False))
 
-    if conf.stratified():
+    if conf.has_stratifications():
         matrix_filepaths = []
         stratification_paths = set(get_stratification_paths(get_phenolist()))
         print(f"stratification paths : {stratification_paths}")

@@ -385,7 +385,7 @@ class MatrixReader:
         phenos: List[Dict[str, Any]] = get_phenolist()
         phenocodes: List[str] = [pheno["phenocode"] for pheno in phenos]
 
-        if conf.stratified():
+        if conf.has_stratifications():
             phenocodes: List[str] = [
                 get_phenocode_with_stratifications(pheno) for pheno in phenos
             ]

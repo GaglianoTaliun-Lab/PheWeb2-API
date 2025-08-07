@@ -161,12 +161,12 @@ class AssocFileReader:
                 if fieldval["from_assoc_files"]
             ]
 
-        interaction_aliases = conf.get_interaction_aliases()
-        if interaction_aliases is not None:
-            pre_mapped_interaction = {v: k for k, v in interaction_aliases.items()}
-        else:
-            pre_mapped_interaction = {self._interaction : self._interaction}
-            
+        
+        assoc_test_name = conf.get_assoc_test_name()
+        interaction_test_name = conf.get_interaction_test_name()
+        interaction_minimum_maf = conf.get_interaction_min_maf()
+        interaction_minimum_mac = conf.get_interaction_min_mac()
+           
         with read_maybe_gzip(self.filepath) as f:
             try:
                 header_line = next(f)
@@ -221,8 +221,8 @@ class AssocFileReader:
 
                     test_value = variant.get("test", "")
 
-                    imp_quality = variant.get("imp_quality")
                     # Retrieve and check imputation quality
+                    imp_quality = variant.get("imp_quality")
                     if imp_quality is None:
                         if self.r2_reader is not None and self.use_external_r2 == True:
                             # if external r2 file is provided, use the R2 value from the external file
@@ -238,40 +238,28 @@ class AssocFileReader:
                         elif imp_quality < conf.get_min_imp_quality():
                             continue
 
+                    maf = get_maf(variant, self._pheno)
                     if self._interaction:
-                        if (
-                            f"ADD-INT_SNPx{pre_mapped_interaction[self._interaction]}"
-                            not in test_value
-                        ):
+                        if interaction_minimum_maf and interaction_minimum_mac:
+                            raise ValueError("Both INTERACTION_MIN_MAC and INTERACTION_MIN_MAF as set, which is not allowed. Only set one and re-run.")
+                        elif interaction_minimum_maf:
+                            if maf < interaction_minimum_maf:
+                                continue
+                        elif interaction_minimum_mac:
+                            mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
+                            if mac < interaction_minimum_mac:
+                                continue
+                        if interaction_test_name not in test_value:
+                            continue                       
+                    else:
+                        if maf < minimum_maf:
                             continue
-                        
-                        if conf.get_interaction_maf_threshold() and conf.get_interaction_mac_threshold():
-                            raise ValueError(
-                                (
-                                    "Both MAC and MAF threshold are set, which is not allowed. Only set one and re-run."
-                                )
-                            )
-                            
-                        maf = get_maf(variant, self._pheno)
-                        if maf is not None and conf.get_interaction_maf_threshold() and maf < conf.get_interaction_maf_threshold():
+                        if test_value not in assoc_test_name:
                             continue
-                        
-                        mac = maf * variant.get("n_samples") * 2 # times 2 because of the 2 alleles
-                        if conf.get_interaction_mac_threshold() is not None and mac < conf.get_interaction_mac_threshold():
-                            continue
-                        
-                    elif test_value not in {"ADD", "ADD-CONDTL"}:
-                        continue
 
                     # Skip processing further if `pval` is empty
                     if not variant.get("pval"):
                         continue
-
-                    # Retrieve and check minor allele frequency (MAF) of non-interaction testing early to avoid unnecessary processing
-                    if not self._interaction:
-                        maf = get_maf(variant, self._pheno)
-                        if maf is not None and maf < minimum_maf:
-                            continue
 
                     # Parse marker ID only if necessary
                     if marker_id_col is not None:

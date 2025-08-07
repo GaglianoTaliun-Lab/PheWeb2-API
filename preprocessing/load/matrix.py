@@ -29,7 +29,7 @@ def clear_out_junk() -> None:
     # Remove files that shouldn't be there (and will confuse the glob in matrixify)
     cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
 
-    if conf.stratified():
+    if conf.has_stratifications():
         cur_phenocodes = OrderedSet(
             get_phenocode_with_suffixes(pheno)
             for pheno in get_phenolist_no_interaction()
@@ -51,13 +51,13 @@ def should_run(matrix_gz_filepath) -> bool:
     # If the matrix's columns don't match the phenos in pheno-list, rebuild.
     cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
 
-    if conf.stratified():
+    if conf.has_stratifications():
         cur_phenocodes = OrderedSet(
             get_phenocode_with_suffixes(pheno)
             for pheno in get_phenolist_no_interaction()
         )
 
-    if not conf.stratified():
+    if not conf.has_stratifications():
         try:
             matrix_phenocodes = set(MatrixReader().get_phenocodes())
         except Exception:
@@ -105,7 +105,7 @@ def run(argv: List[str]) -> None:
         if args.phenos
         else get_phenolist_no_interaction()
     )
-    if conf.stratified():
+    if conf.has_stratifications():
         for stratification_path in set(get_stratification_paths(phenos)):
             matrix_gz_stratified_filepath = get_pheno_filepath(
                 "matrix-stratified", stratification_path, must_exist=False

@@ -141,7 +141,7 @@ def run(argv: List[str]) -> None:
         print("Already up-to-date!")
         return
 
-    if conf.stratified():
+    if conf.has_stratifications():
         data = sorted(
             get_phenotypes_including_top_variants_stratified(), key=lambda p: p["pval"]
         )

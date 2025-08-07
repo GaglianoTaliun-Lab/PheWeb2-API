@@ -6,7 +6,9 @@ from ...file_utils import (
     read_maybe_gzip,
 )
 from ..read_input_file import PhenoReader
-from ...conf import stratified, get_interaction_aliases
+# DT:
+#from ...conf import stratified, get_interaction_aliases
+from ...conf import has_stratifications
 
 import os
 import string
@@ -137,7 +139,7 @@ def check_that_phenocode_is_unique(phenolist):
     # if stratified is True, then verify that the same stratifications are not present for the non-unique phenocode
 
     # also check for interaction
-    if stratified:
+    if has_stratifications():
         phenocodes_stratifications = [
             [pheno["phenocode"], pheno["stratification"]]
             for pheno in phenolist

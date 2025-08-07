@@ -32,7 +32,7 @@ def run(argv: List[str]) -> None:
     for pheno in phenos:
         if pheno["interaction"] is not None:
             pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-        if conf.stratified():
+        if conf.has_stratifications():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
 
     results_by_phenocode = parallelize_per_pheno(

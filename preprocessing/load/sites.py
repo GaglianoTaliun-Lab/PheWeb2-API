@@ -108,7 +108,7 @@ class MergeManager:
         self.files = []
 
         for pheno in get_phenolist():
-            if conf.stratified():
+            if conf.has_stratifications():
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
             self.files.append(
