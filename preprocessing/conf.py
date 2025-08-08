@@ -195,7 +195,7 @@ def get_cache_dir() -> Optional[str]:
 
 ## Debugging config
 def is_debug_mode() -> bool:
-    return "PHEWEB_DEBUG" in os.environ or _get_config_bool("debug", False)
+    return "ENABLE_DEBUG" in os.environ or _get_config_bool("ENABLE_DEBUG", False)
 
 
 def get_debugging_limit_num_variants() -> Optional[int]:

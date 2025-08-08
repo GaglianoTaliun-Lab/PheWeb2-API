@@ -60,7 +60,16 @@ FIELD_ALIASES = {
     # "file://path/file.pvar,R2": "imp_quality",
 }
 
+# Set to `True` to enable debug mode for data ingestion and API. Set `False` in the production mode.
+ENABLE_DEBUG = False
 
+# Set the host for the API endpoint (default is localhost)
+HOST = '127.0.0.1'
+
+# Set the port number for the API endpoint.
+PORT = 9543
+
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 
 # The configuration variables listed below are utilized internally and do not require any modifications.
 PHENOTYPES_DIR = os.path.join(PHEWEB_DATA_DIR)
@@ -86,5 +95,4 @@ MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 
 
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 

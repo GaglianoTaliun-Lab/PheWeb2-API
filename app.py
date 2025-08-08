@@ -32,10 +32,10 @@ def main():
     with app.app_context():
         app.config["AUTOCOMPLETE"] = AutocompleteLoading(file_path=app.config["SITES_DIR"])
 
-    port = int(os.environ.get("PORT", 9543))
+    
     app.run(
-        host="127.0.0.1", port=port, debug=True
-    )  # Remove debug=True when in production.
+        host = app.config["HOST"], port = app.config["PORT"], debug = app.config['ENABLE_DEBUG']
+    )
 
 if __name__ == "__main__":
     main()
