@@ -41,7 +41,7 @@ pheweb2 phenolist import-phenolist pheno-list-example.csv
 pheweb2 process
 ```
 
-4.  Launch PheWeb2 API endpoint:
+4.  Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
 ```
 pheweb2-api
 ```
