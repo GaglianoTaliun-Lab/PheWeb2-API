@@ -17,16 +17,13 @@ DBSNP_VERSION = 157
 # Please specify the GENOCODE version for mapping to genes 
 GENCODE_VERSION = 48
 
-# If your data includes information on genotype imputation quality, please specify your desired threshold for filtering GWAS results. Variants with an imputation quality score below this threshold will be excluded during data ingestion.
-MIN_IMP_QUALITY = 0.3
-
-# Please specify the value in the TEST column of your GWAS files that indicates the main effect of the tested variant. For Regenie and PLINK2, this value should be set to “ADD” to denote rows with an additive effect. If Regenie was executed with the –interaction option, then “ADD-CONDTL” can also be used.
+# Please specify the value in the "test" column of your GWAS files that indicates rows with the main effect of the tested variant. For Regenie and PLINK2, this value should be set to “ADD” to denote rows with an additive effect. If Regenie was executed with the –interaction option, then “ADD-CONDTL” can also be used.
 ASSOC_TEST_NAME = ["ADD", "ADD-CONDTL"]
 
 # Please specify the threshold for variant minor allele frequency (MAF). Variants with a MAF below this threshold will be excluded during data ingestion.
 ASSOC_MIN_MAF = 0.0
 
-# Please specify the value in the TEST column of your GWAS files that indicates the interaction effect between the genotype and the interacting variable (e.g., sex). This value will depend on the specific name of the interacting variable in your dataset.
+# Please specify the value in the "test" column of your GWAS files that indicates rows with the interaction effect between the genotype and the interacting variable (e.g., sex). This value will depend on the specific name of the interacting variable in your dataset.
 INTERACTION_TEST_NAME = "ADD-INT_SNPxBSEX=2"
 
 # Please specify the threshold for minor allele count (MAC) for variants tested for interaction effects. Interaction test results for variants with a MAC below this threshold will be excluded during data ingestion. This threshold is study-dependent and is typically set to correspond to a much higher MAF than that in ASSOC_MIN_MAF.
@@ -37,6 +34,31 @@ INTERACTION_MIN_MAC = 160
 
 # Set this to True if you have stratified GWAS results (default). Otherwise, set it to False.
 ENABLE_STRATIFICATIONS = True
+
+# Set to `True` (default is `False`) if the p-values in your GWAS result files are already reported on a negative log10 scale.
+PVAL_IS_NEGLOG10 = True
+
+# If your data includes information on genotype imputation quality, please specify your desired threshold for filtering GWAS results. Variants with an imputation quality score below this threshold will be excluded during data ingestion.
+MIN_IMP_QUALITY = 0.3
+
+# Please provide a mapping from the field names in your GWAS files to the names used by PheWeb. For instance, an entry like `"CHROM": "chrom"` indicates that the chromosome name in your GWAS files is stored in the “CHROM” field.
+FIELD_ALIASES = {
+    "CHROM": "chrom", # Chromosome
+    "GENPOS": "pos", # Position
+    "ALLELE0": "ref", # Reference allele
+    "ALLELE1": "alt", # Effect (tested) allele
+    "A1FREQ": "af", # Frequency of the effect allele
+    "N": "n_samples", # Number of samples
+    "BETA": "beta", #  Effect size
+    "SE": "sebeta", # Standard error of the effect
+    "LOG10P": "pval", # P-value
+    "TEST": "test", # Reported statistical test/model
+
+    # If you have imputation quality scores saved in the GWAS results (e.g. in the "INFO" field), then you can map them as follows:
+    "INFO": "imp_quality",
+    # If you have imputation quality scores stored separately from your GWAS results, please begin your custom field with “file://” followed by the file name and the specific field name that contains the quality scores within it. Currently, this feature accepts PLINK2’s PVAR or VCF formats.
+    # "file://path/file.pvar,R2": "imp_quality",
+}
 
 
 
@@ -61,27 +83,8 @@ MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 
 
 
-pval_is_neglog10 = True
 
-field_aliases = {
-    "CHROM": "chrom",
-    "GENPOS": "pos",
-    "ALLELE0": "ref",
-    "ALLELE1": "alt",
-    "A1FREQ": "af",
-    "N": "n_samples",
-    "BETA": "beta",
-    "SE": "sebeta",
-    "LOG10P": "pval",
-    "TEST": "test",
-    # Add this field if you have imputation quality scores in the GWAS results
-    "INFO": "imp_quality",
-    # Start your custom field (e.g. imp_quality) with "file://" to load from a file (accept pvar or vcf files)
-    # "file://path/file.pvar,R2": "imp_quality",
 
-}
-
-interaction_aliases = {"BSEX=2": "sex"}
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 

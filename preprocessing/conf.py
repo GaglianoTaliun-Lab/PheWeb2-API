@@ -51,27 +51,23 @@ def set_override(key: str, value: Any) -> None:
     ]:
         print("Ignoring config for {} because it's not implemented.".format(key))
         # raise PheWebError("parse_utils customization isn't implemented yet.")
-    elif key == "field_aliases":
+    elif key == "FIELD_ALIASES":
         if not isinstance(value, dict):
-            raise PheWebError("field_aliases should be dict, not {!r}".format(value))
+            raise PheWebError("FIELD_ALIASES should be dict, not {!r}".format(value))
         for alias, field_name in value.items():
             if not isinstance(alias, str):
-                raise PheWebError("alias {!r} should be str.".format(alias))
+                raise PheWebError("Alias {!r} should be str.".format(alias))
             if field_name not in parse_utils.fields:
                 raise PheWebError(
-                    "The field_name {!r} (for alias {!r}) isn't a real field.  Add it or use one of {}.".format(
+                    "The name {!r} (for alias {!r}) isn't a real field.  Add it or use one of {}.".format(
                         field_name, alias, list(parse_utils.fields)
                     )
                 )
-        # value = {
-        #     alias.lower(): field_name.lower() for alias, field_name in value.items()
-        # }
         value = {
             (alias if alias.startswith("file://") else alias.lower()):
             (field_name if alias.startswith("file://") else field_name.lower())
             for alias, field_name in value.items()
         }
-
         overrides[key] = {**parse_utils.default_field_aliases, **value}
     elif key == "ASSOC_TEST_NAME":
         if not isinstance(value, list):
@@ -211,6 +207,27 @@ def is_allowed_to_download() -> bool:
 
 
 ## Loading config
+def get_num_procs(cmd: Optional[str] = None) -> int:
+    import multiprocessing
+
+    key = "num_procs"
+    try:
+        return int(overrides[key][cmd])
+    except Exception:
+        pass
+    try:
+        return int(overrides[key]["*"])
+    except Exception:
+        pass
+    try:
+        return int(overrides[key])
+    except Exception:
+        pass
+    n_cpus = multiprocessing.cpu_count()
+    return 1 if n_cpus == 1 else int(n_cpus * 3 / 4)
+
+
+# Configuration for the external databases
 def get_hg_build_number() -> int:
     ret = _get_config_int("HG_BUILD_NUMBER", 19)
     if ret not in [19, 38]:
@@ -233,27 +250,7 @@ def get_dbsnp_version() -> int:
     return _get_config_int("DBSNP_VERSION", 157)
 
 
-def get_num_procs(cmd: Optional[str] = None) -> int:
-    import multiprocessing
-
-    key = "num_procs"
-    try:
-        return int(overrides[key][cmd])
-    except Exception:
-        pass
-    try:
-        return int(overrides[key]["*"])
-    except Exception:
-        pass
-    try:
-        return int(overrides[key])
-    except Exception:
-        pass
-    n_cpus = multiprocessing.cpu_count()
-    return 1 if n_cpus == 1 else int(n_cpus * 3 / 4)
-
-
-## Parsing config
+## Configuration for parsing/ingesting GWAS files
 def has_stratifications() -> bool:
     return _get_config_bool("ENABLE_STRATIFICATIONS", True)
 
@@ -278,12 +275,16 @@ def get_interaction_min_mac() -> int:
     return _get_config_optional_int("INTERACTION_MIN_MAC")
 
 
+def pval_is_neglog10() -> bool:
+    return _get_config_bool("PVAL_IS_NEGLOG10", False)
+
+
 def get_min_imp_quality() -> float:
     return _get_config_float("MIN_IMP_QUALITY", 0.3)
 
 
 def get_field_aliases() -> Dict[str, str]:
-    return overrides.get("field_aliases", parse_utils.default_field_aliases)
+    return overrides.get("FIELD_ALIASES", parse_utils.default_field_aliases)
 
 
 ## Manhattan / top-hits / top-loci config
@@ -322,10 +323,6 @@ def get_top_hits_pval_cutoff() -> float:
 ## Pheno correlation config
 def should_show_correlations() -> bool:
     return _get_config_bool("show_correlations", False)
-
-
-def pval_is_neglog10() -> bool:
-    return _get_config_bool("pval_is_neglog10", False)
 
 
 def get_pheno_correlations_pvalue_threshold() -> float:
