@@ -105,19 +105,7 @@ field_aliases = {
 }
 ```
 
-
-## Preprocessing
-
- 
-### Imputation Quality Filtering
- 
-### Interaction Testing
-
-If you wish to pre-process interaction results via Regenie output, you need to set 'interaction_aliases' to the value you gave regenie for the interaction testing and remap it to a value of your choice.
-
-See sample_config.py for an example.
-
-### Pheno-list{.csv, .json}
+### 3.5. Creating `pheno-list.json` file
 
 Like the `config.py` file, a pheno-list.json file MUST be in the base directory of the PheWeb-API before running any command.
 - `PheWeb2.0-API/config.py`
