@@ -33,7 +33,7 @@ tar -xzvf example_regenie.tar.gz
 
 2. Generate JSON file describing the phenotypes:
 ```
-pheweb2 phenolist import-phenolist pheno-list-example.csv 
+pheweb2 phenolist import-phenolist manifest-example.csv 
 ```
 
 3. Ingest the example data into PheWeb2 (this can take some time):
@@ -106,65 +106,30 @@ To ingest GWAS summary statistics files into PheWeb2, you need to create the Man
 | Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
 
 
-### 3.5. Creating `pheno-list.json` file
+### 3.5. Ingesting GWAS summary statistics files
+Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
-Like the `config.py` file, a pheno-list.json file MUST be in the base directory of the PheWeb-API before running any command.
-- `PheWeb2.0-API/config.py`
-- `PheWeb2.0-API/pheno-list.json`
+1. Import the manifest file into PheWeb2:
+```
+pheweb2 phenolist import-phenolist /path/to/manifest.csv
+```
+> [!NOTE]
+> This command will create a `pheno-list.json` file in the root directory.
 
-We highly recommend creating a pheno-list.csv file, then converting to pheno-list.json. 
+2. Ingest the GWAS summary statistics into PheWeb2:
+```
+pheweb2 process
+```
 
-
-Here are the required and optional columns for the pheno-list.csv file:
+> [!NOTE]
+> This command is parallelized, but may still take some time depending on the size of your GWAS data.
+> The ingested data will be by default stored inside the `generated_by_pheweb` folder, but this can be controlled using the `PHEWEB_DATA_DIR` variable inside the [config.py](config.py) file.
+> After the data ingestion, you may archive your original GWAS summary statistics files, as PheWeb2 will no longer need them.
  
 
-
-Refer to pheno-list-example.csv for an example.
-Then with 'pheno-list.csv', run:
-
-`pheweb phenolist import-phenolist "/path/to/pheno-list.csv"`
-
-to create `pheno-list.json`.
-
-
-To pre-process all files to properly work with the backend server, run:
-
-`pheweb process`
-
-To manually enable the autocomplete functionality of searching variant id or rsid, please run:
-
-`pheweb generate-autocomplete-db`
-
-to create `autocomplete.db`. Alternative option: the `autocomplete.db` will be created when you first run the api.
-
-## Runtime Data
-After pre-processing, these folders (with data) need to be present before running.
-
+### 3.6. Running API server
 ```
-CLSA_PheWeb_data
-└── generated_by_pheweb
-    ├── manhattan
-        ├── ... 
-    ├── qq
-        ├── ...
-    ├── phenotypes.json 
-    ├── top_hits.json 
-    ├── ...
-```
-
-The paths to the runtime data needs to be specified in the config.py
-```py
-BASE_DIR = os.path.join(os.sep, 'var', 'local', 'CLSA_PheWeb_data', 'generated_by_pheweb')
-
-PHENOTYPES_DIR = os.path.join(BASE_DIR)
-...
-```
-please refer the `sample_config.py` for more examples.
- 
-
-## Running Backend Server
-```
-pheweb-run
+pheweb2-api
 ```
 
 get data through http://localhost:9099/PATH/TO/ROUTES/
