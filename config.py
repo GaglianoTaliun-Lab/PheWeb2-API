@@ -1,5 +1,9 @@
 import os.path
 
+
+# SECTION A: Data location
+# ================================================
+ 
 # This is the parent directory for PheWeb 2, which contains the `config.py` file.
 PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 
@@ -7,6 +11,10 @@ PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 # If you would like to change this, please provide the full path to your preferred alternative directory.
 PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
 #PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
+
+
+# SECTION B: Public databases
+# ================================================
 
 # Please specify the version of the human genome build used for your data. The default version is GRCh38 (Build 38).
 HG_BUILD_NUMBER = 38
@@ -16,6 +24,10 @@ DBSNP_VERSION = 157
 
 # Please specify the GENOCODE version for mapping to genes 
 GENCODE_VERSION = 48
+
+
+# SECTION C: Data ingestion
+# ===============================================
 
 # Please specify the value in the "test" column of your GWAS files that indicates rows with the main effect of the tested variant. For Regenie and PLINK2, this value should be set to “ADD” to denote rows with an additive effect. If Regenie was executed with the –interaction option, then “ADD-CONDTL” can also be used.
 ASSOC_TEST_NAME = ["ADD", "ADD-CONDTL"]
