@@ -83,31 +83,11 @@ During the ingestion of GWAS summary statistics, PheWeb 2 will apply the followi
 - If the MAF of the variant is below a specified threshold (defined by the `INTERACTION_MIN_MAF` variable in the [config.py](config.py) file), the interaction effect for this variant will not be imported.
 - When genotype imputation quality scores are available, if the imputation quality for a variant falls below a specified threshold (defined by the `MIN_IMP_QUALITY` variable in the [config.py](config.py) file), the variant will be excluded.
 
-### 3.4. Genotype imputation qualities
-In the preprocessing, you can filter out variants that have imputation quality lower than a customized threshold. To implement this, you can use specific field from the GWAS results (e.g., the INFO field in REGENIE output). You can specify the imputation quality field and threshold in the `config.py` by
-```
-MIN_IMP_QUALITY = # your imputation quality threshold
-field_aliases = {
-    ...
-    # Add this field if you have imputation quality scores in the GWAS results
-    # e.g., if the imputation quality field in the GWAS results is called 'INFO'
-    "INFO": "imp_quality",
-    ...
-}
-```
-***
-However, we strongly recommend you to access the imputation quality scores from external files, especially if you are using REGENIE to generate the GWAS results. We strongly recommend to use the VCF files (input of GWAS) as the source of the imputation quality scores.
-***
-You can set it up in the `config.py` by
-```
-MIN_IMP_QUALITY = # your imputation quality threshold
-field_aliases = {
-    ...
-    # Start your custom field (e.g. imp_quality) with "file://" to load from a file (accept vcf files for imputation quality). Separate the file path the the field of interest by ','
-    "file://path/file.vcf.gz,R2": "imp_quality",
-    ...
-}
-```
+> [!NOTE]
+> When filtering by imputation quality scores, the scores can be provided as a column inside the GWAS summary statistics file (e.g., the Regenie outputs imputation quality scores in the `INFO` column) or in the external indexed VCF files outputted by the genotype imputation software (e.g., [minimac4](https://github.com/statgen/Minimac4)). See an example inside the [config.py](config.py) file.
+
+> [!IMPORTANT]
+> The imputation quality scores recomputed by Regenie may differ from the scores outputted by the genotype imputation software, as Regenie uses dosages only for a subset of individuals included in GWAS who have phenotype and covariate data. When conducting stratified analyses, we recommend using the original genotype imputation quality scores computed by the imputation software.
 
 ### 3.5. Creating `pheno-list.json` file
 
