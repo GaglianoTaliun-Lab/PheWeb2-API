@@ -20,7 +20,10 @@ if "PHEWEB_IPDB" in os.environ:
     )
 
 
+# A dictionary that maps command line subcommands to their corresponding modules.
 handlers: Dict[str, Callable[[List[str]], None]] = {}
+
+
 for submodule in """
  phenolist
  cluster
@@ -63,13 +66,17 @@ for submodule in """
         module_run(argv)
 
     handlers[submodule.replace("_", "-")] = functools.partial(f, submodule)
+
+
 handlers["process"] = handlers["process-assoc-files"]
 handlers["parse"] = handlers["parse-input-files"]
 
-# def serve(argv:List[str]) -> None:
-#     from pheweb.serve.run import run
-#     run(argv)
-# handlers['serve'] = serve
+
+def serve(argv:List[str]) -> None:
+     from preprocessing.api_app import run
+     run(argv)
+
+handlers['serve'] = serve
 
 
 def configure(argv: List[str]) -> None:

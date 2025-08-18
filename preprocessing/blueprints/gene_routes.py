@@ -1,5 +1,5 @@
 from flask import Blueprint, g
-from models import create_genes
+from ..models import create_genes
 from flask_restx import Namespace, Resource
 
 bp = Blueprint("gene_routes", __name__)

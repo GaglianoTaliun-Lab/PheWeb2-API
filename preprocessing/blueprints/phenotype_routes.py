@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, g
-from models import create_phenotypes_list, create_tophits
-from models.utils import extract_variants
+from ..models import create_phenotypes_list, create_tophits
+from ..models.utils import extract_variants
 from flask_restx import Namespace, Resource, reqparse
 
 bp = Blueprint("phenotype_routes", __name__)

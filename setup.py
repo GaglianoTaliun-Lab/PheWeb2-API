@@ -65,12 +65,11 @@ setup(
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
-    packages=["preprocessing", "blueprints", "models"],
+    packages=["preprocessing"],
     py_modules=["app", "config"],
     entry_points={
         "console_scripts": [
-            "pheweb2=preprocessing.command_line:main",
-            "pheweb2-api=app:main",
+            "pheweb2=preprocessing.command_line:main"
         ]
     },
     include_package_data=True,

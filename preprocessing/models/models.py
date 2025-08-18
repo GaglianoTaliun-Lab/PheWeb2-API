@@ -1,7 +1,7 @@
-from models.locus_zoom_utils import get_pheno_region
+from .locus_zoom_utils import get_pheno_region
 from flask import current_app, send_from_directory, send_file
-from models.gene_utils import get_gene_tuples
-from models.download_utils import getDownloadFunction
+from .gene_utils import get_gene_tuples
+from .download_utils import getDownloadFunction
 
 import sqlite3
 import os

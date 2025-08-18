@@ -1,5 +1,5 @@
 from flask import g
-from models import create_variant
+from ..models import create_variant
 from flask_restx import Namespace, Resource
 import logging
 

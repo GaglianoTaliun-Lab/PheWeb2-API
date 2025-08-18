@@ -5,7 +5,7 @@ import sqlite3
 import csv
 from functools import lru_cache
 import tqdm
-from models.models import create_phenotypes_list, create_genes
+from .models import create_phenotypes_list, create_genes
 from flask import g
 
 
