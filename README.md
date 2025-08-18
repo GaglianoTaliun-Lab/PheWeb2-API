@@ -89,6 +89,23 @@ During the ingestion of GWAS summary statistics, PheWeb 2 will apply the followi
 > [!IMPORTANT]
 > The imputation quality scores recomputed by Regenie may differ from the scores outputted by the genotype imputation software, as Regenie uses dosages only for a subset of individuals included in GWAS who have phenotype and covariate data. When conducting stratified analyses, we recommend using the original genotype imputation quality scores computed by the imputation software.
 
+### 3.4. Creating the Manifest file
+
+To ingest GWAS summary statistics files into PheWeb2, you need to create the Manifest file. The Manifest file is a comma-separated (CSV) file that describes each GWAS summary statistics file you have. The [manifest-example.csv](manifest-example.csv) file serves as an example of the Manifest file, and the table below lists the required and optional columns.
+
+| column description                                  | value         | allowed values                      | required? |
+| --------------------------------------------------- | ------------- | ----------------------------------- | --------- |
+| Phenotype Code                                      | phenocode     | string                              | true      |
+| Phenotype Description                               | phenostring   | string                              | true      |
+| Location of summary statistics                      | assoc_files   | string                              | true      |
+| Number of tested samples / participants             | num_samples   | int                                 | true     |
+| Number of tested cases                              | num_cases     | int                                 | false     |
+| Number of tested controls                           | num_controls  | int                                 | false     |
+| Category of trait                                   | category      | float                               | false     |
+| Variable of Interaction Testing                     | interaction   | string                              | false     |
+| Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
+
+
 ### 3.5. Creating `pheno-list.json` file
 
 Like the `config.py` file, a pheno-list.json file MUST be in the base directory of the PheWeb-API before running any command.
@@ -100,17 +117,7 @@ We highly recommend creating a pheno-list.csv file, then converting to pheno-lis
 
 Here are the required and optional columns for the pheno-list.csv file:
  
-| column description                                  | value         | allowed values                      | required? |
-| --------------------------------------------------- | ------------- | ----------------------------------- | --------- |
-| Phenotype Code                                      | phenocode     | string                              | true      |
-| Phenotype Description                               | phenostring   | string                              | true      |
-| Location of summary statistics                      | assoc_files   | string                              | true      |
-| Number of tested samples / participants             | num_samples   | int                                 | false     |
-| Number of tested cases                              | num_cases     | int                                 | false     |
-| Number of tested controls                           | num_controls  | int                                 | false     |
-| Category of trait                                   | category      | float                               | false     |
-| Variable of Interaction Testing                     | interaction   | string                              | false     |
-| Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
+
 
 Refer to pheno-list-example.csv for an example.
 Then with 'pheno-list.csv', run:
