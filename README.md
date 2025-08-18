@@ -43,7 +43,7 @@ pheweb2 process
 
 4.  Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
 ```
-pheweb2-api
+pheweb2 serve --host 127.0.0.1 --port 9543
 ```
 
 ## 3. Run using your own data
@@ -129,7 +129,7 @@ pheweb2 process
 
 ### 3.6. Running API server
 ```
-pheweb2-api
+pheweb2 serve --host 127.0.0.1 --port 9543
 ```
 
 get data through http://localhost:9099/PATH/TO/ROUTES/
