@@ -37,7 +37,7 @@ def load_module_by_path(module_name, filepath):
 
 
 version = load_module_by_path(
-    "preprocessing.version", "preprocessing/version.py"
+    "pheweb_api.version", "pheweb_api/version.py"
 ).version
 
 
@@ -65,16 +65,16 @@ setup(
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
-    packages=["preprocessing"],
+    packages=["pheweb_api"],
     py_modules=["app", "config"],
     entry_points={
         "console_scripts": [
-            "pheweb2=preprocessing.command_line:main"
+            "pheweb2=pheweb_api.command_line:main"
         ]
     },
     include_package_data=True,
     zip_safe=False,
-    cffi_modules=["preprocessing/load/cffi/ffibuilder.py:ffibuilder"],
+    cffi_modules=["pheweb_api/load/cffi/ffibuilder.py:ffibuilder"],
     python_requires=">=3.12",
     setup_requires=[
         "cffi==1.16.0",

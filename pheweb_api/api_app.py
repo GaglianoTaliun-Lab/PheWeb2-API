@@ -3,7 +3,7 @@ from typing import List
 import argparse
 from flask import Flask
 from flask_restx import Api
-from preprocessing.blueprints import phenotype_routes, gene_routes, variant_routes, autocomplete
+from .blueprints import phenotype_routes, gene_routes, variant_routes, autocomplete
 from flask_cors import CORS
 from dotenv import load_dotenv
 from .models.variant_utils import VariantLoading

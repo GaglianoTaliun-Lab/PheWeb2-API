@@ -9,7 +9,7 @@ with open(cxx_path) as f:
 
 ffibuilder = cffi.FFI()
 ffibuilder.set_source(
-    "preprocessing.load.cffi._x",
+    "pheweb_api.load.cffi._x",
     src,
     source_extension=".cpp",
     extra_compile_args=["--std=c++11"],

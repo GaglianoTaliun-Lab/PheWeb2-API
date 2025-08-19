@@ -1,6 +1,6 @@
 import csv
 import typing as ty
-from preprocessing import conf
+from pheweb_api import conf
 from flask import current_app
 
 chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]

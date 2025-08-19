@@ -73,7 +73,7 @@ handlers["parse"] = handlers["parse-input-files"]
 
 
 def serve(argv:List[str]) -> None:
-     from preprocessing.api_app import run
+     from pheweb_api.api_app import run
      run(argv)
 
 handlers['serve'] = serve
