@@ -27,11 +27,14 @@ MAX_NUM_FILES_TO_MERGE_AT_ONCE = (
     8  # I have no idea what's fastest.  Maybe #files / #cpus?
 )
 MIN_NUM_FILES_TO_MERGE_AT_ONCE = (
-    4  # Try to avoid ever merging fewer than this many files at a time.
+    4   # Try to avoid ever merging fewer than this many files at a time.
 )
 
 
+
 def run(argv):
+    global MAX_NUM_FILES_TO_MERGE_AT_ONCE, MIN_NUM_FILES_TO_MERGE_AT_ONCE
+
     out_filepath = get_filepath("unanno", must_exist=False)
 
     force = False
@@ -51,6 +54,11 @@ def run(argv):
         exit(1)
 
     manna = MergeManager()
+
+    if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
+        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
+        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
+        
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
     if os.path.exists(out_filepath) and not force:
