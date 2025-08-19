@@ -6,8 +6,6 @@ from ...file_utils import (
     read_maybe_gzip,
 )
 from ..read_input_file import PhenoReader
-# DT:
-#from ...conf import stratified, get_interaction_aliases
 from ...conf import has_stratifications
 
 import os
@@ -320,8 +318,7 @@ def _import_phenolist_csv(f, has_header):
     else:
         fieldnames = list(range(num_cols))
 
-    # if conf.stratified == True, build stratified column as a sub dictionary
-    if stratified:
+    if has_stratifications():
         stratification_colnumbers = [
             i
             for i in range(0, len(fieldnames))
@@ -431,11 +428,12 @@ def listify_assoc_files(phenolist):
 
 
 # if present, change interaction variable name to the one specified
-def convert_interaction(pheno: dict) -> dict:
-    pheno["interaction"] = get_interaction_aliases().get(
-        pheno["interaction"], pheno["interaction"]
-    )
-    return pheno
+# HX: need to delete
+# def convert_interaction(pheno: dict) -> dict:
+#     pheno["interaction"] = get_interaction_aliases().get(
+#         pheno["interaction"], pheno["interaction"]
+#     )
+#     return pheno
 
 
 # convert "null" string in interaction to actual null
@@ -449,8 +447,9 @@ def split_phenos_on_interaction(phenolist):
     for pheno in phenolist:
         if pheno["interaction"] == "null" or pheno["interaction"] == "":
             pheno["interaction"] = None
-        else:
-            convert_interaction(pheno)
+        # HX: need to delete
+        # else:
+        #     convert_interaction(pheno)
 
     return phenolist
 

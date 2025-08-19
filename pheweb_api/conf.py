@@ -210,7 +210,7 @@ def is_allowed_to_download() -> bool:
 def get_num_procs(cmd: Optional[str] = None) -> int:
     import multiprocessing
 
-    key = "num_procs"
+    key = "NUM_PROCS"
     try:
         return int(overrides[key][cmd])
     except Exception:

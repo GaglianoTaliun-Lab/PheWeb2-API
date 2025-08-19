@@ -106,7 +106,7 @@ To ingest GWAS summary statistics files into PheWeb2, you need to create the Man
 | Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
 
 
-### 3.5. Ingesting GWAS summary statistics files
+### 3.5. Ingesting GWAS summary statistics files using a single node
 Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
 1. Import the manifest file into PheWeb2:
@@ -116,10 +116,51 @@ pheweb2 phenolist import-phenolist /path/to/manifest.csv
 > [!NOTE]
 > This command will create a `pheno-list.json` file in the root directory.
 
-2. Ingest the GWAS summary statistics into PheWeb2:
+2. Set the number of parallel ingestion jobs using `NUM_PROCS` parameter in the `config.py`.
+
+3. Ingest the GWAS summary statistics into PheWeb2:
 ```
 pheweb2 process
 ```
+
+> [!NOTE]
+> This command is parallelized, but may still take some time depending on the size of your GWAS data.
+> The ingested data will be by default stored inside the `generated_by_pheweb` folder, but this can be controlled using the `PHEWEB_DATA_DIR` variable inside the [config.py](config.py) file.
+> After the data ingestion, you may archive your original GWAS summary statistics files, as PheWeb2 will no longer need them.
+
+### 3.6. Ingesting GWAS summary statistics files using SLURM or SGE
+Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
+
+1. Import the manifest file into PheWeb2:
+```
+pheweb2 phenolist import-phenolist /path/to/manifest.csv
+```
+> [!NOTE]
+> This command will create a `pheno-list.json` file in the root directory.
+
+2. Create SLURM/SGE job submission script for parsing the GWAS summary statistics files:
+```
+pheweb2 cluster --engine=slurm --step=parse
+```
+or
+```
+pheweb2 cluster --engine=sge --step=parse
+```
+
+This will generate a bash script named `slurm-parse-<DATETIME>.sh` or `sge-parse-<DATETIME>.sh` in the `generated-by-pheweb/tmp/` directory by default. If you modified the `PHEWEB_DATA_DIR` variable in the `config.py` file, then the bash script will be placed in the `<PHEWEB_DATA_DIR>/tmp/` directory.
+
+3. Once you have the script, you can submit the jobs by running: 
+```
+sbatch generated-by-pheweb/tmp/slurm-parse-<DATETIME>.sh
+``` 
+or 
+```
+sge generated-by-pheweb/tmp/sge-parse-<DATETIME>.sh
+``` 
+> [!NOTE]
+> Depending on the size of your GWAS files and the configuration of your cluster, you may need to modify the job submission parameters inside the bash script.
+> For example, you may want to increase the job time limit or memory limit, or add a queue/account name.
+
 
 > [!NOTE]
 > This command is parallelized, but may still take some time depending on the size of your GWAS data.

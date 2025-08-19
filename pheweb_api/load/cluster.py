@@ -95,7 +95,7 @@ def run(argv: List[str]) -> None:
     for pheno in phenolist:
         if pheno["interaction"] is not None:
             pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-        if conf.stratified():
+        if conf.has_stratifications():
             pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             
     idxs = [i for i, pheno in enumerate(phenolist) if should_process(pheno)]
@@ -124,10 +124,10 @@ def run(argv: List[str]) -> None:
         for job in jobs:
             f.write(",".join(map(str, job)) + "\n")
         f.write(")\n\n")
-        f.write("export PHEWEB_DATADIR={!r}\n".format(conf.get_data_dir()))
+        f.write("export PHEWEB_DATADIR={!r}\n".format(conf.get_pheweb_data_dir()))
         f.write(
             sys.argv[0]
-            + " conf num_procs=1 "
+            + " conf NUM_PROCS=1 "
             + args.step
             + " --phenos=${jobs[$"
             + array_id_variable[args.engine]

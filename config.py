@@ -72,8 +72,14 @@ FIELD_ALIASES = {
     # "file://path/file.pvar,R2": "imp_quality",
 }
 
+# SECTION D: Runtime parameters
+# ===============================================
+
 # Set to `True` to enable debug mode for data ingestion and API. Set `False` in the production mode.
 ENABLE_DEBUG = False
+
+# Set number of parallel processes for data ingestion on a single node
+NUM_PROCS = 8
 
 # Set the host for the API endpoint (default is localhost)
 HOST = '127.0.0.1'
