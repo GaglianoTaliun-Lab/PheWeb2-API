@@ -89,6 +89,9 @@ PORT = 9543
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 
+# SECTION E: Internal parameters (no need to modify)
+# ===============================================
+
 # The configuration variables listed below are utilized internally and do not require any modifications.
 PHENOTYPES_DIR = os.path.join(PHEWEB_DATA_DIR)
 MANHATTAN_DIR = os.path.join(PHEWEB_DATA_DIR, "manhattan")
@@ -101,10 +104,16 @@ SITES_DIR = os.path.join(PHEWEB_DATA_DIR, "sites")
 
 # The configuration variables listed below are used internally for generating Manhattan/Miami plots and do not require any modifications.
 MANHATTAN_NUM_UNBINNED = 500
+WITHIN_PHENO_MASK_AROUND_PEAK = 500_000
+BETWEEN_PHENO_MASK_AROUND_PEAK = 1_000_000
+MANHATTAN_NUM_UNBINNED = 500
 MANHATTAN_PEAK_MAX_COUNT = 500
 MANHATTAN_PEAK_PVAL_THRESHOLD = 1e-6
 MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
+TOP_HITS_PVAL_CUTOFF = 1e-6
+PHENO_CORRELATIONS_PVALUE_THRESHOLD = 0.05
+
 
 
 

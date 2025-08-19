@@ -289,44 +289,44 @@ def get_field_aliases() -> Dict[str, str]:
 
 ## Manhattan / top-hits / top-loci config
 def get_within_pheno_mask_around_peak() -> int:
-    return _get_config_int("within_pheno_mask_around_peak", 500_000)
+    return _get_config_int("WITHIN_PHENO_MASK_AROUND_PEAK", 500_000)
 
 
 def get_between_pheno_mask_around_peak() -> int:
-    return _get_config_int("between_pheno_mask_around_peak", 1_000_000)
+    return _get_config_int("BETWEEN_PHENO_MASK_AROUND_PEAK", 1_000_000)
 
 
 def get_manhattan_num_unbinned() -> int:
-    return _get_config_int("manhattan_num_unbinned", 500)
+    return _get_config_int("MANHATTAN_NUM_UNBINNED", 500)
 
 
 def get_manhattan_peak_max_count() -> int:
-    return _get_config_int("manhattan_peak_max_count", 500)
+    return _get_config_int("MANHATTAN_PEAK_MAX_COUNT", 500)
 
 
 def get_manhattan_peak_pval_threshold() -> float:
-    return _get_config_float("manhattan_peak_pval_threshold", 1e-6)
+    return _get_config_float("MANHATTAN_PEAK_PVAL_THRESHOLD", 1e-6)
 
 
 def get_manhattan_peak_sprawl_dist() -> int:
-    return _get_config_int("manhattan_peak_sprawl_dist", 200_000)
+    return _get_config_int("MANHATTAN_PEAK_SPRAWL_DIST", 200_000)
 
 
 def get_manhattan_peak_variant_counting_pval_threshold() -> float:
-    return _get_config_float("manhattan_peak_variant_counting_pval_threshold", 5e-8)
+    return _get_config_float("MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD", 5e-8)
 
 
 def get_top_hits_pval_cutoff() -> float:
-    return _get_config_float("top_hits_pval_cutoff", 1e-6)
+    return _get_config_float("TOP_HITS_PVAL_CUTOFF", 1e-6)
 
 
 ## Pheno correlation config
 def should_show_correlations() -> bool:
-    return _get_config_bool("show_correlations", False)
+    return _get_config_bool("SHOW_CORRELATIONS", False)
 
 
 def get_pheno_correlations_pvalue_threshold() -> float:
-    return _get_config_float("pheno_correlations_pvalue_threshold", 0.05)
+    return _get_config_float("PHENO_CORRELATIONS_PVALUE_THRESHOLD", 0.05)
 
 
 ## Serving config
