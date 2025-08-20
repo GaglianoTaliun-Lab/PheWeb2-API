@@ -3,6 +3,7 @@ from pheweb_api import parse_utils
 from flask import current_app
 import math
 from contextlib import contextmanager
+from ..conf import get_pheweb_data_dir
 
 
 import itertools
@@ -84,7 +85,7 @@ get_pheno_region = _Get_Pheno_Region.get_pheno_region
 
 @contextmanager
 def IndexedVariantFileReader(phenocode: str):
-    filepath = os.path.join(current_app.config["PHENO_GZ_DIR"], phenocode + ".gz")
+    filepath = os.path.join(get_pheweb_data_dir(), "pheno_gz", phenocode + ".gz")
     # filepath = get_pheno_filepath('pheno_gz', phenocode)
     with read_gzip(filepath) as f:
         reader: Iterator[List[str]] = csv.reader(f, dialect="pheweb-internal-dialect")

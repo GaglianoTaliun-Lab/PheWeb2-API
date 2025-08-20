@@ -1,6 +1,7 @@
 import polars as pl
 from flask import current_app
-
+import os
+from ..conf import get_pheweb_data_dir
 import math
 import heapq
 
@@ -28,7 +29,7 @@ def extract_variants(
         phenocode = phenocode + stratification
 
     df = pl.read_csv(
-        current_app.config["BEST_OF_PHENO_DIR"] + f"/{phenocode}",
+        os.path.join(get_pheweb_data_dir(), "best_of_pheno", phenocode),
         separator="\t",
         dtypes={
             "chrom": str,
