@@ -69,6 +69,16 @@ class Genes:
         chrom, start, end = self.gene_region_mapping[gene]
 
         return chrom, start, end
+
+    def get_gene_names(self):
+        connection = self.connect_to_sqlite()
+        cursor = connection.cursor()
+        cursor.execute("SELECT gene FROM best_phenos_for_each_gene")
+        results = cursor.fetchall()
+        connection.close()
+
+        gene_names = [row["gene"] for row in results]
+        return gene_names
     
     def get_all_genes(self):
         # Fetch all gene names from the sqlite3 database

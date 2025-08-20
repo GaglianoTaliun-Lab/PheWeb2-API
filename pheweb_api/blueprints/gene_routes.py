@@ -17,11 +17,27 @@ def get_genes_service():
             )
     return g.genes
 
+
+@api.route("/")
+class GeneNames(Resource):
+    def get(self):
+        """
+        Get a list of all available gene names
+        """
+        try:
+            genes_service = get_genes_service()
+            gene_list = genes_service.get_gene_names()
+            return gene_list, 200
+        except GenesServiceNotAvailable as e:
+            return {"message": str(e)}, 404
+        except Exception as e:
+            return {"message": "Internal server error."}, 500
+
 @api.route("/<gene>")
 class SignificantAssociationTable(Resource):
     def get(self, gene):
         """
-        Get association information for a specific gene.
+        Get association information for a specific gene name.
         """
         try:
             genes_service = get_genes_service()
@@ -42,7 +58,7 @@ class SignificantAssociationTable(Resource):
 class GenePosition(Resource):
     def get(self, gene):
         """
-        Get base-pair and chromosome position of a given gene
+        Get base-pair and chromosome position of a given gene name
         """
         try:
             genes_service = get_genes_service()

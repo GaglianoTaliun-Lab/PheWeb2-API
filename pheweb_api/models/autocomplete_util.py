@@ -7,12 +7,11 @@ from functools import lru_cache
 import tqdm
 from .models import create_phenotypes_list, create_genes
 from flask import g
-from ..conf import is_debug_mode
+from ..conf import is_debug_mode, get_pheweb_data_dir
 
 
 class GenesServiceNotAvailable(Exception):
     pass
-
 
 # def get_genes_service():
 #     if "genes" not in g:
@@ -39,11 +38,10 @@ class GenesServiceNotAvailable(Exception):
 
 
 class AutocompleteLoading:
-    def __init__(self, file_path):
+    def __init__(self):
         self.variants = {}
-        self.file_path = file_path
-
-        self.db_path = os.path.join(file_path, "autocomplete.db")
+        self.file_path = os.path.join(get_pheweb_data_dir(), "sites")
+        self.db_path = os.path.join(self.file_path, "autocomplete.db")
         self.create_table()
         self._load_to_memory()
 

@@ -5,7 +5,7 @@ import csv
 from typing import Dict
 import pysam
 import json
-
+from ..conf import get_pheweb_data_dir
 
 class PhewasMatrixReader:
     def __init__(self, variant_code, stratification, all_phenos : dict, all_stratifications : list):
@@ -21,7 +21,7 @@ class PhewasMatrixReader:
             "phenos": [],
         }
         tsvpath = f"matrix.{stratification}.tsv.gz"
-        self.filepath = os.path.join(current_app.config["PHEWAS_MATRIX_DIR"], tsvpath)
+        self.filepath = os.path.join(get_pheweb_data_dir(), "matrix-stratified", tsvpath)
         csv.register_dialect(
             "pheweb-internal-dialect",
             delimiter="\t",
@@ -36,7 +36,7 @@ class PhewasMatrixReader:
     def get_phenotypes_data(self):
         try:
             phenotypes_file = os.path.join(
-                current_app.config["PHENOTYPES_DIR"], "phenotypes.json"
+                get_pheweb_data_dir(), "phenotypes.json"
             )
             with open(phenotypes_file) as f:
                 data = json.load(f)

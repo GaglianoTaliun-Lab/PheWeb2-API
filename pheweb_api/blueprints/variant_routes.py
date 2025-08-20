@@ -40,6 +40,7 @@ class Variant(Resource):
             logging.exception("Unexpected error in /variant endpoint")
             return {"message": "Internal server error."}, 500
 
+# TODO: remove stratification list endpoint and category list endpoint from variant routes
 @api.route("/stratification_list")
 class StratificationList(Resource):
     def get(self):

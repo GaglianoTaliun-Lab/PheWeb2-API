@@ -1,14 +1,15 @@
 from flask import Blueprint, request, current_app
 from flask_restx import Namespace, Resource
 import re
+from ..models.autocomplete_util import AutocompleteLoading
 
+autocomplete_service = AutocompleteLoading()
 
 bp = Blueprint("autocomplete", __name__)
 api = Namespace("autocomplete", description="Routes related to autocomplete")
 
-    
 def search_gene_names(query):
-    autocomplete_service = current_app.config["AUTOCOMPLETE"]
+    
     results = autocomplete_service.query_genes(query)
     # print(f"DEBUG: results: {results}")
     output = []
@@ -24,7 +25,6 @@ def search_gene_names(query):
 
 
 def search_pheno_names(query):
-    autocomplete_service = current_app.config["AUTOCOMPLETE"]
     results = autocomplete_service.query_phenotypes(query)
     # print(f"DEBUG: results: {results}")
     output = []
@@ -40,7 +40,7 @@ def search_pheno_names(query):
 def search_variant_names(query, chrom=None, pos=None):
     print("DEBUG: search_variant_names called")
     print(f"DEBUG: query: {query}")
-    autocomplete_service = current_app.config["AUTOCOMPLETE"]
+    # autocomplete_service = current_app.config["AUTOCOMPLETE"]
     if chrom and pos:
         results = autocomplete_service.query_variants(query, chrom=chrom, pos=pos)
         print(f"DEBUG: variant query results: {results}")

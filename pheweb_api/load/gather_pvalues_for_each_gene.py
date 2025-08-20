@@ -51,7 +51,7 @@ def run(argv: List[str]) -> None:
             and matrix_filepath.stat().st_mtime < out_filepath.stat().st_mtime
         ):
             print("{} is up-to-date!".format(str(out_filepath)))
-            # return
+            return
 
         else:
             regions_on_chrom = get_regions_on_chrom()

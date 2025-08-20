@@ -248,9 +248,44 @@ pheweb2 process
  
 
 ### 3.6. Running API server
+1. To run the API server, run:
 ```
 pheweb2 serve --host 127.0.0.1 --port 9543
 ```
+
+2. Once it's running, in a separate terminal window, you can test it by running the following commands:
+```
+curl -X GET "http://localhost:9543/phenotypes/"
+```
+this should give you a list of all the phenotypic information.
+```
+curl -X GET "http://localhost:9543/gene/"
+```
+this should give you a list of all the gene names.
+```
+curl -X GET "http://localhost:9543/gene/PCSK9"
+```
+this should give you phenotypic information related to gene PCSK9
+```
+curl -X GET "http://localhost:9543/phenotypes/tophits"
+```
+to get rsid
+
+```
+curl -X GET "http://localhost:9543/variant/stratification_list"
+```
+to get the stratificaiton list
+[
+    "european.female",
+    "european.male",
+    "european.both"
+]
+
+```
+curl -X GET "http://localhost:9543/variant/6-32658525-T-G/european.male"
+```
+to get phenotypic information of the chosen variant
+
 
 get data through http://localhost:9099/PATH/TO/ROUTES/
 
