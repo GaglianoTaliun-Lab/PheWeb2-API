@@ -1,7 +1,9 @@
 from flask import current_app, send_from_directory, send_file, Response, request
 import polars as pl
+from ..conf import get_pheweb_data_dir
+import os
 
-def getDownloadFunction(dir, phenocode, filtering_options, suffix=None):
+def getDownloadFunction(phenocode, filtering_options, suffix=None):
     
     filename = phenocode
     
@@ -16,15 +18,15 @@ def getDownloadFunction(dir, phenocode, filtering_options, suffix=None):
     if filtering_options['indel'] == 'both' and filtering_options['min_maf'] == 0.0 and filtering_options['max_maf'] == 0.5:
         headers["Content-Disposition"] = f'attachment; filename={filename}.txt'
 
-        return Response(getUnfilteredFunction(dir, phenocode, suffix), headers = headers)
+        return Response(getUnfilteredFunction(phenocode, suffix), headers = headers)
         
     # if filtering has been applied, this gets far more complicated
     # as we need to send a modified file that has been filtered.
     headers["Content-Disposition"] = f'attachment; filename=filtered-{filename}.txt'
-    return Response(getFilteredFunction(dir, phenocode, filtering_options, suffix), headers = headers)
+    return Response(getFilteredFunction(phenocode, filtering_options, suffix), headers = headers)
    
 
-def getFilteredFunction(dir, phenocode, filtering_options, suffix):
+def getFilteredFunction(phenocode, filtering_options, suffix):
     
     column_dtypes = {
         0: str,   # chrom
@@ -102,11 +104,11 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
 
     file_path = None
     if not suffix:
-        file_path = dir["PHENO_GZ_DIR"] + f"/{phenocode}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "pheno_gz", f"{phenocode}.gz")
     elif "interaction-" in suffix:
-        file_path = dir["INTERACTION_DIR"] + f"/{phenocode}{suffix}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "interaction", f"{phenocode}{suffix}.gz")
     else:
-        file_path = dir["PHENO_GZ_DIR"] + f"/{phenocode}{suffix}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "pheno_gz", f"{phenocode}{suffix}.gz")
 
     # Read and cache the header separately
     header_chunk = pl.read_csv(
@@ -127,7 +129,7 @@ def getFilteredFunction(dir, phenocode, filtering_options, suffix):
         for row in filtered_chunk.iter_rows(named=False):
             yield "\t".join(map(str, row)) + "\n"
 
-def getUnfilteredFunction(dir, phenocode, suffix):
+def getUnfilteredFunction(phenocode, suffix):
     
     column_dtypes = {
         0: str,   # chrom
@@ -176,11 +178,11 @@ def getUnfilteredFunction(dir, phenocode, suffix):
     # Determine the file path based on `suffix`
     file_path = None
     if not suffix:
-        file_path = dir["PHENO_GZ_DIR"] + f"/{phenocode}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "pheno_gz", f"{phenocode}.gz")
     elif "interaction-" in suffix:
-        file_path = dir["INTERACTION_DIR"] + f"/{phenocode}{suffix}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "interaction", f"{phenocode}{suffix}.gz")
     else:
-        file_path = dir["PHENO_GZ_DIR"] + f"/{phenocode}{suffix}.gz"
+        file_path = os.path.join(get_pheweb_data_dir(), "pheno_gz", f"{phenocode}{suffix}.gz")
 
     # Read the header separately
     header_chunk = pl.read_csv(

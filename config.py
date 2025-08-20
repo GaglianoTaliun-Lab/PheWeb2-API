@@ -76,7 +76,7 @@ FIELD_ALIASES = {
 # ===============================================
 
 # Set to `True` to enable debug mode for data ingestion and API. Set `False` in the production mode.
-ENABLE_DEBUG = False
+ENABLE_DEBUG = True
 
 # Set number of parallel processes for data ingestion on a single node
 NUM_PROCS = 8
@@ -91,16 +91,6 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 
 # SECTION E: Internal parameters (no need to modify)
 # ===============================================
-
-# The configuration variables listed below are utilized internally and do not require any modifications.
-PHENOTYPES_DIR = os.path.join(PHEWEB_DATA_DIR)
-MANHATTAN_DIR = os.path.join(PHEWEB_DATA_DIR, "manhattan")
-QQ_DIR = os.path.join(PHEWEB_DATA_DIR, "qq")
-PHENO_GZ_DIR = os.path.join(PHEWEB_DATA_DIR, "pheno_gz")
-BEST_OF_PHENO_DIR = os.path.join(PHEWEB_DATA_DIR, "best_of_pheno")
-PHEWAS_MATRIX_DIR = os.path.join(PHEWEB_DATA_DIR, "matrix-stratified")
-INTERACTION_DIR = os.path.join(PHEWEB_DATA_DIR, "interaction")
-SITES_DIR = os.path.join(PHEWEB_DATA_DIR, "sites")
 
 # The configuration variables listed below are used internally for generating Manhattan/Miami plots and do not require any modifications.
 MANHATTAN_NUM_UNBINNED = 500

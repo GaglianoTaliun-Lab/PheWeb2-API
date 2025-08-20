@@ -24,7 +24,6 @@ qq
 phenotypes
 best_of_pheno
 pheno_correlation
-generate_variant_db
 generate_autocomplete_db
 """.split("\n")
 scripts = [script for script in scripts if script]

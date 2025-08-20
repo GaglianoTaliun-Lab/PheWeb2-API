@@ -140,14 +140,14 @@ pheweb2 phenolist import-phenolist /path/to/manifest.csv
 
 2. Create SLURM/SGE job submission script for parsing the GWAS summary statistics files:
 ```
-pheweb2 cluster --engine=slurm --step=parse
+pheweb2 cluster --engine=slurm --step=parse --N_per_job=3 --account=<USERNAME> 
 ```
 or
 ```
-pheweb2 cluster --engine=sge --step=parse
+pheweb2 cluster --engine=sge --step=parse --N_per_job=3 --account=<USERNAME>
 ```
 
-This will generate a bash script named `slurm-parse-<DATETIME>.sh` or `sge-parse-<DATETIME>.sh` in the `generated-by-pheweb/tmp/` directory by default. If you modified the `PHEWEB_DATA_DIR` variable in the `config.py` file, then the bash script will be placed in the `<PHEWEB_DATA_DIR>/tmp/` directory.
+This will generate a bash script named `slurm-parse-<DATETIME>.sh` or `sge-parse-<DATETIME>.sh` in the `generated-by-pheweb/tmp/` directory by default. If you modified the `PHEWEB_DATA_DIR` variable in the [config.py](config.py) file, then the bash script will be placed in the `<PHEWEB_DATA_DIR>/tmp/` directory. `--N_per_job` is used to specify how many jobs you want to have per 1 parallel job (default = 3).
 
 3. Once you have the script, you can submit the jobs by running: 
 ```
@@ -157,9 +157,88 @@ or
 ```
 sge generated-by-pheweb/tmp/sge-parse-<DATETIME>.sh
 ``` 
+
 > [!NOTE]
 > Depending on the size of your GWAS files and the configuration of your cluster, you may need to modify the job submission parameters inside the bash script.
 > For example, you may want to increase the job time limit or memory limit, or add a queue/account name.
+
+
+4. Reading through all the parsed GWAS files to generate a `sites-unannotatedtes.tsv` that contains all the unique variants:
+```
+pheweb2 sites
+```
+
+5. Downloading gene aliases database in `generated-by-pheweb/resources/` (need internet):
+```
+pheweb2 make-gene-aliases-sqlite3
+```
+
+6. Adding rsids and genes to the sites file (it may take a few hours; need internet):
+```
+pheweb2 add-rsids
+pheweb2 add-genes
+```
+
+7. Generate variant id <-> rsid database:
+```
+pheweb2 make-cpras-rsids-sqlite3
+```
+
+8. Create SLURM/SGE job submission script for generating all variants' information, manhattan data, and qq data for all the phenotypes (methods similar to the parsing step):
+```
+pheweb2 cluster --engine=slurm --step=augment-phenos --N_per_job=3 --account=<USERNAME>
+pheweb2 cluster --engine=slurm --step=manhattan --N_per_job=3 --account=<USERNAME>
+pheweb2 cluster --engine=slurm --step=qq --N_per_job=3 --account=<USERNAME> 
+```
+or
+```
+pheweb2 cluster --engine=sge --step=augment-phenos --N_per_job=3 --account=<USERNAME>
+pheweb2 cluster --engine=sge --step=manhattan --N_per_job=3 --account=<USERNAME>
+pheweb2 cluster --engine=sge --step=qq --N_per_job=3 --account=<USERNAME>
+```
+
+Once you have the script, you can submit the jobs by running: 
+```
+sbatch generated-by-pheweb/tmp/slurm-augment-phenos-<DATETIME>.sh
+sbatch generated-by-pheweb/tmp/slurm-manhattan-<DATETIME>.sh
+sbatch generated-by-pheweb/tmp/slurm-qq-<DATETIME>.sh
+``` 
+or 
+```
+sge generated-by-pheweb/tmp/sge-augment-phenos-<DATETIME>.sh
+sge generated-by-pheweb/tmp/sge-manhattan-<DATETIME>.sh
+sge generated-by-pheweb/tmp/sge-qq-<DATETIME>.sh
+``` 
+
+9. Create the phenotype matrix:
+``` 
+pheweb2 matrix
+```
+
+10. Create the best-phenos-by-gene database:
+```
+pheweb2 gather-pvalues-for-each-gene
+```
+
+11. 
+```
+pheweb2 phenotypes && pheweb2 top-hits
+```
+
+12.
+```
+pheweb2 best-of-pheno
+```
+
+13.
+```
+pheweb2 generate-autocomplete-db
+```
+
+14.
+```
+pheweb2 process
+```
 
 
 > [!NOTE]

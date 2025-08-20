@@ -51,7 +51,6 @@ for submodule in """
  top_loci
  detect_ref
  generate_autocomplete_db
- generate_variant_db
 """.split():
 
     def f(submodule: str, argv: List[str]) -> None:
@@ -129,9 +128,6 @@ Subcommands:
 
     pheweb2 generate_autocomplete_db
         Generate autocomplete database.
-
-    pheweb2 generate_variant_db
-        Generate variant database.
 
 """.format(version.version)
     )

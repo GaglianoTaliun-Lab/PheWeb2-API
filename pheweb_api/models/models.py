@@ -1,5 +1,6 @@
 from .locus_zoom_utils import get_pheno_region
-from flask import current_app, send_from_directory, send_file
+# from flask import current_app, send_from_directory, send_file
+from flask import send_from_directory
 from .gene_utils import get_gene_tuples
 from .download_utils import getDownloadFunction
 
@@ -9,6 +10,7 @@ import json
 from .variant import PhewasMatrixReader
 from .gwas_missing import SNPFetcher
 import gzip
+from ..conf import get_pheweb_data_dir
 
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -39,7 +41,7 @@ class Genes:
         # connect to sqlite3 database of best-phenos-by-gene
         connection = sqlite3.connect(
             os.path.join(
-                current_app.config["PHENOTYPES_DIR"], "best-phenos-by-gene.sqlite3"
+                get_pheweb_data_dir(), "best-phenos-by-gene.sqlite3"
             )
         )
         connection.row_factory = sqlite3.Row  # each row as dictionary
@@ -138,7 +140,7 @@ class Pheno:
             phenocode += stratification
 
         response = send_from_directory(
-            current_app.config["MANHATTAN_DIR"], f"{phenocode}.json"
+            get_pheweb_data_dir(), "manhattan", f"{phenocode}.json"
         )
         return response
 
@@ -147,15 +149,13 @@ class Pheno:
             phenocode += stratification
 
         response = send_from_directory(
-            current_app.config["QQ_DIR"], f"{phenocode}.json"
+            get_pheweb_data_dir(), "qq", f"{phenocode}.json"
         )
         return response
 
     def get_sumstats(self, phenocode, filtering_options, suffix=None):
         
-        dir = current_app.config
-
-        download_function = getDownloadFunction(dir, phenocode, filtering_options, suffix)
+        download_function = getDownloadFunction(phenocode, filtering_options, suffix)
         
         return download_function
 
@@ -173,7 +173,7 @@ class Pheno:
     def get_gwas_missing(self, gwas_missing_data):
         #print(f"{gwas_missing_data=}")
         #print(f"{'6-162025704-T-G' in gwas_missing_data['GS_EXAM_MAX_COM.all.male']}")
-        fetcher = SNPFetcher(current_app.config["PHENO_GZ_DIR"])
+        fetcher = SNPFetcher(os.path.join(get_pheweb_data_dir(), "pheno_gz"))
         response = fetcher.process_keys(gwas_missing_data)
         
         #print(f"{response=}")
@@ -204,7 +204,7 @@ class Variant:
     
     def get_nearest_genes(self, variant_code):
         try:
-            db_path = os.path.join(current_app.config["SITES_DIR"], "variants.db")
+            db_path = os.path.join(get_pheweb_data_dir(), "sites", "variants.db")
             conn = sqlite3.connect(db_path)
             cur = conn.cursor()
             cur.execute("SELECT nearest_genes FROM variants WHERE variant_id = ?", (variant_code,))
@@ -219,7 +219,7 @@ class Variant:
     
     def get_variant_rsid(self, variant_code):
         try:
-            db_path = os.path.join(current_app.config["SITES_DIR"], "autocomplete.db")
+            db_path = os.path.join(get_pheweb_data_dir(), "sites", "autocomplete.db")
             conn = sqlite3.connect(db_path)
             cur = conn.cursor()
             cur.execute("SELECT rsid FROM variants WHERE variant_id = ?", (variant_code,))
@@ -245,7 +245,7 @@ def create_genes() -> Genes:
 
 def create_tophits() -> Tophits:
     with open(
-        os.path.join(current_app.config["PHENOTYPES_DIR"], "top_hits_1k.json"), "r"
+        os.path.join(get_pheweb_data_dir(), "top_hits_1k.json"), "r"
     ) as f:
         data = json.load(f)
 
@@ -255,7 +255,7 @@ def create_tophits() -> Tophits:
 def create_phenotypes_list() -> Pheno:
     try:
         with open(
-            os.path.join(current_app.config["PHENOTYPES_DIR"], "phenotypes.json")
+            os.path.join(get_pheweb_data_dir(), "phenotypes.json")
         ) as f:
             data = json.load(f)
 
@@ -280,7 +280,7 @@ def create_phenotypes_list() -> Pheno:
 def create_variant() -> Variant:
     try:
         with open(
-            os.path.join(current_app.config["PHENOTYPES_DIR"], "phenotypes.json")
+            os.path.join(get_pheweb_data_dir(), "phenotypes.json")
         ) as f:
             data = json.load(f)
 

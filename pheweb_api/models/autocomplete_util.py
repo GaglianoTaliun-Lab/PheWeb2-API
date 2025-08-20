@@ -1,41 +1,41 @@
 import gzip
 import os
-from flask import current_app
+# from flask import current_app
 import sqlite3
 import csv
 from functools import lru_cache
 import tqdm
 from .models import create_phenotypes_list, create_genes
 from flask import g
-
+from ..conf import is_debug_mode
 
 
 class GenesServiceNotAvailable(Exception):
     pass
 
 
-def get_genes_service():
-    if "genes" not in g:
-        g.genes = create_genes()
-        if g.genes is None:
-            raise GenesServiceNotAvailable(
-                "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
-    return g.genes
+# def get_genes_service():
+#     if "genes" not in g:
+#         g.genes = create_genes()
+#         if g.genes is None:
+#             raise GenesServiceNotAvailable(
+#                 "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
+#             )
+#     return g.genes
 
 
-class PhenotypeServiceNotAvailable(Exception):
-    pass
+# class PhenotypeServiceNotAvailable(Exception):
+#     pass
 
 
-def get_pheno_service():
-    if "pheno" not in g:
-        g.pheno = create_phenotypes_list()
-        if g.pheno is None:
-            raise PhenotypeServiceNotAvailable(
-                "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
-    return g.pheno
+# def get_pheno_service():
+#     if "pheno" not in g:
+#         g.pheno = create_phenotypes_list()
+#         if g.pheno is None:
+#             raise PhenotypeServiceNotAvailable(
+#                 "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
+#             )
+#     return g.pheno
 
 
 class AutocompleteLoading:
@@ -58,18 +58,18 @@ class AutocompleteLoading:
             cur = mem_connection.cursor()
             cur.execute("SELECT COUNT(*) FROM variants")
             count = cur.fetchone()[0]
-            print(f"DEBUG: {count} variant records loaded into memory")
+            if is_debug_mode(): print(f"DEBUG: {count} variant records loaded into memory")
             # cur.execute("SELECT rsid, variant_id FROM variants LIMIT 5")
             # sample_rows = cur.fetchall()
             # print(f"DEBUG: Sample rsids in DB: {sample_rows}")
 
             cur.execute("SELECT COUNT(*) FROM genes")
             count = cur.fetchone()[0]
-            print(f"DEBUG: {count} gene records loaded into memory")
+            if is_debug_mode(): print(f"DEBUG: {count} gene records loaded into memory")
 
             cur.execute("SELECT COUNT(*) FROM phenotypes")
             count = cur.fetchone()[0]
-            print(f"DEBUG: {count} phenotype records loaded into memory")
+            if is_debug_mode(): print(f"DEBUG: {count} phenotype records loaded into memory")
             
         except Exception as e:
             print("DEBUG: Failed to query memory DB:", e)
@@ -82,24 +82,24 @@ class AutocompleteLoading:
     
     def create_table(self):
         if os.path.exists(self.db_path):
-            print(f"DEBUG: Found existing database at {self.db_path}")
+            if is_debug_mode(): print(f"DEBUG: Found existing database at {self.db_path}")
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
             
             if not self.table_exists(cur, "variants"):
-                print(f"DEBUG: Creating variants table")
-                self.load_or_create_autocomplete_db_variants_table()
+                if is_debug_mode(): print(f"DEBUG: Creating variants table")
+                self.create_autocomplete_db_variants_table()
 
             if not self.table_exists(cur, "genes"):
-                print(f"DEBUG: Creating genes table")
-                self.load_or_create_autocomplete_db_genes_table()
+                if is_debug_mode(): print(f"DEBUG: Creating genes table")
+                self.create_autocomplete_db_genes_table()
 
             if not self.table_exists(cur, "phenotypes"):
-                print(f"DEBUG: Creating phenotypes table")
-                self.load_or_create_autocomplete_db_phenotypes_table()
+                if is_debug_mode(): print(f"DEBUG: Creating phenotypes table")
+                self.create_autocomplete_db_phenotypes_table()
 
             if self.table_exists(cur, "phenotypes") and not self.table_exists(cur, "phenotypes_fts"):
-                print(f"DEBUG: Creating phenotypes_fts virtual table")
+                if is_debug_mode(): print(f"DEBUG: Creating phenotypes_fts virtual table")
                 cur.execute("""
                     CREATE VIRTUAL TABLE phenotypes_fts USING fts5(
                         phenocode,
@@ -110,19 +110,19 @@ class AutocompleteLoading:
                 """)
                 cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
                 conn.commit()
-                print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
+                if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
            
             conn.close()
-            print(f"DEBUG: Database creation complete. Entries loaded.")
+            if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
             return
         else:
-            print(f"DEBUG: Creating new database at {self.db_path}")
-            self.load_or_create_autocomplete_db_variants_table()
-            self.load_or_create_autocomplete_db_genes_table()
-            self.load_or_create_autocomplete_db_phenotypes_table()
+            if is_debug_mode(): print(f"DEBUG: Creating new database at {self.db_path}")
+            self.create_autocomplete_db_variants_table()
+            self.create_autocomplete_db_genes_table()
+            self.create_autocomplete_db_phenotypes_table()
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
-            print("DEBUG: Creating phenotypes_fts virtual table...")
+            if is_debug_mode(): print("DEBUG: Creating phenotypes_fts virtual table...")
             cur.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS phenotypes_fts USING fts5(
                     phenocode,
@@ -134,14 +134,14 @@ class AutocompleteLoading:
             cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
             conn.commit()
             conn.close()
-            print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
+            if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
         
     
-    def load_or_create_autocomplete_db_variants_table(self):
+    def create_autocomplete_db_variants_table(self):
         
         db_path = self.db_path
 
-        print(f"DEBUG: Creating new database at {db_path}")
+        # if is_debug_mode(): print(f"DEBUG: Creating new database at {db_path}")
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
 
@@ -161,8 +161,9 @@ class AutocompleteLoading:
             """)
 
             tsv_path = os.path.join(self.file_path, "sites.tsv")
-            print(f"DEBUG: Loading data from {tsv_path}")
+            if is_debug_mode(): print(f"DEBUG: Loading data from {tsv_path}")
             rows = []
+            batch_size = 1_000_000
             with gzip.open(tsv_path, "rt") as tsvfile:
                 reader = csv.DictReader(tsvfile, delimiter="\t")
                 for row in tqdm.tqdm(reader, desc="Loading TSV"):
@@ -173,20 +174,26 @@ class AutocompleteLoading:
                     rsid = row["rsids"].split(",")[0] if row["rsids"] else None
                     variant_id = f"{chrom}-{pos}-{ref}-{alt}"
                     rows.append((rsid, variant_id, chrom, int(pos)))
+                    if len(rows) >= batch_size:
+                        if is_debug_mode(): print(f"\nDEBUG: Inserting {len(rows)} rows into database")
+                        if is_debug_mode(): print(f"DEBUG: Example row: {rows[0]}")
+                        cur.execute("BEGIN TRANSACTION")
+                        cur.executemany(
+                            "INSERT INTO variants (rsid, variant_id, chrom, pos) VALUES (?, ?, ?, ?)", rows
+                        )
+                        rows = []
+                        conn.commit()
+                if len(rows) > 0:
+                    if is_debug_mode(): print(f"DEBUG: Inserting {len(rows)} rows into database")
+                    if is_debug_mode(): print(f"DEBUG: Example row: {rows[0]}")
+                    cur.execute("BEGIN TRANSACTION")
+                    cur.executemany(
+                        "INSERT INTO variants (rsid, variant_id, chrom, pos) VALUES (?, ?, ?, ?)", rows
+                    )
+                    rows = []
+                    conn.commit()
 
-            print(f"DEBUG: Inserting {len(rows)} rows into database")
-            print(f"DEBUG: Example row: {rows[0]}")
-
-            batch_size = 1_000_000
-            cur.execute("BEGIN TRANSACTION")
-            for i in tqdm.tqdm(range(0, len(rows), batch_size), desc="Inserting data"):
-                batch = rows[i:i+batch_size]
-                cur.executemany(
-                    "INSERT INTO variants (rsid, variant_id, chrom, pos) VALUES (?, ?, ?, ?)", batch
-                )
-            conn.commit()
-
-            print("DEBUG: Creating indexes for rsid and variant_id...")
+            if is_debug_mode(): print("DEBUG: Creating indexes for rsid and variant_id...")
             cur.execute("CREATE INDEX idx_variant_id ON variants(variant_id)")
             cur.execute("CREATE INDEX idx_rsid ON variants(rsid)")
             cur.execute("CREATE INDEX idx_chrom ON variants(chrom)")
@@ -194,7 +201,7 @@ class AutocompleteLoading:
             # cur.execute("CREATE INDEX idx_pos_str ON variants(pos_str)")
             conn.commit()
 
-            print(f"DEBUG: Database creation complete. Entries loaded.")
+            if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
 
         except Exception as e:
             print(f"DEBUG: Error inserting data: {e}")
@@ -203,14 +210,18 @@ class AutocompleteLoading:
         finally:
             conn.close()
     
-    def load_or_create_autocomplete_db_genes_table(self):
+    
+    def create_autocomplete_db_genes_table(self):
         db_path = self.db_path
-        genes_service = get_genes_service()
-        gene_dict = genes_service.get_all_genes()
+        # genes_service = get_genes_service()
+        # gene_dict = genes_service.get_all_genes()
+        gene_dict = create_genes().get_all_genes()
+        
         if gene_dict is None:
-            raise GenesServiceNotAvailable(
-                "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
+            raise Exception("genes cannot be retrieved")
+            # raise GenesServiceNotAvailable(
+            #     "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
+            # )
         
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
@@ -232,7 +243,7 @@ class AutocompleteLoading:
             cur.execute("BEGIN TRANSACTION")
             cur.executemany("INSERT INTO genes (gene_id, chrom, start, stop) VALUES (?, ?, ?, ?)", rows)
             conn.commit()
-            print(f"DEBUG: Genes table creation complete. {len(rows)} entries loaded.")
+            if is_debug_mode(): print(f"DEBUG: Genes table creation complete. {len(rows)} entries loaded.")
         except Exception as e:
             print(f"DEBUG: Error inserting data: {e}")
             conn.rollback()
@@ -240,15 +251,17 @@ class AutocompleteLoading:
         finally:
             conn.close()
 
-    def load_or_create_autocomplete_db_phenotypes_table(self):
+    def create_autocomplete_db_phenotypes_table(self):
         db_path = self.db_path
         
-        pheno_service = get_pheno_service()
-        pheno_dict = pheno_service.get_all_pheno_names()
+        # pheno_service = get_pheno_service()
+        # pheno_dict = pheno_service.get_all_pheno_names()
+        pheno_dict = create_phenotypes_list().get_all_pheno_names()
         if pheno_dict is None:
-            raise PhenotypeServiceNotAvailable(
-                "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-            )
+            raise Exception("phenotypes cannot be retrieved")
+            # raise PhenotypeServiceNotAvailable(
+            #     "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
+            # )
         
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
@@ -268,13 +281,13 @@ class AutocompleteLoading:
             cur.execute("BEGIN TRANSACTION")
             cur.executemany("INSERT INTO phenotypes (phenocode, phenostring) VALUES (?, ?)", rows)
             conn.commit()
-            print(f"DEBUG: Phenotypes table creation complete. {len(rows)} entries loaded.")
+            if is_debug_mode(): print(f"DEBUG: Phenotypes table creation complete. {len(rows)} entries loaded.")
 
-            print("DEBUG: Creating indexes for phenostring...")
+            if is_debug_mode(): print("DEBUG: Creating indexes for phenostring...")
             cur.execute("CREATE INDEX idx_phenostring ON phenotypes(phenostring)")
             conn.commit()
 
-            print(f"DEBUG: Database creation complete. Entries loaded.")
+            if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
 
         except Exception as e:
             print(f"DEBUG: Error inserting data: {e}")
@@ -298,13 +311,13 @@ class AutocompleteLoading:
             # print(f"DEBUG: cursor created")
             cur.execute("SELECT rsid, variant_id FROM variants LIMIT 1")
             sample_rows = cur.fetchall()
-            print(f"DEBUG: Sample rsids in DB: {sample_rows}")
+            if is_debug_mode(): print(f"DEBUG: Sample rsids in DB: {sample_rows}")
         except Exception as e:
             print(f"DEBUG: Error querying variants: {e}")
             raise e
         
         try:
-            print(f"DEBUG: chrom: {chrom}, pos: {pos}")
+            if is_debug_mode(): print(f"DEBUG: chrom: {chrom}, pos: {pos}")
 
             if chrom and pos:
                 pos_window = 10
