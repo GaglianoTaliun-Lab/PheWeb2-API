@@ -293,8 +293,9 @@ e.g. to view phenotype table data, go to http://localhost:9099/phenotypes
  
 ## Documentation
 
+>> you can play with [http://localhost:9099/](http://localhost:9099/)
+
 To see all available API routes, visit http://localhost:9099/ (or the location of your backend API instance).
 
-Documentation was created with [Flask-RESTX](https://flask-restx.readthedocs.io/en/latest/).
 
 
