@@ -18,12 +18,12 @@ def getDownloadFunction(phenocode, filtering_options, suffix=None):
     if filtering_options['indel'] == 'both' and filtering_options['min_maf'] == 0.0 and filtering_options['max_maf'] == 0.5:
         headers["Content-Disposition"] = f'attachment; filename={filename}.txt'
 
-        return Response(getUnfilteredFunction(phenocode, suffix), headers = headers)
+        return Response(getUnfilteredFunction(phenocode, suffix), headers = headers, mimetype='text/plain')
         
     # if filtering has been applied, this gets far more complicated
     # as we need to send a modified file that has been filtered.
     headers["Content-Disposition"] = f'attachment; filename=filtered-{filename}.txt'
-    return Response(getFilteredFunction(phenocode, filtering_options, suffix), headers = headers)
+    return Response(getFilteredFunction(phenocode, filtering_options, suffix), headers = headers, mimetype='text/plain')
    
 
 def getFilteredFunction(phenocode, filtering_options, suffix):
@@ -191,8 +191,8 @@ def getUnfilteredFunction(phenocode, suffix):
         n_rows=1  # Read only the first row for header
     )
     header = header_chunk.columns 
-    chunk_size = 1_000_000  
-    
+    chunk_size = 1_000_000
+
     # Yield the header only once
     yield "\t".join(header) + "\n"
 
@@ -200,7 +200,6 @@ def getUnfilteredFunction(phenocode, suffix):
     for chunk in read_in_chunks(file_path, chunk_size=chunk_size, header=header):
         # Process each chunk to calculate 'maf'
         chunk = process_chunk(chunk, header)
-        
         # Yield rows of the chunk (skip header)
         for row in chunk.iter_rows(named=False):
             yield "\t".join(map(str, row)) + "\n"

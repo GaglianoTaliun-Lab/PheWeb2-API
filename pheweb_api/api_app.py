@@ -31,24 +31,6 @@ def create_app(enable_cache:bool=True) -> Flask:
 
     return app
 
-# app = Flask(__name__)
-
-# CORS(app, origins=get_cors_origins())
-
-# Create a central API object for Swagger documentation
-# api = Api(
-#     app,
-#     version="1.0",
-#     title="API Documentation",
-#     description="Swagger documentation for all API routes",
-# )
-
-# Register blueprints with the shared API instance
-# api.add_namespace(phenotype_routes.api, path="/phenotypes")
-# api.add_namespace(gene_routes.api, path="/gene")
-# api.add_namespace(variant_routes.api, path="/variant")
-# api.add_namespace(autocomplete.api, path="/autocomplete")
-
 def run_gunicorn(app:Flask, host:str, port:int, num_workers:int, reload:bool) -> None:
     class StandaloneGunicornApplication(gunicorn.app.base.BaseApplication):
         # from <http://docs.gunicorn.org/en/stable/custom.html>
@@ -70,6 +52,7 @@ def run_gunicorn(app:Flask, host:str, port:int, num_workers:int, reload:bool) ->
         'access_log_format': '%(t)s | %(s)s | %(L)ss | %(m)s %(U)s | resp_len:%(B)s | referrer:"%(f)s" | ip:%(h)s | agent:%(a)s',
         # docs @ <http://docs.gunicorn.org/en/stable/settings.html#access-log-format>
         'worker_class': 'gevent',
+        'timeout': 1800 # to enable streaming of large file for downloading
     }
     sga = StandaloneGunicornApplication(app, options)
     # for skey,sval in sorted(sga.cfg.settings.items()):
