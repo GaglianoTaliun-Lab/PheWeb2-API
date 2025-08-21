@@ -147,19 +147,7 @@ def getUnfilteredFunction(phenocode, suffix):
         12: int, # n_samples
     }
     
-    def process_chunk(chunk, header):
-        af_index = header.index('af')
-
-        # Ensure MAF (modify the DataFrame, not Series directly)
-        chunk = chunk.with_columns(
-            pl.when(pl.nth(af_index) > 0.5)
-            .then(1 - pl.nth(af_index))
-            .otherwise(pl.nth(af_index))
-            .alias("maf")
-        )
-        return chunk
-
-    def read_in_chunks(file_path, chunk_size, header=None):
+    def read_in_chunks(file_path, chunk_size, header=None, header_subset=None):
         # Read the file in chunks
         total_rows = 0
         while True:
@@ -167,6 +155,7 @@ def getUnfilteredFunction(phenocode, suffix):
                 file_path,
                 separator="\t",
                 dtypes={col_name: column_dtypes[i] for i, col_name in enumerate(header)},  # Map columns by index
+                columns= header_subset,
                 skip_rows=total_rows,  # Skip rows processed in the previous chunks
                 n_rows=chunk_size
             )
@@ -191,15 +180,15 @@ def getUnfilteredFunction(phenocode, suffix):
         n_rows=1  # Read only the first row for header
     )
     header = header_chunk.columns 
+    header_subset = header.copy()
+    header_subset.remove("test")
     chunk_size = 1_000_000
 
     # Yield the header only once
-    yield "\t".join(header) + "\n"
+    yield "\t".join(header_subset) + "\n"
 
     # Process and yield chunks
-    for chunk in read_in_chunks(file_path, chunk_size=chunk_size, header=header):
-        # Process each chunk to calculate 'maf'
-        chunk = process_chunk(chunk, header)
+    for chunk in read_in_chunks(file_path, chunk_size=chunk_size, header=header, header_subset=header_subset):
         # Yield rows of the chunk (skip header)
         for row in chunk.iter_rows(named=False):
             yield "\t".join(map(str, row)) + "\n"
