@@ -315,10 +315,20 @@ WARNING: This is a development server. Do not use it in a production deployment.
 ```
 and some messages starting with `DEBUG...` when API is triggered.
 
-3. You can generate your own PyTest script by running
->> not sure if we need this section
+
+## Testing
+To test the API routes, run:
 ```
-pytest <YOUR PyTest FILE> -v
+pytest tests/test_routes.py -s -v
+```
+you should see:
+```
+tests/test_routes.py::test_get_phenotypes PASSED
+tests/test_routes.py::test_get_gene_names PASSED
+tests/test_routes.py::test_get_gene_PCSK9 PASSED
+tests/test_routes.py::test_get_tophits PASSED
+tests/test_routes.py::test_get_stratifications PASSED
+tests/test_routes.py::test_get_variant_10_112999020_G_T PASSED
 ```
 
 

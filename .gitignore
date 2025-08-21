@@ -23,7 +23,6 @@ phenocode_labels.csv
 *.log
 
 pheno-list*
-test*
 src/
 browser*
 

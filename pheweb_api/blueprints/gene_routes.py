@@ -27,7 +27,7 @@ class GeneNames(Resource):
         Get a list of all available gene names
         """
         try:
-            current_app.logger.debug("Getting gene names")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             gene_list = genes_service.get_gene_names()
             return gene_list, 200
@@ -45,7 +45,7 @@ class SignificantAssociationTable(Resource):
         Get association information for a specific gene name.
         """
         try:
-            current_app.logger.debug(f"Getting gene table for {gene}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             table_data = genes_service.get_genes_table(gene)
 
@@ -69,7 +69,7 @@ class GenePosition(Resource):
         Get base-pair and chromosome position of a given gene name
         """
         try:
-            current_app.logger.debug(f"Getting gene position for {gene}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             chrom, start, end = genes_service.get_gene_position(gene)
 

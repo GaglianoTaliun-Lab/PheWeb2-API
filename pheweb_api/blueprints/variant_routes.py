@@ -28,7 +28,7 @@ class Variant(Resource):
     )
     def get(self, variant_code, stratification):
         try:
-            current_app.logger.debug(f"Getting variant for {variant_code} and {stratification}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             variant_service = get_variant_service()
             variant_phewas = variant_service.get_variant(variant_code, stratification)
 
@@ -48,7 +48,7 @@ class StratificationList(Resource):
     @cache.cached(timeout=300)
     def get(self):
         try:
-            current_app.logger.debug("Getting stratification list")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             variant_service = get_variant_service()
             strat_list = variant_service.get_stratifications()
 
@@ -67,7 +67,7 @@ class CategoryList(Resource):
     @cache.cached(timeout=300)
     def get(self):
         try:
-            current_app.logger.debug("Getting category list")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             variant_service = get_variant_service()
             cat_list = variant_service.get_categories()
 
@@ -86,7 +86,7 @@ class Rsid(Resource):
     @cache.cached(timeout=300)
     def get(self, variant_code):
         try:
-            current_app.logger.debug(f"Getting rsid for {variant_code}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             variant_service = get_variant_service()
             rsid = variant_service.get_variant_rsid(variant_code)
             return rsid, 200
@@ -101,7 +101,7 @@ class NearestGenes(Resource):
     @cache.cached(timeout=300)
     def get(self, variant_code, stratification="european.male"):
         try:
-            current_app.logger.debug(f"Getting nearest genes for {variant_code}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             variant_service = get_variant_service()
             nearest_genes = variant_service.get_nearest_genes(variant_code)
             return nearest_genes, 200

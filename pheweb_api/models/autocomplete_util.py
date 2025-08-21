@@ -42,6 +42,7 @@ class AutocompleteLoading:
         self.variants = {}
         self.file_path = os.path.join(get_pheweb_data_dir(), "sites")
         self.db_path = os.path.join(self.file_path, "autocomplete.db")
+        print(f"DEBUG: db_path: {self.db_path}")
         self.create_table()
         self._load_to_memory()
 

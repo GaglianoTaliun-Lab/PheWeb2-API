@@ -42,7 +42,7 @@ class PhenotypeList(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode=None):
         try:
-            current_app.logger.debug(f"Getting phenotypes list for {phenocode}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
             result = pheno_service.get_phenotypes_list(phenocode)
             if result:
@@ -60,7 +60,7 @@ class TopHits(Resource):
     @cache.cached(timeout=300)
     def get(self):
         try:
-            current_app.logger.debug("Getting top hits")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             tophits_service = get_tophits_service()
             result = tophits_service.get_tophits()
             if result:
@@ -87,9 +87,10 @@ class TopHits(Resource):
     },
 )
 class InteractionList(Resource):
+    @cache.cached(timeout=300)
     def get(self, phenocode=None):
         try:
-            current_app.logger.debug(f"Getting interaction list for {phenocode}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
             result = pheno_service.get_interaction_list(phenocode)
             if result:
@@ -103,7 +104,7 @@ class InteractionList(Resource):
 
 
 @api.route("/<phenocode>/<stratification>/manhattan")
-class Pheno(Resource):
+class Manhattan(Resource):
     def get(self, phenocode, stratification=None):
         try:
             current_app.logger.debug(f"Getting pheno for {phenocode} and {stratification}")
@@ -128,7 +129,7 @@ class PhenoFilterSingle(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode, stratification=None):
         try:
-            current_app.logger.debug(f"Getting pheno filter for {phenocode} and {stratification}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             args = parser.parse_args()
             min_maf = args["min_maf"]
             max_maf = args["max_maf"]
@@ -184,7 +185,7 @@ class Region(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode, region_code, stratification=None):
         try:
-            current_app.logger.debug(f"Getting region for {phenocode} and {stratification}")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
             result = pheno_service.get_region(phenocode, stratification, region_code)
             if not result:
@@ -201,11 +202,11 @@ class Region(Resource):
 
 
 @api.route("/variants")
-class MissingGWAS(Resource):
+class GetVariants(Resource):
     @cache.cached(timeout=300)
     def post(self):
         try:
-            current_app.logger.debug("Getting missing gwas")
+            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             data = api.payload
             if not data:
                 return {"message": "No data provided"}, 400
