@@ -87,7 +87,11 @@ HOST = '127.0.0.1'
 # Set the port number for the API endpoint.
 PORT = 9543
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+# Set the number of cpus to run API in parallel (default is 4)
+NUM_API_WORKERS = 4
+
+# Specify the comma separated list of origins allowed to access the API. By default all are alllowed i.e.'*'.
+CORS_ORIGINS = '*'
 
 # SECTION E: Internal parameters (no need to modify)
 # ===============================================

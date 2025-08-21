@@ -175,6 +175,30 @@ def get_pheweb_base_dir() -> str:
         )
     return base_dir
 
+def get_cors_origins() -> List[str]:
+    if "CORS_ORIGINS" in os.environ:
+        return os.environ["CORS_ORIGINS"].split(",")
+    else:
+        return _get_config_str("CORS_ORIGINS", "*").split(",")
+
+
+def get_host() -> str:
+    if "HOST" in os.environ:
+        return os.environ["HOST"]
+    else:
+        return _get_config_str("HOST", "127.0.0.1")
+    
+def get_port() -> int:
+    if "PORT" in os.environ:
+        return int(os.environ["PORT"])
+    else:
+        return _get_config_int("PORT", 9000)
+
+def get_num_api_workers() -> int:
+    if "NUM_API_WORKERS" in os.environ:
+        return int(os.environ["NUM_API_WORKERS"])
+    else:
+        return _get_config_int("NUM_API_WORKERS", 4)
 
 def get_cache_dir() -> Optional[str]:
     key = "cache_dir"

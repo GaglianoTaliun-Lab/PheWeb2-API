@@ -248,9 +248,17 @@ pheweb2 process
  
 
 ### 3.6. Running API server
-1. To run the API server, run:
+1. To run the API server in production mode, run:
+```
+pheweb2 serve --host 127.0.0.1 --port 9543 --gunicorn
+```
+To run the API in dev mode, run:
 ```
 pheweb2 serve --host 127.0.0.1 --port 9543
+```
+you can add argument `--enable-cache` to enable the API cache like:
+```
+pheweb2 serve --host 127.0.0.1 --port 9543 --gunicorn --enable-cache 
 ```
 
 2. Once it's running, in a separate terminal window, you can test it by running the following commands:
@@ -287,15 +295,40 @@ curl -X GET "http://localhost:9543/variant/6-32658525-T-G/european.male"
 to get phenotypic information of the chosen variant
 
 
-get data through http://localhost:9099/PATH/TO/ROUTES/
+get data through http://localhost:9543/PATH/TO/ROUTES/
 
-e.g. to view phenotype table data, go to http://localhost:9099/phenotypes
+e.g. to view phenotype table data, go to http://localhost:9543/phenotypes
+
+### 3.7 Developing mode
+1. Before running the API under dev mode, you may want to first turn on the debug mode by setting `ENABLE_DEBUG` variable in [config.py](config.py) file to be `True`
+
+2. Then run API on dev mode:
+```
+pheweb2 serve --host 127.0.0.1 --port 9543
+```
+When the debug mode is turned on on dev mode, you will see messages from the terminal like:
+```
+ * Serving Flask app 'pheweb_api.api_app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Debugger is active!
+```
+and some messages starting with `DEBUG...` when API is triggered.
+
+3. You can generate your own PyTest script by running
+>> not sure if we need this section
+```
+pytest <YOUR PyTest FILE> -v
+```
+
+
+
  
 ## Documentation
 
->> you can play with [http://localhost:9099/](http://localhost:9099/)
+>> you can play with [http://localhost:9543/](http://localhost:9543/) (or the location of your backend API instance). It is an interactive API documentation to see details of all available routes and their functions.
 
-To see all available API routes, visit http://localhost:9099/ (or the location of your backend API instance).
+To see all available API routes, visit http://localhost:9543/ (or the location of your backend API instance).
 
 
 

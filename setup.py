@@ -86,6 +86,8 @@ setup(
         "Flask-Cors==5.0.0",
         "Flask-Login==0.6.3",
         "flask-restx==1.3.0",
+        "Flask-Caching==2.3.1",
+        "pytest==8.4.1",
         "gunicorn==22.0.0",
         "psutil==6.0.0",
         "setuptools==75.5.0",

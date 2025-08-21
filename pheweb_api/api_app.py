@@ -8,12 +8,17 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from .models.variant_utils import VariantLoading
 from .models.autocomplete_util import AutocompleteLoading
+from .conf import get_cors_origins, is_debug_mode, get_host, get_port, get_num_api_workers
 load_dotenv()
+import gunicorn.app.base
+from .blueprints.cache import cache
+import logging
 
 app = Flask(__name__)
-app.config.from_object("config")
 
-CORS(app, origins=app.config["CORS_ORIGINS"])
+
+
+CORS(app, origins=get_cors_origins())
 
 # Create a central API object for Swagger documentation
 api = Api(
@@ -29,15 +34,69 @@ api.add_namespace(gene_routes.api, path="/gene")
 api.add_namespace(variant_routes.api, path="/variant")
 api.add_namespace(autocomplete.api, path="/autocomplete")
 
+def run_gunicorn(app:Flask, host:str, port:int, num_workers:int, reload:bool) -> None:
+    class StandaloneGunicornApplication(gunicorn.app.base.BaseApplication):
+        # from <http://docs.gunicorn.org/en/stable/custom.html>
+        def __init__(self, app, opts=None):
+            self.application = app
+            self.options = opts or {}
+            super().__init__()
+        def load_config(self):
+            for key, val in self.options.items():
+                self.cfg.set(key, val)
+        def load(self):
+            return self.application
+
+    options = {
+        'bind': '{}:{}'.format(host, port),
+        'workers': num_workers,
+        'reload': reload,
+        'accesslog': '-',
+        'access_log_format': '%(t)s | %(s)s | %(L)ss | %(m)s %(U)s | resp_len:%(B)s | referrer:"%(f)s" | ip:%(h)s | agent:%(a)s',
+        # docs @ <http://docs.gunicorn.org/en/stable/settings.html#access-log-format>
+        'worker_class': 'gevent',
+    }
+    sga = StandaloneGunicornApplication(app, options)
+    # for skey,sval in sorted(sga.cfg.settings.items()):
+    #     cli_args = sval.cli and ' '.join(sval.cli) or ''
+    #     val = str(sval.value)
+    #     print(f'cfg.{skey:25} {cli_args:28} {val}')
+    #     if sval.value != sval.default:
+    #         print(f'             default: {str(sval.default)}')
+    #         print(f'             short: {sval.short}')
+    #         print(f'             desc: <<\n{sval.desc}\n>>')
+    sga.run()
+
 def run(argv:List[str]) -> None:
 
     parser = argparse.ArgumentParser(prog = 'pheweb2 serve')
-    parser.add_argument('--host', default = app.config["HOST"], help = f'The hostname to use to access PheWeb2 API. Default: {app.config["HOST"]}.')
-    parser.add_argument('--port', type = int, default = app.config["PORT"], help = f'The port name to use to access PheWeb2 API. Default: {app.config["PORT"]}.')
+    parser.add_argument('--host', default = get_host(), help = f'The hostname to use to access PheWeb2 API. Default: {get_host()}.')
+    parser.add_argument('--port', type = int, default = get_port(), help = f'The port name to use to access PheWeb2 API. Default: {get_port()}.')
+    parser.add_argument('--gunicorn', action='store_true', help='Use gunicorn to run the API.')
+    parser.add_argument('--enable-cache', action='store_true', help='Enable cache to run the API.')
     args = parser.parse_args(argv)
 
-    app.run(
-        host = args.host, port = args.port, debug = app.config['ENABLE_DEBUG']
-    )
+    if args.enable_cache:
+        # cache = Cache(config={
+        #     'CACHE_TYPE': 'SimpleCache',
+        #     'CACHE_DEFAULT_TIMEOUT': 30
+        # })
+        # cache.init_app(app)
+        cache.init_app(app)
+    
+    if is_debug_mode():
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
+        
+
+    if args.gunicorn:
+        run_gunicorn(app, host=args.host, port=args.port, num_workers=get_num_api_workers(), reload=is_debug_mode())
+    else:
+        app.run(
+            host = args.host, port = args.port, debug = is_debug_mode()
+        )
+
+    
 
 

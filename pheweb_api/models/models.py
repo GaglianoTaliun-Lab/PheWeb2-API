@@ -150,7 +150,7 @@ class Pheno:
             phenocode += stratification
 
         response = send_from_directory(
-            get_pheweb_data_dir(), "manhattan", f"{phenocode}.json"
+            os.path.join(get_pheweb_data_dir(), "manhattan"), f"{phenocode}.json", max_age=300
         )
         return response
 
@@ -159,7 +159,7 @@ class Pheno:
             phenocode += stratification
 
         response = send_from_directory(
-            get_pheweb_data_dir(), "qq", f"{phenocode}.json"
+            os.path.join(get_pheweb_data_dir(), "qq"), f"{phenocode}.json", max_age=300
         )
         return response
 

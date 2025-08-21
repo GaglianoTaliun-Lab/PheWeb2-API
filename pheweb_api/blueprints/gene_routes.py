@@ -1,6 +1,7 @@
-from flask import Blueprint, g
+from flask import Blueprint, g, current_app
 from ..models import create_genes
 from flask_restx import Namespace, Resource
+from .cache import cache
 
 bp = Blueprint("gene_routes", __name__)
 api = Namespace("gene", description="Routes related to genes")
@@ -20,26 +21,31 @@ def get_genes_service():
 
 @api.route("/")
 class GeneNames(Resource):
+    @cache.cached(timeout=300)
     def get(self):
         """
         Get a list of all available gene names
         """
         try:
+            current_app.logger.debug("Getting gene names")
             genes_service = get_genes_service()
             gene_list = genes_service.get_gene_names()
             return gene_list, 200
         except GenesServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
+            current_app.logger.error(f"Error getting gene names: {e}")
             return {"message": "Internal server error."}, 500
 
 @api.route("/<gene>")
 class SignificantAssociationTable(Resource):
+    @cache.cached(timeout=300)
     def get(self, gene):
         """
         Get association information for a specific gene name.
         """
         try:
+            current_app.logger.debug(f"Getting gene table for {gene}")
             genes_service = get_genes_service()
             table_data = genes_service.get_genes_table(gene)
 
@@ -51,16 +57,19 @@ class SignificantAssociationTable(Resource):
         except GenesServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
+            current_app.logger.error(f"Error getting gene table for {gene}: {e}")
             return {"message": "Internal server error."}, 500
 
 
 @api.route("/<gene>/gene_position")
 class GenePosition(Resource):
+    @cache.cached(timeout=300)
     def get(self, gene):
         """
         Get base-pair and chromosome position of a given gene name
         """
         try:
+            current_app.logger.debug(f"Getting gene position for {gene}")
             genes_service = get_genes_service()
             chrom, start, end = genes_service.get_gene_position(gene)
 
@@ -75,4 +84,5 @@ class GenePosition(Resource):
         except GenesServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
+            current_app.logger.error(f"Error getting gene position for {gene}: {e}")
             return {"message": "Internal server error."}, 500
