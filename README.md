@@ -8,19 +8,19 @@ This is an implementation of the data model and API for [PheWeb2](https://github
 
 You can install PheWeb2 and all required dependencies within a virtual environment using the following steps:
 1. Clone this repository:
-```
-git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git
-cd PheWeb2-API
-```
+   ```
+   git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git
+   cd PheWeb2-API
+   ```
 2. Create and activate Python virtual environment:
-```
-python -m venv .venv
-source .venv/bin/activate
-```
+   ```
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
 3. Install PheWeb2 Python package and its dependencies:
-```
-pip install -e .
-```
+   ```
+   pip install -e .
+   ```
 
 ## 2. Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
