@@ -100,7 +100,7 @@ During the ingestion of GWAS summary statistics, PheWeb 2 will apply the followi
 - If the minor allele frequency (MAF) of the variant falls below a specified threshold (defined by the `ASSOC_MIN_MAF` variable in the [config.py](config.py) file), the variant will be excluded.
 - If the MAF of the variant is below a specified threshold (defined by the `INTERACTION_MIN_MAF` variable in the [config.py](config.py) file), the interaction effect for this variant will not be imported.
 - When genotype imputation quality scores are available, if the imputation quality for a variant falls below a specified threshold (defined by the `MIN_IMP_QUALITY` variable in the [config.py](config.py) file), the variant will be excluded.
-
+  
 > [!NOTE]
 > When filtering by imputation quality scores, the scores can be provided as a column inside the GWAS summary statistics file (e.g., the Regenie outputs imputation quality scores in the `INFO` column) or in the external indexed VCF files outputted by the genotype imputation software (e.g., [minimac4](https://github.com/statgen/Minimac4)). See an example inside the [config.py](config.py) file.
 
@@ -134,17 +134,17 @@ To ingest GWAS summary statistics files into PheWeb2, you need to create the Man
 Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
 1. Import the manifest file into PheWeb2:
-```
-pheweb2 phenolist import-phenolist /path/to/manifest.csv
-```
-This command creates a `pheno-list.json` file in the root directory.
+   ```
+   pheweb2 phenolist import-phenolist /path/to/manifest.csv
+   ```
+   This command creates a `pheno-list.json` file in the root directory.
 
 2. Set the number of parallel ingestion jobs using the `NUM_PROCS` parameter in the [config.py](config.py) file.
 
 3. Ingest the GWAS summary statistics into PheWeb2:
-```
-pheweb2 process
-```
+   ```
+   pheweb2 process
+   ```
 
 ### 3.5b. Ingesting GWAS summary statistics files using SLURM or SGE
 
@@ -157,112 +157,113 @@ pheweb2 process
 Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
 1. Import the manifest file into PheWeb2:
-```
-pheweb2 phenolist import-phenolist /path/to/manifest.csv
-```
-This command creates a `pheno-list.json` file in the root directory.
+   ```
+   pheweb2 phenolist import-phenolist /path/to/manifest.csv
+   ```
+   This command creates a `pheno-list.json` file in the root directory.
 
 2. Create a SLURM/SGE job submission bash script for parsing the GWAS summary statistics files:
-```
-pheweb2 cluster --engine=slurm --step=parse --N_per_job=3
-```
-or
-```
-pheweb2 cluster --engine=sge --step=parse --N_per_job=3
-```
-A bash script named `slurm-parse-[DATETIME].sh` or `sge-parse-[DATETIME].sh` will be generated in the `generated-by-pheweb/tmp/` directory. If you have modified the `PHEWEB_DATA_DIR` variable in the [config.py](config.py) configuration file, the script will be placed in the `[PHEWEB_DATA_DIR]/tmp/` directory instead.
+   ```
+   pheweb2 cluster --engine=slurm --step=parse --N_per_job=3
+   ```
+   or
+   ```
+   pheweb2 cluster --engine=sge --step=parse --N_per_job=3
+   ```
+   A bash script named `slurm-parse-[DATETIME].sh` or `sge-parse-[DATETIME].sh` will be generated in the `generated-by-pheweb/tmp/` directory. If you have modified the `PHEWEB_DATA_DIR` variable in the [config.py](config.py) configuration file, the script will be placed in the `[PHEWEB_DATA_DIR]/tmp/` directory instead.
 
-To specify the maximum number of GWAS files to parse sequentially per parallel job, use the `--N_per_job` option (the default is 3). You can also include an optional `--account` argument in the `pheweb2 cluster` command to specify your SLURM account name if needed.
+   To specify the maximum number of GWAS files to parse sequentially per parallel job, use the `--N_per_job` option (the default is 3). You can also include an optional `--account `argument in the `pheweb2 cluster` command to specify your SLURM account name if needed.
 
 3. Submit the SLURM/SGE jobs for parsing GWAS summary statistics files to the queue:
-```
-sbatch generated-by-pheweb/tmp/slurm-parse-[DATETIME].sh
-``` 
-or 
-```
-sge generated-by-pheweb/tmp/sge-parse-[DATETIME].sh
-``` 
-
+   ```
+   sbatch generated-by-pheweb/tmp/slurm-parse-[DATETIME].sh
+   ```
+   or
+   ```
+   sge generated-by-pheweb/tmp/sge-parse-[DATETIME].sh
+   ```
+   
 > [!IMPORTANT]
 > Depending on your GWAS files' size and your cluster's configuration, you may need to adjust the job submission parameters in the bash script. This could involve increasing the job time limit or memory limit, or specifying a queue/account name.
 
 4. After all SLURM/SGE jobs submitted to the queue have successfully finished running, you can proceed to the next step. This involves generating a union of all genetic variants from the GWAS summary statistics files. Note that this step does not utilize SLURM/SGE; instead, it employs local parallelization, which is controlled by the `NUM_PROCS` variable in the [config.py](config.py) configuration file.
-```
-pheweb2 sites
-```
-This creates the `generated-by-pheweb/sites/sites-unannotated.tsv` file.
+   ```
+   pheweb2 sites
+   ```
+   This creates the `generated-by-pheweb/sites/sites-unannotated.tsv` file.
 
-5. Downloading gene aliases database in `generated-by-pheweb/resources/` (need internet):
-```
-pheweb2 make-gene-aliases-sqlite3
-```
+5. Next, download the gene aliases database (internet access is required):
+   ```
+   pheweb2 make-gene-aliases-sqlite3
+   ```
 
-6. Adding rsids and genes to the sites file (it may take a few hours; need internet):
-```
-pheweb2 add-rsids
-pheweb2 add-genes
-```
+6. Download the rsID database and annotate it with gene names in the sites file (this may take a few hours; internet access is required):
+   ```
+   pheweb2 add-rsids
+   pheweb2 add-genes
+   ```
 
-7. Generate variant id <-> rsid database:
-```
-pheweb2 make-cpras-rsids-sqlite3
-```
+7. Create a mapping between GWAS variants and rsIDs:
+   ```
+   pheweb2 make-cpras-rsids-sqlite3
+   ```
 
-8. Create SLURM/SGE job submission script for generating all variants' information, manhattan data, and qq data for all the phenotypes (methods similar to the parsing step):
-```
-pheweb2 cluster --engine=slurm --step=augment-phenos --N_per_job=3 --account=<USERNAME>
-pheweb2 cluster --engine=slurm --step=manhattan --N_per_job=3 --account=<USERNAME>
-pheweb2 cluster --engine=slurm --step=qq --N_per_job=3 --account=<USERNAME> 
-```
-or
-```
-pheweb2 cluster --engine=sge --step=augment-phenos --N_per_job=3 --account=<USERNAME>
-pheweb2 cluster --engine=sge --step=manhattan --N_per_job=3 --account=<USERNAME>
-pheweb2 cluster --engine=sge --step=qq --N_per_job=3 --account=<USERNAME>
-```
+8. The upcoming processing steps will again utilize SLURM/SGE for parallelization, similar to steps 2-3. Please create bash scripts for SLURM/SGE to augment variant-phenotype data and generate Manhattan and QQ plots:
+   ```
+   pheweb2 cluster --engine=slurm --step=augment-phenos --N_per_job=3
+   pheweb2 cluster --engine=slurm --step=manhattan --N_per_job=3
+   pheweb2 cluster --engine=slurm --step=qq --N_per_job=3
+   ```
+   or
+   ```
+   pheweb2 cluster --engine=sge --step=augment-phenos --N_per_job=3
+   pheweb2 cluster --engine=sge --step=manhattan --N_per_job=3
+   pheweb2 cluster --engine=sge --step=qq --N_per_job=3
+   ```
 
-Once you have the script, you can submit the jobs by running: 
-```
-sbatch generated-by-pheweb/tmp/slurm-augment-phenos-<DATETIME>.sh
-sbatch generated-by-pheweb/tmp/slurm-manhattan-<DATETIME>.sh
-sbatch generated-by-pheweb/tmp/slurm-qq-<DATETIME>.sh
-``` 
-or 
-```
-sge generated-by-pheweb/tmp/sge-augment-phenos-<DATETIME>.sh
-sge generated-by-pheweb/tmp/sge-manhattan-<DATETIME>.sh
-sge generated-by-pheweb/tmp/sge-qq-<DATETIME>.sh
-``` 
+   After generating the job submission bash scripts, you can submit your jobs to the SLURM or SGE queue, just as you did in step 3.
+   ```
+   sbatch generated-by-pheweb/tmp/slurm-augment-phenos-[DATETIME].sh
+   sbatch generated-by-pheweb/tmp/slurm-manhattan-[DATETIME].sh
+   sbatch generated-by-pheweb/tmp/slurm-qq-[DATETIME].sh
+   ```
+   or
+   ```
+   sge generated-by-pheweb/tmp/sge-augment-phenos-[DATETIME].sh
+   sge generated-by-pheweb/tmp/sge-manhattan-[DATETIME].sh
+   sge generated-by-pheweb/tmp/sge-qq-[DATETIME].sh
+   ``` 
 
-9. Create the phenotype matrix:
-``` 
-pheweb2 matrix
-```
+9. Once all SLURM/SGE jobs from the previous step have successfully completed, proceed to create the phenotype matrix:
+    ```
+    pheweb2 matrix
+    ```
 
-10. Create the best-phenos-by-gene database:
-```
-pheweb2 gather-pvalues-for-each-gene
-```
+10. Then, create the database to map each gene to phenotypes:
+    ```
+    pheweb2 gather-pvalues-for-each-gene
+    ```
 
-11. 
-```
-pheweb2 phenotypes && pheweb2 top-hits
-```
+11. Then, prepare a list of all phenotypes and all statistically significant results:
+    ```
+    pheweb2 phenotypes
+    pheweb2 top-hits
+    ```
 
-12.
-```
-pheweb2 best-of-pheno
-```
+12. Generate a list of phenotypes with the statistically significant associations:
+    ```
+    pheweb2 best-of-pheno
+    ```
 
-13.
-```
-pheweb2 generate-autocomplete-db
-```
+13. Generate a database for quick lookups of variants, genes, and phenotypes using incomplete names. This will support the functionality of the search boxes effectively.
+    ```
+    pheweb2 generate-autocomplete-db
+    ```
 
-14.
-```
-pheweb2 process
-``` 
+14. Run this command to validate the process and ensure that all expected files were generated.
+    ```
+    pheweb2 process
+    ``` 
 
 ### 3.6. Running API server
 1. To run the API server in production mode, run:
