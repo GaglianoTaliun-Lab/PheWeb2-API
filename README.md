@@ -41,7 +41,25 @@ pheweb2 phenolist import-phenolist manifest-example.csv
 pheweb2 process
 ```
 
-4.  Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
+4. Run automated tests of the API routes:
+```
+pytest tests/test_routes.py -s -v
+```
+<details>
+<summary>Click to see an example of passed tests.</summary>
+  
+```
+tests/test_routes.py::test_get_phenotypes                PASSED
+tests/test_routes.py::test_get_gene_names                PASSED
+tests/test_routes.py::test_get_gene_PCSK9                PASSED
+tests/test_routes.py::test_get_tophits                   PASSED
+tests/test_routes.py::test_get_stratifications           PASSED
+tests/test_routes.py::test_get_variant_10_112999020_G_T  PASSED
+```
+
+</details>
+
+5.  Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
 ```
 pheweb2 serve --host 127.0.0.1 --port 9543
 ```
