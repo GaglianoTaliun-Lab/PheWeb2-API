@@ -68,7 +68,7 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
 
 ## 3. Run using your own data
 
-### 3.1. Configuration file `config.py`
+### 3.1. Configuration file
 The self-documenting [config.py](config.py) configuration file includes all the variables that determine where PheWeb 2 API stores ingested GWAS data, how it processes this data, and how it serves it through HTTP. 
 
 When performing GWAS data ingestion, you should focus on adjusting the variables in *SECTION A*, *SECTION B*, and *SECTION C* of this file:
