@@ -178,19 +178,17 @@ A bash script named `slurm-parse-[DATETIME].sh` or `sge-parse-[DATETIME].sh` wil
 
 To specify the maximum number of GWAS files to parse sequentially per parallel job, use the `--N_per_job` option (the default is 3). You can also include an optional `--account` argument in the `pheweb2 cluster` command to specify your SLURM account name if needed.
 
-3. Once you have the script, you can submit the jobs by running: 
+3. Submit the SLURM/SGE jobs for parsing GWAS summary statistics files to the queue:
 ```
-sbatch generated-by-pheweb/tmp/slurm-parse-<DATETIME>.sh
+sbatch generated-by-pheweb/tmp/slurm-parse-[DATETIME].sh
 ``` 
 or 
 ```
-sge generated-by-pheweb/tmp/sge-parse-<DATETIME>.sh
+sge generated-by-pheweb/tmp/sge-parse-[DATETIME].sh
 ``` 
 
-> [!NOTE]
-> Depending on the size of your GWAS files and the configuration of your cluster, you may need to modify the job submission parameters inside the bash script.
-> For example, you may want to increase the job time limit or memory limit, or add a queue/account name.
-
+> [!IMPORTANT]
+> Depending on your GWAS files' size and your cluster's configuration, you may need to adjust the job submission parameters in the bash script. This could involve increasing the job time limit or memory limit, or specifying a queue/account name.
 
 4. Reading through all the parsed GWAS files to generate a `sites-unannotatedtes.tsv` that contains all the unique variants:
 ```
