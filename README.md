@@ -265,37 +265,39 @@ Once you have edited the [config.py](config.py) file and created the Manifest fi
     pheweb2 process
     ``` 
 
-### 3.6. Running API server
-1. To run the API server in production mode, run:
-```
-pheweb2 serve --host 127.0.0.1 --port 9543 --gunicorn
-```
-To run the API in dev mode, run:
-```
-pheweb2 serve --host 127.0.0.1 --port 9543
-```
-you can add argument `--enable-cache` to enable the API cache like:
-```
-pheweb2 serve --host 127.0.0.1 --port 9543 --gunicorn --enable-cache 
-```
+### 3.6a. Running API server in development mode
+1. Adjust the configuration variables in *SECTION D* of the configuration file located at [config.py](config.py). Among other things, you may want to enable debug mode by setting the `ENABLE_DEBUG` variable.
 
-in config.py, you can specify api url prefix 
+2. To run the API in development mode, run:
+   ```
+   pheweb2 serve
+   ```
 
-2. Once it's running, in a separate terminal window, you can test it by running the following commands:
-```
-curl -X GET "http://localhost:9543/phenotypes/"
-```
-this should give you a list of all the phenotypic information.
-```
-curl -X GET "http://localhost:9543/gene/"
-```
-this should give you a list of all the gene names.
-```
-curl -X GET "http://localhost:9543/gene/PCSK9"
-```
-this should give you phenotypic information related to gene PCSK9
-```
-curl -X GET "http://localhost:9543/phenotypes/tophits"
+
+### 3.6b. Running API server in production mode
+1. Adjust the configuration variables in *SECTION D* of the configuration file located at [config.py](config.py).
+
+> [!NOTE]
+> If you plan to run the API behind a reverse proxy, such as Apache or Nginx, and want all API routes to start with a specific prefix (like `/api` or `/api/v1`), you should set the `API_URL_PREFIX` variable in the [config.py](config.py) configuration file.
+
+> [!WARNING]
+> If you need to allow access to API only from a specific machine, then set the `CORS_ORIGINS` variable in the [config.py](config.py) configuration file.
+
+2. To run the API server in production mode, run:
+   ```
+   pheweb2 serve --gunicorn --enable-cache
+   ```
+
+3. Once the API is running, you can test it by executing the following commands on the same machine. Chang the 9543 port number if required.
+   ```
+   curl -X GET "http://localhost:9543/phenotypes/"
+   curl -X GET "http://localhost:9543/gene/"
+   curl -X GET "http://localhost:9543/phenotypes/tophits"
+   ```
+
+4. To access the interactive API documentation, open your internet browser and navigate to `http://localhost:9543/`, assuming you are running it on the same machine at port 9543. If not, you will need to modify the HTTP address in your browser to match the host and port specified in the [config.py](config.py) configuration file.
+
+
 ```
 to get rsid
 
