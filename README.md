@@ -1,5 +1,8 @@
 # PheWeb2 API
-This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications. 
+This is an implementation of the data model and API for [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2/tree/main) — an enhanced version of the original [PheWeb](https://github.com/statgen/pheweb) web-based tool for interactive querying, visualizing, and sharing summary-level results from genome-wide and phenome-wide association studies (GWAS/PheWAS), which offers intuitive and efficient support for stratified analysis results. PheWeb2 decouples the data model and API from the user interface (UI) to improve code maintenance and reusability and allow results querying by other external resources and applications.
+
+> [!TIP]
+> If you've already set up the PheWeb2 API, you can proceed to install and launch the [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2) user interface.
   
 ## 1. Install
 
