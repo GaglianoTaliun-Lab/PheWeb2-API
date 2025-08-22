@@ -22,7 +22,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-## 2. Run using the example data
+## 2. Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
 1. Download and unarchive the example data (~13 GB):
@@ -49,11 +49,15 @@ pheweb2 serve --host 127.0.0.1 --port 9543
 ## 3. Run using your own data
 
 ### 3.1. Configuration file `config.py`
-The self-documenting [config.py](config.py) configuration file includes all the variables that determine where PheWeb 2 API stores ingested GWAS data, how it processes this data, and how it serves it through HTTP. When performing GWAS data ingestion, you should focus on adjusting the variables in *SECTION A*, *SECTION B*, and *SECTION C* of this file:
+The self-documenting [config.py](config.py) configuration file includes all the variables that determine where PheWeb 2 API stores ingested GWAS data, how it processes this data, and how it serves it through HTTP. 
+
+When performing GWAS data ingestion, you should focus on adjusting the variables in *SECTION A*, *SECTION B*, and *SECTION C* of this file:
 
 - *SECTION A* of the [config.py](config.py) file lists the configuration variables that control the location of the processed GWAS summary statistics.
 - *SECTION B* of the [config.py](config.py) file lists the configuration variables that control the versions of the external public databases such as dbSNP and GENCODE.
 - *SECTION C* of the [config.py](config.py) file lists the configuration variables that control GWAS summary statistics ingestion.
+
+When running an API endpoint, you should focus on adjusting the variables in *SECTION D* of the [config.py](config.py) file that control the API URL address, the number of API workers to handle HTTP requests, and so on.
 
 ### 3.2. Minimal GWAS summary statistics file
 
