@@ -128,7 +128,7 @@ To ingest GWAS summary statistics files into PheWeb2, you need to create the Man
 | Category of stratification (Can be more than one)   | interaction   | "stratification.*" (where *=string) | false     |
 
 
-### 3.5. Ingesting GWAS summary statistics files using a single node
+### 3.5a. Ingesting GWAS summary statistics files using a single node
 
 > [!NOTE]
 > Although parallelized, data ingestion may still take some time, depending on the number and size of your GWAS summary statistics files.
@@ -150,7 +150,7 @@ This command creates a `pheno-list.json` file in the root directory.
 pheweb2 process
 ```
 
-### 3.6. Ingesting GWAS summary statistics files using SLURM or SGE
+### 3.5b. Ingesting GWAS summary statistics files using SLURM or SGE
 
 > [!NOTE]
 > Although parallelized, data ingestion may still take some time, depending on the number and size of your GWAS summary statistics files.
