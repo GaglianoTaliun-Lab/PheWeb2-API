@@ -60,6 +60,9 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
    pheweb2 serve --host 127.0.0.1 --port 9543
    ```
 
+6. To access the interactive API documentation, open your internet browser and navigate to `http://localhost:9543/`, assuming you are running it on the same machine at port 9543.
+
+
 ## 3. Run using your own data
 
 ### 3.1. Configuration file `config.py`
@@ -272,10 +275,30 @@ Once you have edited the [config.py](config.py) file and created the Manifest fi
    ```
    pheweb2 serve
    ```
+   <details>
+     <summary>Click to see an example of terminal output in the development mode.</summary>
+     
+     ```
+     * Serving Flask app 'pheweb_api.api_app'
+     * Debug mode: on
+     WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+     * Debugger is active!
+     ```
+   </details>
 
+3. To test the API once it is running, execute the following commands in a different terminal on the same machine. If necessary, change the port number from 9543.
+   ```
+   curl -X GET "http://localhost:9543/phenotypes/"
+   curl -X GET "http://localhost:9543/gene/"
+   curl -X GET "http://localhost:9543/phenotypes/tophits"
+   curl -X GET "http://localhost:9543/variant/stratification_list"
+   ```
+   You should see the messages in the terminal that run the API, prefixed with `[DEBUG]`.
+
+5. To access the interactive API documentation and test API queries, open your internet browser and go to `http://localhost:9543/`, provided you are running it on the same machine at port 9543. If you are using a different host or port, please update the HTTP address in your browser to match the settings in the [config.py](config.py) configuration file.
 
 ### 3.6b. Running API server in production mode
-1. Adjust the configuration variables in *SECTION D* of the configuration file located at [config.py](config.py).
+1. Adjust the configuration variables in *SECTION D* of the configuration file located at [config.py](config.py). Make sure to disable debug mode by setting the `ENABLE_DEBUG` variable to `False`.
 
 > [!NOTE]
 > If you plan to run the API behind a reverse proxy, such as Apache or Nginx, and want all API routes to start with a specific prefix (like `/api` or `/api/v1`), you should set the `API_URL_PREFIX` variable in the [config.py](config.py) configuration file.
@@ -288,79 +311,13 @@ Once you have edited the [config.py](config.py) file and created the Manifest fi
    pheweb2 serve --gunicorn --enable-cache
    ```
 
-3. Once the API is running, you can test it by executing the following commands on the same machine. Chang the 9543 port number if required.
+3. Once the API is running, you can test it by executing the following commands on the same machine. Change the 9543 port number if required.
    ```
    curl -X GET "http://localhost:9543/phenotypes/"
    curl -X GET "http://localhost:9543/gene/"
    curl -X GET "http://localhost:9543/phenotypes/tophits"
+   curl -X GET "http://localhost:9543/variant/stratification_list"
    ```
 
 4. To access the interactive API documentation, open your internet browser and navigate to `http://localhost:9543/`, assuming you are running it on the same machine at port 9543. If not, you will need to modify the HTTP address in your browser to match the host and port specified in the [config.py](config.py) configuration file.
-
-
-```
-to get rsid
-
-```
-curl -X GET "http://localhost:9543/variant/stratification_list"
-```
-to get the stratificaiton list
-[
-    "european.female",
-    "european.male",
-    "european.both"
-]
-
-```
-curl -X GET "http://localhost:9543/variant/6-32658525-T-G/european.male"
-```
-to get phenotypic information of the chosen variant
-
-
-get data through http://localhost:9543/PATH/TO/ROUTES/
-
-e.g. to view phenotype table data, go to http://localhost:9543/phenotypes
-
-### 3.7 Developing mode
-1. Before running the API under dev mode, you may want to first turn on the debug mode by setting `ENABLE_DEBUG` variable in [config.py](config.py) file to be `True`
-
-2. Then run API on dev mode:
-```
-pheweb2 serve --host 127.0.0.1 --port 9543
-```
-When the debug mode is turned on on dev mode, you will see messages from the terminal like:
-```
- * Serving Flask app 'pheweb_api.api_app'
- * Debug mode: on
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Debugger is active!
-```
-and some messages starting with `DEBUG...` when API is triggered.
-
-
-## Testing
-To test the API routes, run:
-```
-pytest tests/test_routes.py -s -v
-```
-you should see:
-```
-tests/test_routes.py::test_get_phenotypes PASSED
-tests/test_routes.py::test_get_gene_names PASSED
-tests/test_routes.py::test_get_gene_PCSK9 PASSED
-tests/test_routes.py::test_get_tophits PASSED
-tests/test_routes.py::test_get_stratifications PASSED
-tests/test_routes.py::test_get_variant_10_112999020_G_T PASSED
-```
-
-
-
- 
-## Documentation
-
->> you can play with [http://localhost:9543/](http://localhost:9543/) (or the location of your backend API instance). It is an interactive API documentation to see details of all available routes and their functions.
-
-To see all available API routes, visit http://localhost:9543/ (or the location of your backend API instance).
-
-
 
