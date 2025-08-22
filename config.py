@@ -76,7 +76,7 @@ FIELD_ALIASES = {
 # ===============================================
 
 # Set to `True` to enable debug mode for data ingestion and API. Set `False` in the production mode.
-ENABLE_DEBUG = True
+ENABLE_DEBUG = False
 
 # Set number of parallel processes for data ingestion on a single node
 NUM_PROCS = 8
@@ -109,7 +109,7 @@ TOP_HITS_PVAL_CUTOFF = 1e-6
 PHENO_CORRELATIONS_PVALUE_THRESHOLD = 0.05
 
 # Set the API URL prefix if applicable (e.g. on Apache2)
-API_URL_PREFIX = "/api/v1/"
+API_URL_PREFIX = ""
 
 
 

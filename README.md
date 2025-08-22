@@ -261,6 +261,8 @@ you can add argument `--enable-cache` to enable the API cache like:
 pheweb2 serve --host 127.0.0.1 --port 9543 --gunicorn --enable-cache 
 ```
 
+in config.py, you can specify api url prefix 
+
 2. Once it's running, in a separate terminal window, you can test it by running the following commands:
 ```
 curl -X GET "http://localhost:9543/phenotypes/"
