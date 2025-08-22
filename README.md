@@ -190,10 +190,11 @@ sge generated-by-pheweb/tmp/sge-parse-[DATETIME].sh
 > [!IMPORTANT]
 > Depending on your GWAS files' size and your cluster's configuration, you may need to adjust the job submission parameters in the bash script. This could involve increasing the job time limit or memory limit, or specifying a queue/account name.
 
-4. Reading through all the parsed GWAS files to generate a `sites-unannotatedtes.tsv` that contains all the unique variants:
+4. After all SLURM/SGE jobs submitted to the queue have successfully finished running, you can proceed to the next step. This involves generating a union of all genetic variants from the GWAS summary statistics files. Note that this step does not utilize SLURM/SGE; instead, it employs local parallelization, which is controlled by the `NUM_PROCS` variable in the [config.py](config.py) configuration file.
 ```
 pheweb2 sites
 ```
+This creates the `generated-by-pheweb/sites/sites-unannotated.tsv` file.
 
 5. Downloading gene aliases database in `generated-by-pheweb/resources/` (need internet):
 ```
