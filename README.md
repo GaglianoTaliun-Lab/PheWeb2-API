@@ -129,47 +129,54 @@ To ingest GWAS summary statistics files into PheWeb2, you need to create the Man
 
 
 ### 3.5. Ingesting GWAS summary statistics files using a single node
+
+> [!NOTE]
+> Although parallelized, data ingestion may still take some time, depending on the number and size of your GWAS summary statistics files.
+> The ingested data will be by default stored inside the `generated_by_pheweb` folder, but this can be controlled using the `PHEWEB_DATA_DIR` variable inside the [config.py](config.py) file.
+> After the data ingestion, you may archive your original GWAS summary statistics files, as PheWeb2 will no longer need them.
+
 Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
 1. Import the manifest file into PheWeb2:
 ```
 pheweb2 phenolist import-phenolist /path/to/manifest.csv
 ```
-> [!NOTE]
-> This command will create a `pheno-list.json` file in the root directory.
+This command creates a `pheno-list.json` file in the root directory.
 
-2. Set the number of parallel ingestion jobs using `NUM_PROCS` parameter in the `config.py`.
+2. Set the number of parallel ingestion jobs using the `NUM_PROCS` parameter in the [config.py](config.py) file.
 
 3. Ingest the GWAS summary statistics into PheWeb2:
 ```
 pheweb2 process
 ```
 
+### 3.6. Ingesting GWAS summary statistics files using SLURM or SGE
+
 > [!NOTE]
-> This command is parallelized, but may still take some time depending on the size of your GWAS data.
+> Although parallelized, data ingestion may still take some time, depending on the number and size of your GWAS summary statistics files.
 > The ingested data will be by default stored inside the `generated_by_pheweb` folder, but this can be controlled using the `PHEWEB_DATA_DIR` variable inside the [config.py](config.py) file.
 > After the data ingestion, you may archive your original GWAS summary statistics files, as PheWeb2 will no longer need them.
 
-### 3.6. Ingesting GWAS summary statistics files using SLURM or SGE
+
 Once you have edited the [config.py](config.py) file and created the Manifest file, execute the following commands inside the root directory of the PheWeb2 API.
 
 1. Import the manifest file into PheWeb2:
 ```
 pheweb2 phenolist import-phenolist /path/to/manifest.csv
 ```
-> [!NOTE]
-> This command will create a `pheno-list.json` file in the root directory.
+This command creates a `pheno-list.json` file in the root directory.
 
-2. Create SLURM/SGE job submission script for parsing the GWAS summary statistics files:
+2. Create a SLURM/SGE job submission bash script for parsing the GWAS summary statistics files:
 ```
-pheweb2 cluster --engine=slurm --step=parse --N_per_job=3 --account=<USERNAME> 
+pheweb2 cluster --engine=slurm --step=parse --N_per_job=3
 ```
 or
 ```
-pheweb2 cluster --engine=sge --step=parse --N_per_job=3 --account=<USERNAME>
+pheweb2 cluster --engine=sge --step=parse --N_per_job=3
 ```
+A bash script named `slurm-parse-[DATETIME].sh` or `sge-parse-[DATETIME].sh` will be generated in the `generated-by-pheweb/tmp/` directory. If you have modified the `PHEWEB_DATA_DIR` variable in the [config.py](config.py) configuration file, the script will be placed in the `[PHEWEB_DATA_DIR]/tmp/` directory instead.
 
-This will generate a bash script named `slurm-parse-<DATETIME>.sh` or `sge-parse-<DATETIME>.sh` in the `generated-by-pheweb/tmp/` directory by default. If you modified the `PHEWEB_DATA_DIR` variable in the [config.py](config.py) file, then the bash script will be placed in the `<PHEWEB_DATA_DIR>/tmp/` directory. `--N_per_job` is used to specify how many jobs you want to have per 1 parallel job (default = 3).
+To specify the maximum number of GWAS files to parse sequentially per parallel job, use the `--N_per_job` option (the default is 3). You can also include an optional `--account` argument in the `pheweb2 cluster` command to specify your SLURM account name if needed.
 
 3. Once you have the script, you can submit the jobs by running: 
 ```
@@ -260,14 +267,7 @@ pheweb2 generate-autocomplete-db
 14.
 ```
 pheweb2 process
-```
-
-
-> [!NOTE]
-> This command is parallelized, but may still take some time depending on the size of your GWAS data.
-> The ingested data will be by default stored inside the `generated_by_pheweb` folder, but this can be controlled using the `PHEWEB_DATA_DIR` variable inside the [config.py](config.py) file.
-> After the data ingestion, you may archive your original GWAS summary statistics files, as PheWeb2 will no longer need them.
- 
+``` 
 
 ### 3.6. Running API server
 1. To run the API server in production mode, run:
