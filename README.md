@@ -31,7 +31,7 @@ wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f5435
 tar -xzvf example_regenie.tar.gz
 ```
 
-2. Generate JSON file describing the phenotypes:
+2. Import the example manifest file describing phenotypes:
 ```
 pheweb2 phenolist import-phenolist manifest-example.csv 
 ```
