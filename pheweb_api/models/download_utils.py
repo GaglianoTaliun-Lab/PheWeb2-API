@@ -78,9 +78,11 @@ def getFilteredFunction(phenocode, filtering_options, suffix):
             )
         else:
             filtered_chunk = chunk  # No filtering applied
+        
+        filtered_chunk = filtered_chunk.drop("maf")
         return filtered_chunk
 
-    def read_in_chunks(file_path, chunk_size=1_000_000, header=None):
+    def read_in_chunks(file_path, chunk_size=1_000_000, header=None, header_subset=None):
         total_rows = 0
                 
         while True:
@@ -90,6 +92,7 @@ def getFilteredFunction(phenocode, filtering_options, suffix):
                 dtypes={col_name: column_dtypes[i] for i, col_name in enumerate(header)},  # Map columns by index
                 rechunk=False,
                 n_rows=chunk_size,
+                columns= header_subset,
                 skip_rows=total_rows
             )
 
@@ -117,13 +120,15 @@ def getFilteredFunction(phenocode, filtering_options, suffix):
         n_rows=1
     )
     header = header_chunk.columns
+    header_subset = header.copy()
+    header_subset.remove("test")
 
     chunk_size = 1_000_000  # Adjust chunk size as needed (less than 1GB)
 
-    yield "\t".join(header) + "\n"
+    yield "\t".join(header_subset) + "\n"
 
-    for chunk in read_in_chunks(file_path, chunk_size=chunk_size, header = header):
-        filtered_chunk = process_and_filter_chunk(chunk, header=header)
+    for chunk in read_in_chunks(file_path, chunk_size=chunk_size, header = header, header_subset=header_subset):
+        filtered_chunk = process_and_filter_chunk(chunk, header=header_subset)
 
         # Yield rows in the filtered chunk
         for row in filtered_chunk.iter_rows(named=False):

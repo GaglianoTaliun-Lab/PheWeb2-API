@@ -354,6 +354,9 @@ def get_pheno_correlations_pvalue_threshold() -> float:
 
 
 ## Serving config
+def get_api_url_prefix() -> str:
+    return _get_config_str("API_URL_PREFIX", "")
+
 def get_lzjs_version() -> str:
     return _get_config_str("lzjs_version", "0.13.4")
 

@@ -20,10 +20,10 @@ PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
 HG_BUILD_NUMBER = 38
 
 # Please specify the dbSNP version for mapping to rsIDs
-DBSNP_VERSION = 157
+DBSNP_VERSION = 154
 
 # Please specify the GENOCODE version for mapping to genes 
-GENCODE_VERSION = 48
+GENCODE_VERSION = 37
 
 
 # SECTION C: Data ingestion
@@ -85,10 +85,10 @@ NUM_PROCS = 8
 HOST = '127.0.0.1'
 
 # Set the port number for the API endpoint.
-PORT = 9543
+PORT = 9090
 
 # Set the number of cpus to run API in parallel (default is 4)
-NUM_API_WORKERS = 4
+NUM_API_WORKERS = 17
 
 # Specify the comma separated list of origins allowed to access the API. By default all are alllowed i.e.'*'.
 CORS_ORIGINS = '*'
@@ -108,7 +108,8 @@ MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 TOP_HITS_PVAL_CUTOFF = 1e-6
 PHENO_CORRELATIONS_PVALUE_THRESHOLD = 0.05
 
-
+# Set the API URL prefix if applicable (e.g. on Apache2)
+API_URL_PREFIX = "/api/v1/"
 
 
 
