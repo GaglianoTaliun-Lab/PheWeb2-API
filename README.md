@@ -26,43 +26,39 @@ You can install PheWeb2 and all required dependencies within a virtual environme
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
 1. Download and unarchive the example data (~13 GB):
-```
-wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
-tar -xzvf example_regenie.tar.gz
-```
-
+   ```
+   wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
+   tar -xzvf example_regenie.tar.gz
+   ```
 2. Import the example manifest file describing phenotypes:
-```
-pheweb2 phenolist import-phenolist manifest-example.csv 
-```
-
+   ```
+   pheweb2 phenolist import-phenolist manifest-example.csv
+   ```
 3. Ingest the example data into PheWeb2 (this can take some time):
-```
-pheweb2 process
-```
-
+   ```
+   pheweb2 process
+   ```
 4. Run automated tests of the API routes:
-```
-pytest tests/test_routes.py -s -v
-```
-<details>
-<summary>Click to see an example of passed tests.</summary>
-  
-```
-tests/test_routes.py::test_get_phenotypes                PASSED
-tests/test_routes.py::test_get_gene_names                PASSED
-tests/test_routes.py::test_get_gene_PCSK9                PASSED
-tests/test_routes.py::test_get_tophits                   PASSED
-tests/test_routes.py::test_get_stratifications           PASSED
-tests/test_routes.py::test_get_variant_10_112999020_G_T  PASSED
-```
+   ```
+   pytest tests/test_routes.py -s -v
+   ```
+   <details>
+     <summary>Click to see an example of passed tests.</summary>
+     
+     ```
+     tests/test_routes.py::test_get_phenotypes                PASSED
+     tests/test_routes.py::test_get_gene_names                PASSED
+     tests/test_routes.py::test_get_gene_PCSK9                PASSED
+     tests/test_routes.py::test_get_tophits                   PASSED
+     tests/test_routes.py::test_get_stratifications           PASSED
+     tests/test_routes.py::test_get_variant_10_112999020_G_T  PASSED
+     ```
+   </details>
 
-</details>
-
-5.  Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
-```
-pheweb2 serve --host 127.0.0.1 --port 9543
-```
+5. Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
+   ```
+   pheweb2 serve --host 127.0.0.1 --port 9543
+   ```
 
 ## 3. Run using your own data
 
