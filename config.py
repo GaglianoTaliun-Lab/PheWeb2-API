@@ -29,6 +29,9 @@ GENCODE_VERSION = 37
 # SECTION C: Data ingestion
 # ===============================================
 
+# Set number of parallel processes for data ingestion on a single node
+NUM_PROCS = 8
+
 # Please specify the value in the "test" column of your GWAS files that indicates rows with the main effect of the tested variant. For Regenie and PLINK2, this value should be set to “ADD” to denote rows with an additive effect. If Regenie was executed with the –interaction option, then “ADD-CONDTL” can also be used.
 ASSOC_TEST_NAME = ["ADD", "ADD-CONDTL"]
 
@@ -78,19 +81,19 @@ FIELD_ALIASES = {
 # Set to `True` to enable debug mode for data ingestion and API. Set `False` in the production mode.
 ENABLE_DEBUG = False
 
-# Set number of parallel processes for data ingestion on a single node
-NUM_PROCS = 8
-
 # Set the host for the API endpoint (default is localhost)
 HOST = '127.0.0.1'
 
 # Set the port number for the API endpoint.
 PORT = 9090
 
-# Set the number of cpus to run API in parallel (default is 4)
-NUM_API_WORKERS = 17
+# Set the API URL prefix if applicable, e.g., when you are running the API behind a reverse proxy (e.g., using Apache).
+API_URL_PREFIX = ""
 
-# Specify the comma separated list of origins allowed to access the API. By default all are alllowed i.e.'*'.
+# Set the number of workers to run API in parallel (default is 4).
+NUM_API_WORKERS = 4
+
+# Specify the comma-separated list of origins allowed to access the API. By default, all are allowed, i.e., '*'.
 CORS_ORIGINS = '*'
 
 # SECTION E: Internal parameters (no need to modify)
@@ -107,9 +110,6 @@ MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 TOP_HITS_PVAL_CUTOFF = 1e-6
 PHENO_CORRELATIONS_PVALUE_THRESHOLD = 0.05
-
-# Set the API URL prefix if applicable (e.g. on Apache2)
-API_URL_PREFIX = ""
 
 
 
