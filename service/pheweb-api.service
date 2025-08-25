@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=/your/username
 WorkingDirectory=/path/to/your/pheweb-api/dir
-ExecStart=/path/to/your/venv/.venv/bin/python /path/to/your/pheweb-api/dir/app.py
+ExecStart=/path/to/your/venv/.venv/bin/pheweb2 serve --gunicorn --enable-cache
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
