@@ -20,10 +20,11 @@ PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
 HG_BUILD_NUMBER = 38
 
 # Please specify the dbSNP version for mapping to rsIDs
-DBSNP_VERSION = 154
+DBSNP_VERSION = 157
 
 # Please specify the GENOCODE version for mapping to genes 
-GENCODE_VERSION = 37
+GENCODE_VERSION = 48
+
 
 
 # SECTION C: Data ingestion

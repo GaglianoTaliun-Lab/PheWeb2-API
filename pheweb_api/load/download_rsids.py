@@ -45,7 +45,7 @@ def get_rsids_for_build(hg_build_number: int) -> None:
         print()
     except Exception as exc:
         raise PheWebError(
-            "Failed to download rsids from {}.  Try `pheweb download-rsids-from-scratch` instead.".format(
+            "Failed to download rsids from {}.  Try `pheweb2 download-rsids-from-scratch` instead. Make sure to specify the correct human genome build number in the config.py file".format(
                 url
             )
         ) from exc

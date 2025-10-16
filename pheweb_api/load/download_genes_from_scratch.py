@@ -2,7 +2,6 @@ from ..utils import chrom_order, chrom_aliases, PheWebError
 from ..file_utils import (
     get_tmp_path,
     make_basedir,
-    genes_version,
     get_filepath,
     read_gzip,
 )
@@ -218,7 +217,7 @@ def dedup_symbol(genes: Iterator[Dict[str, Any]]) -> Iterator[Dict[str, Any]]:
 #                               '\n'.join('- {:12,}\t{:12,}\t{}'.format(g['start'], g['end'], g) for g in symbol_group))
 
 
-def download_genes_for_build(hg_build_number: int) -> None:
+def download_genes_for_build(hg_build_number: int, genes_version: int) -> None:
     raw_gencode_filepath = get_tmp_path(
         "gencode-v{}-hg{}.gtf.gz".format(genes_version, hg_build_number)
     )
@@ -274,5 +273,9 @@ def run(argv: List[str]) -> None:
     parser.add_argument(
         "--hg", type=int, default=conf.get_hg_build_number(), choices=[19, 38]
     )
+    parser.add_argument(
+        "--genes_version", type=int, default=conf.get_gencode_version()
+    )
     args = parser.parse_args(argv)
-    download_genes_for_build(args.hg)
+    print(f"human genome build build number: {args.hg}, Gencode version: {args.genes_version}")
+    download_genes_for_build(args.hg, args.genes_version)

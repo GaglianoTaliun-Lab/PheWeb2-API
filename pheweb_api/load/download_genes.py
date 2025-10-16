@@ -45,7 +45,7 @@ def get_genes_for_build(hg_build_number: int) -> None:
         print()
     except Exception as exc:
         raise PheWebError(
-            "Failed to download genes from {}.  Try `pheweb download-genes-from-scratch` instead.".format(
+            "Failed to download genes from {}.  Try `pheweb2 download-genes-from-scratch` instead. Make sure to specify the correct human genome build number and Gencode version in the config.py file".format(
                 url
             )
         ) from exc

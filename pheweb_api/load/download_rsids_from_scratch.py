@@ -1,4 +1,4 @@
-from ..file_utils import make_basedir, get_tmp_path, dbsnp_version, get_filepath
+from ..file_utils import make_basedir, get_tmp_path, get_filepath
 from .load_utils import run_script
 from .. import conf
 
@@ -7,7 +7,7 @@ import wget
 from typing import List
 
 
-def download_rsids_for_build(hg_build_number: int) -> None:
+def download_rsids_for_build(hg_build_number: int, dbsnp_version: int) -> None:
     raw_dbsnp_filepath = get_tmp_path(
         "dbsnp-b{}-hg{}.gz".format(dbsnp_version, hg_build_number)
     )
@@ -71,5 +71,9 @@ def run(argv: List[str]) -> None:
     parser.add_argument(
         "--hg", type=int, default=conf.get_hg_build_number(), choices=[19, 38]
     )
+    parser.add_argument(
+        "--dbsnp_version", type=int, default=conf.get_dbsnp_version()
+    )
     args = parser.parse_args(argv)
-    download_rsids_for_build(args.hg)
+    print(f"human genome build build number: {args.hg}, dbSNP version: {args.dbsnp_version}")
+    download_rsids_for_build(args.hg, args.dbsnp_version)
