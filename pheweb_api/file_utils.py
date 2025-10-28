@@ -46,7 +46,8 @@ _single_filepaths: Dict[str, Callable[[], str]] = {
     "correlations-raw": (
         lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-correlations.txt")
     ),
-    "phenolist": (lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-list.json")),
+    # "phenolist": (lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-list.json")),
+    "phenolist": (lambda: get_generated_path("pheno-list.json")),
     # depend on hg_build_number, dbsnp_version, genes_version:
     "rsids": (
         lambda: get_generated_path(

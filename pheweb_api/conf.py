@@ -155,7 +155,7 @@ def _get_config_bool(key: str, default: bool) -> bool:
 # Core config
 def get_pheweb_data_dir() -> str:
     if 'PHEWEB_DATA_DIR' in os.environ:
-        return os.path.abspath(os.environ['PHEWEBD_DATA_DIR'])
+        return os.path.abspath(os.environ['PHEWEB_DATA_DIR'])
     else:
         return _get_config_str("PHEWEB_DATA_DIR", os.path.join(get_pheweb_base_dir(), "generated-by-pheweb"))
 

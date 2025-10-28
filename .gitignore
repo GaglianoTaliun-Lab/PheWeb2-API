@@ -32,3 +32,4 @@ example_regenie.tar.gz
 example_regenie/
 pheweb_api/load/cffi/*.so
 
+test-*
