@@ -46,18 +46,18 @@ We released the Docker image file for strict version control. If you want to eas
 5. Prepare the data-preprocessing list file (if you want to preprocess your association testing data) 
 
    For testing, You can copy the `./manifest-example.csv` and save it as `./manifest-example.csv` to your machine.
-   >[!IMPORTANT]
-   >if you use apptainer, **please make sure** in the manifest-example.csv the data path (assoc_files column) is set to be something like `./example_regenie/...` (starts from ./, not absolute data path)
+>[!IMPORTANT]
+>if you use apptainer, **please make sure** in the manifest-example.csv the data path (assoc_files column) is set to be something like `./example_regenie/...` (starts from ./, not absolute data path)
 
 
-   > [!NOTE] You may want to structure your directory like this:
-   > ```
-   > /path/to/your/PheWeb2-API
-   > └── config.py
-   > └── generated-by-pheweb/ (PheWeb 2 data directory: could be empty, but must exist)
-   > └── example_regenie/ (your GWAS data directory)
-   > └── manifest-example.csv (must exist)
-   >```
+> [!NOTE] You may want to structure your directory like this:
+> ```
+> /path/to/your/PheWeb2-API
+> └── config.py
+> └── generated-by-pheweb/ (PheWeb 2 data directory: could be empty, but must exist)
+> └── example_regenie/ (your GWAS data directory)
+> └── manifest-example.csv (must exist)
+>```
 
 6. Ingesting (preprocessing) your data to PheWeb 2 (it can take some time)
 
@@ -156,20 +156,20 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
    ```
    pheweb2 process
    ```
-   > [!IMPORTANT]
-   >Please note that the `config.py` contains default settings run the API. If you just want to test the functionality, please don't change anything. 
-   >If you changed anything, please carefully read the console output / error message for debugging.
-   >For example, we provided the reference files (gene aliases files, genes bed files, and rsid files) from our web server bucket with default setting
-   >```
-   >HG_BUILD_NUMBER = 38
-   >DBSNP_VERSION = 157
-   >GENCODE_VERSION = 48
-   >```
-   >if you need any other versions for your data, please manually download them using command:
-   >```
-   >pheweb2 download-genes-from-scratch
-   >pheweb2 download-rsids-from-scratch
-   >```
+> [!IMPORTANT]
+>Please note that the `config.py` contains default settings run the API. If you just want to test the functionality, please don't change anything. 
+>If you changed anything, please carefully read the console output / error message for debugging.
+>For example, we provided the reference files (gene aliases files, genes bed files, and rsid files) from our web server bucket with default setting
+>```
+>HG_BUILD_NUMBER = 38
+>DBSNP_VERSION = 157
+>GENCODE_VERSION = 48
+>```
+>if you need any other versions for your data, please manually download them using command:
+>```
+>pheweb2 download-genes-from-scratch
+>pheweb2 download-rsids-from-scratch
+>```
 
 4. Run automated tests of the API routes:
    ```
