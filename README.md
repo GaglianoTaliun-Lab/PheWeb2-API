@@ -53,6 +53,20 @@ We released the Docker image file for strict version control. If you want to eas
    >```
 
 6. Ingesting (preprocessing) your data to PheWeb 2 (it can take some time)
+
+   Import the example manifest file describing phenotypes:
+   ```
+   apptainer exec --pwd /app \
+   --env PYTHONPATH=/app \
+   --containall --no-home \
+   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
+   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \ #could be empty, but must exist
+   --bind /PATH/TO/YOUR/GWAS/DATA/DIR/:/app/example_regenie:ro \
+   --bind /PATH/TO/YOUR/LIST/FILE/manifest-example.csv 
+   pheweb2-api-latest.sif \
+   pheweb2 phenolist import-phenolist manifest-example.csv
+   ```
+
    ```
    apptainer exec --pwd /app \
    --env PYTHONPATH=/app \
