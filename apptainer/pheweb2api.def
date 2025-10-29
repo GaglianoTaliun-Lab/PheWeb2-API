@@ -1,0 +1,73 @@
+Bootstrap: docker
+From: python:3.12.4-slim
+
+%labels
+    Author = Hongyu Xiao
+    Purpose = Reproducible env for PheWeb2-API on HPC
+    Base = python:3.12.4-slim
+    Version = 0.2.0
+    Date = 2025-10
+
+%environment
+    export PYTHONUNBUFFERED=1
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONNOUSERSITE=1         
+    export HOST=127.0.0.1
+
+%post -c /bin/bash
+    set -euo pipefail
+
+    apt-get update && apt-get install -y --no-install-recommends \
+        git build-essential ca-certificates curl \
+        zlib1g-dev libbz2-dev liblzma-dev libffi-dev libhts3 \
+        vim less \
+      && rm -rf /var/lib/apt/lists/*
+
+    python -m pip install --upgrade pip wheel setuptools gunicorn
+
+    mkdir -p /src
+    cd /src
+    git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git .
+    git checkout 7b5c02dc306f3a2c8ac5dfe74cd0f5f414c9c92f      # pin to the latest stable commit
+
+    rm -rf .git .github config.py  LICENSE* README.md .gitignore
+    rm -rf *.tar.gz __pycache__
+
+    pip install gunicorn
+    pip install -e .
+
+
+%runscript
+    echo "Starting: pheweb2 service"
+    exec pheweb2 serve \
+        --gunicorn \
+        --enable-cache \
+        "$@"
+
+%help
+    PheWeb2-API container
+
+    Data preprocess:
+      apptainer exec --cleanenv \
+      --bind ./config.py:/src/config.py:ro \
+      --bind path/to/your/data:/src/generated-by-pheweb \
+      pheweb2-api.sif \
+      pheweb2 process
+
+    Quick start (read-only data):
+      apptainer run \
+        --cleanenv \
+        --bind ./config.py:/src/config.py:ro \
+        --bind path/to/your/data:/src/generated-by-pheweb \
+        pheweb2-api.sif
+
+    Dev with external config.py and source:
+      apptainer exec --cleanenv \
+        --bind ./config.py:/src/config.py:ro \
+        --bind path/to/your/data:/src/generated-by-pheweb \
+        pheweb2-api.sif \
+        pheweb2 serve
+
+%test
+    pheweb2 --help >/dev/null
+    python -c "import pysam; import sys; print(sys.version.split()[0])"

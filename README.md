@@ -23,6 +23,13 @@ We released the Docker image file for strict version control. If you want to eas
    apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
    ```
 
+   If you prefer to build the apptainer image based on a def file, we also provided it in `./apptainer/pheweb2api.def`
+
+   You can copy this file to your machine and do
+   ```
+   apptainer build pheweb2-api-latest.sif PATH/TO/YOUR/pheweb2api.def
+   ```
+
 3. Download/Prepare the data
 
    For testing, you can download our sample data
