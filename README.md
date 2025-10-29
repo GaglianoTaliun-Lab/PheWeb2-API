@@ -50,7 +50,8 @@ We released the Docker image file for strict version control. If you want to eas
 >if you use apptainer, **please make sure** in the manifest-example.csv the data path (assoc_files column) is set to be something like `./example_regenie/...` (starts from ./, not absolute data path)
 
 
-> [!NOTE] You may want to structure your directory like this:
+> [!NOTE] 
+> You may want to structure your directory like this:
 > ```
 > /path/to/your/PheWeb2-API
 > └── config.py
