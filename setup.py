@@ -22,7 +22,7 @@ if sys.version_info.major <= 2:
     sys.exit(1)
 if sys.version_info < (3, 12):
     print(
-        "PheWeb2 requires Python 3.12 or newer."
+        "PheWeb2 requires Python 3.12 or newer. It is tested to be stable on Python 3.12.4 (highly recommended)."
     )
     sys.exit(1)
 
@@ -77,7 +77,7 @@ setup(
     cffi_modules=["pheweb_api/load/cffi/ffibuilder.py:ffibuilder"],
     python_requires=">=3.12",
     setup_requires=[
-        "cffi==1.16.0",
+        "cffi>=1.16.0",
     ],
     install_requires=[
         "astroid>=3.3.5",
@@ -109,6 +109,6 @@ setup(
         "intervaltree>=3.1.0",
         "ipython>=8.12.3",
         "ordered_set>=4.1.0",
-        "polars>=1.28.1"
+        "polars==1.28.1"
     ],
 )
