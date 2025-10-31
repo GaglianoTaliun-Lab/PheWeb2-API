@@ -1,28 +1,16 @@
-# Deploy PheWeb 2 without installing from GitHub (using `apptainer` with minimal steps)
-We released the Docker image file for strict version control. If you want to easily deploy the tool (e.g. to test it), please do the following steps:
+# Use a container image to deploy PheWeb 2 API
 
-## 1. Make sure you have `apptainer` installed on your machine
+The PheWeb 2 API container image is available through the [Docker Hub image repository](https://hub.docker.com/r/xiaoh11/pheweb2-api).
+The sections below describe how to use it with [Apptainer](https://apptainer.org/). The process for [Docker](https://www.docker.com/) is very similar.
 
-   If not, please refer to https://github.com/apptainer/apptainer/blob/main/INSTALL.md to install `apptainer`
-
-   For any questions about using `apptainer`, please refer to their official documentation https://apptainer.org/docs/user/main/quick_start.html 
-
-## 2. Build the apptainer image
+## 1. Download the latest image
    ```
    mkdir -p PheWeb2-API
    cd PheWeb2-API
    apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
    ```
 
-   If you prefer to build the apptainer image based on a def file, we also provided it in `./pheweb2api.def`
-
-   You can copy this file to your machine and do
-   ```
-   apptainer build pheweb2-api-latest.sif PATH/TO/YOUR/pheweb2api.def
-   ```
-
-
-## 3. Download/Prepare the data
+## 2. Download/Prepare the data
 
 For testing, you can download our sample data
    ```
