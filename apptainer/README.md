@@ -24,7 +24,7 @@ We released the Docker image file for strict version control. If you want to eas
 
 ## 3. Download/Prepare the data
 
-   For testing, you can download our sample data
+For testing, you can download our sample data
    ```
    wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
    tar -xzvf example_regenie.tar.gz

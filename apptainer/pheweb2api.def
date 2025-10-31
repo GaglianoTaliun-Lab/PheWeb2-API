@@ -39,6 +39,7 @@ From: python:3.12.4-slim
 
 %runscript
     echo "Starting: pheweb2 service"
+    cd /app
     exec pheweb2 serve \
         --gunicorn \
         --enable-cache \
@@ -49,22 +50,22 @@ From: python:3.12.4-slim
 
     Data preprocess:
       apptainer exec --cleanenv \
-      --bind ./config.py:/src/config.py:ro \
-      --bind path/to/your/data:/src/generated-by-pheweb \
+      --bind ./config.py:/app/config.py:ro \
+      --bind path/to/your/data:/app/generated-by-pheweb \
       pheweb2-api.sif \
       pheweb2 process
 
     Quick start (read-only data):
       apptainer run \
         --cleanenv \
-        --bind ./config.py:/src/config.py:ro \
-        --bind path/to/your/data:/src/generated-by-pheweb \
+        --bind ./config.py:/app/config.py:ro \
+        --bind path/to/your/data:/app/generated-by-pheweb \
         pheweb2-api.sif
 
     Dev with external config.py and source:
       apptainer exec --cleanenv \
-        --bind ./config.py:/src/config.py:ro \
-        --bind path/to/your/data:/src/generated-by-pheweb \
+        --bind ./config.py:/app/config.py:ro \
+        --bind path/to/your/data:/app/generated-by-pheweb \
         pheweb2-api.sif \
         pheweb2 serve
 
