@@ -1,4 +1,5 @@
 # PheWeb2 API
+![License](https://img.shields.io/github/license/GaglianoTaliun-Lab/PheWeb2-API)
 [![Docker Pulls](https://img.shields.io/docker/pulls/xiaoh11/pheweb2-api)](https://hub.docker.com/r/xiaoh11/pheweb2-api)
 [![Docker Image Version (latest by date)](https://img.shields.io/docker/v/xiaoh11/pheweb2-api?sort=semver)](https://hub.docker.com/r/xiaoh11/pheweb2-api)
 
