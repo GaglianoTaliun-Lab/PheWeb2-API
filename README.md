@@ -14,12 +14,11 @@ This is an implementation of the data model and API for [PheWeb2](https://github
 > If you've already set up the PheWeb2 API, you can proceed to install and launch the [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2) user interface.
 
 > [!NOTE]
-> We provide a containerized setup (using Docker image) for easy deployment and reliable version management. Please check the [detailed documentation](./apptainer/README.md).
-
-## 1. Install
-
-> [!NOTE]
 > The code was developed and tested with Python 3.12+ on Linux-based OS.
+
+
+## 1. Install from source 
+### [ :whale: Or use Docker image that comes with everything pre-installed &#8599;](./apptainer/README.md)
 
 You can install PheWeb2 and all required dependencies within a virtual environment using the following steps:
 1. Clone this repository:
@@ -36,28 +35,6 @@ You can install PheWeb2 and all required dependencies within a virtual environme
    ```
    pip install -e .
    ```
-
-<details>
-   <summary>
-      Click to see another installing option through apptainer
-   </summary>
-   
-   ```
-   mkdir -p PheWeb2-API
-   cd PheWeb2-API
-   apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
-   ```
-   If you prefer to build the apptainer image based on a def file, we also provided it in [`pheweb2api.def`](./apptainer/pheweb2api.def)
-
-   You can copy this file to your machine and do
-   ```
-   mkdir -p PheWeb2-API
-   cd PheWeb2-API
-   apptainer build pheweb2-api-latest.sif PATH/TO/YOUR/pheweb2api.def
-   ```
-
-   For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#2-build-the-apptainer-image)
-</details>
 
 ## 2. Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
