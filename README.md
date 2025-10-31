@@ -9,116 +9,8 @@ This is an implementation of the data model and API for [PheWeb2](https://github
 > [!TIP]
 > If you've already set up the PheWeb2 API, you can proceed to install and launch the [PheWeb2](https://github.com/GaglianoTaliun-Lab/PheWeb2) user interface.
 
-## 0. Deploy PheWeb 2 without installing from GitHub (with minimal steps)
-We released the Docker image file for strict version control. If you want to easily deploy the tool (e.g. to test it), please do the following steps:
-
-1. Make sure you have `apptainer` installed on your machine
-
-   If not, please refer to https://github.com/apptainer/apptainer/blob/main/INSTALL.md to install `apptainer`
-
-2. Build the apptainer image
-   ```
-   mkdir -p PheWeb2-API
-   cd PheWeb2-API
-   apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
-   ```
-
-   If you prefer to build the apptainer image based on a def file, we also provided it in `./apptainer/pheweb2api.def`
-
-   You can copy this file to your machine and do
-   ```
-   apptainer build pheweb2-api-latest.sif PATH/TO/YOUR/pheweb2api.def
-   ```
-
-3. Download/Prepare the data
-
-   For testing, you can download our sample data
-   ```
-   wget https://objets.juno.calculquebec.ca/swift/v1/AUTH_290e6dcc5e264b34b401f54358bd4c54/pheweb_example_data/example_regenie.tar.gz
-   tar -xzvf example_regenie.tar.gz
-   ```
-
-4. Prepare the configuration file 
-
-   You can do that by copying the `./config.py` file and save it as `config.py` to your machine.
-   The `config.py` contains default settings to run the API. If you just want to test the functionality, please don't change anything. For anything questions related to the configurations setting, you are very welcome to contact us.
-
-5. Prepare the data-preprocessing list file (if you want to preprocess your association testing data) 
-
-   For testing, You can copy the `./manifest-example.csv` and save it as `./manifest-example.csv` to your machine.
->[!IMPORTANT]
->if you use apptainer, **please make sure** in the manifest-example.csv the data path (assoc_files column) is set to be something like `./example_regenie/...` (starts from ./, not absolute data path)
-
-
-> [!NOTE] 
-> You may want to structure your directory like this:
-> ```
-> /path/to/your/PheWeb2-API
-> └── config.py
-> └── generated-by-pheweb/ (PheWeb 2 data directory: could be empty, but must exist)
-> └── example_regenie/ (your GWAS data directory)
-> └── manifest-example.csv (must exist)
->```
-
-6. Ingesting (preprocessing) your data to PheWeb 2 (it can take some time)
-
-   Import the example manifest file describing phenotypes:
-   ```
-   apptainer exec --pwd /app \
-   --env PYTHONPATH=/app \
-   --containall --no-home \
-   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
-   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \ #could be empty, but must exist
-   --bind /PATH/TO/YOUR/GWAS/DATA/DIR/:/app/example_regenie:ro \
-   --bind /PATH/TO/YOUR/LIST/FILE/manifest-example.csv 
-   pheweb2-api-latest.sif \
-   pheweb2 phenolist import-phenolist manifest-example.csv
-   ```
-
-   ```
-   apptainer exec --pwd /app \
-   --env PYTHONPATH=/app \
-   --containall --no-home \
-   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
-   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \ #could be empty, but must exist
-   --bind /PATH/TO/YOUR/GWAS/DATA/DIR/:/app/example_regenie:ro \
-   --bind /PATH/TO/YOUR/LIST/FILE/manifest-example.csv 
-   pheweb2-api-latest.sif \
-   pheweb2 process
-   ```
-
-7. Run automated tests of the API routes:
-   ```
-   apptainer exec --pwd /app \
-   --env PYTHONPATH=/app \
-   --containall --no-home \
-   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
-   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \
-   pheweb2-api-latest.sif \
-   pytest tests/test_routes.py -s -v
-   ```
-
-8. Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
-   ```
-   apptainer exec --pwd /app \
-   --env PYTHONPATH=/app \
-   --containall --no-home \
-   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
-   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \
-   pheweb2-api-latest.sif \
-   pheweb2 serve --host 127.0.0.1 --port 9543
-   ```
-
-9. To run the PheWeb2 API in production mode:
-   ```
-   apptainer exec --pwd /app \
-   --env PYTHONPATH=/app \
-   --containall --no-home \
-   --bind /PATH/TO/YOUR/CONFIG/config.py:/app/config.py:ro \
-   --bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb \
-   pheweb2-api-latest.sif \
-   pheweb2 serve --gunicorn --enable-cache
-   ```
+> [!NOTE]
+> We provide a containerized setup (using Docker image) for easy deployment and reliable version management. Please check the [detailed documentation](./apptainer/README.md).
 
 ## 1. Install
 
@@ -141,8 +33,49 @@ You can install PheWeb2 and all required dependencies within a virtual environme
    pip install -e .
    ```
 
+<details>
+   <summary>
+      Click to see another installing option through apptainer
+   </summary>
+   
+   ```
+   mkdir -p PheWeb2-API
+   cd PheWeb2-API
+   apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
+   ```
+   If you prefer to build the apptainer image based on a def file, we also provided it in [`pheweb2api.def`](./apptainer/pheweb2api.def)
+
+   You can copy this file to your machine and do
+   ```
+   mkdir -p PheWeb2-API
+   cd PheWeb2-API
+   apptainer build pheweb2-api-latest.sif PATH/TO/YOUR/pheweb2api.def
+   ```
+
+   For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#2-build-the-apptainer-image)
+</details>
+
 ## 2. Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
+
+> [!IMPORTANT]
+>Please note that the `config.py` contains default settings run the API. For testing/getting familiar with the functionality, please don't change anything. <br/>
+>For example, we provided the reference files (gene aliases files, genes bed files, and rsid files) from our web server bucket with default setting
+>```
+>HG_BUILD_NUMBER = 38
+>DBSNP_VERSION = 157
+>GENCODE_VERSION = 48
+>```
+>if you need any other versions for your data, a hint will pop up during `pheweb2 process` like<br/>
+>```
+>Failed to download genes from our bucket
+>Try `pheweb2 download-genes-from-scratch` instead
+>```
+> Then, please manually download them during using commands:
+>```
+>pheweb2 download-genes-from-scratch
+>pheweb2 download-rsids-from-scratch
+>```
 
 1. Download and unarchive the example data (~13 GB):
    ```
@@ -153,29 +86,75 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
    ```
    pheweb2 phenolist import-phenolist manifest-example.csv
    ```
+   <details>
+      <summary>
+         Click to see another option through apptainer
+      </summary>
+
+      If you download everything in `PheWeb2-API`
+      
+      ```
+      mkdir -p generated-by-pheweb
+
+      apptainer exec --pwd /app \
+      --env PYTHONPATH=/app \
+      --containall --no-home \
+      --bind ./config.py:/app/config.py:ro \
+      --bind ./generated-by-pheweb:/app/generated-by-pheweb \ #could be empty, but must exist
+      --bind ./example_regenie:/app/example_regenie:ro \
+      --bind ./manifest-example.csv:/app/manifest-example.csv:ro \
+      pheweb2-api-latest.sif \
+      pheweb2 phenolist import-phenolist manifest-example.csv
+      ```
+
+      For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#61-import-the-example-manifest-file-describing-phenotypes-must-be-done-first)
+   </details>
 3. Ingest the example data into PheWeb2 (this can take some time):
    ```
    pheweb2 process
    ```
-> [!IMPORTANT]
->Please note that the `config.py` contains default settings run the API. If you just want to test the functionality, please don't change anything. 
->If you changed anything, please carefully read the console output / error message for debugging.
->For example, we provided the reference files (gene aliases files, genes bed files, and rsid files) from our web server bucket with default setting
->```
->HG_BUILD_NUMBER = 38
->DBSNP_VERSION = 157
->GENCODE_VERSION = 48
->```
->if you need any other versions for your data, please manually download them using command:
->```
->pheweb2 download-genes-from-scratch
->pheweb2 download-rsids-from-scratch
->```
+   <details>
+      <summary>
+         Click to see another option through apptainer
+      </summary>
+
+      If you download everything in `PheWeb2-API`
+      
+      ```
+      apptainer exec --pwd /app \
+      --env PYTHONPATH=/app \
+      --containall --no-home \
+      --bind ./config.py:/app/config.py:ro \
+      --bind ./generated-by-pheweb:/app/generated-by-pheweb \ #could be empty, but must exist
+      --bind ./example_regenie:/app/example_regenie:ro \
+      pheweb2-api-latest.sif \
+      pheweb2 process
+      ```
+
+      For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#62-prepross-data)
+   </details>
 
 4. Run automated tests of the API routes:
    ```
    pytest tests/test_routes.py -s -v
    ```
+   <details>
+      <summary>
+         Click to see another option through apptainer
+      </summary>
+      
+      ```
+      apptainer exec --pwd /app \
+      --env PYTHONPATH=/app \
+      --containall --no-home \
+      --bind ./config.py:/app/config.py:ro \
+      --bind ./generated-by-pheweb:/app/generated-by-pheweb \
+      pheweb2-api-latest.sif \
+      pytest tests/test_routes.py -s -v
+      ```
+
+      For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#7-run-automated-tests-of-the-api-routes)
+   </details>
    <details>
      <summary>Click to see an example of passed tests.</summary>
      
@@ -193,6 +172,23 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
    ```
    pheweb2 serve --host 127.0.0.1 --port 9543
    ```
+   <details>
+      <summary>
+         Click to see another option through apptainer
+      </summary>
+      
+      ```
+      apptainer exec --pwd /app \
+      --env PYTHONPATH=/app \
+      --containall --no-home \
+      --bind ./config.py:/app/config.py:ro \
+      --bind ./generated-by-pheweb:/app/generated-by-pheweb \
+      pheweb2-api-latest.sif \
+      pheweb2 serve --host 127.0.0.1 --port 9543
+      ```
+
+      For detailed information, please head to [documentation of implementing PheWeb2 in container](./apptainer/README.md#8-launch-pheweb2-api-endpoint-which-will-be-available-at-http1270019543)
+   </details>
 
 6. To access the interactive API documentation, open your internet browser and navigate to `http://localhost:9543/docs`, assuming you are running it on the same machine at port 9543.
 

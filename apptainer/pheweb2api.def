@@ -25,8 +25,8 @@ From: python:3.12.4-slim
 
     python -m pip install --upgrade pip wheel setuptools gunicorn
 
-    mkdir -p /src
-    cd /src
+    mkdir -p /app
+    cd /app
     git clone https://github.com/GaglianoTaliun-Lab/PheWeb2-API.git .
     git checkout 7b5c02dc306f3a2c8ac5dfe74cd0f5f414c9c92f      # pin to the latest stable commit
 
