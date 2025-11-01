@@ -39,7 +39,7 @@ apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
    
 5. Run automated tests of the API routes:
    ```
-   apptainer exec pheweb2-api-latest.sif pytest tests/test_routes.py -s -v
+   apptainer exec pheweb2-api-latest.sif pytest /app/tests/test_routes.py -s -v
    ```
    
 6. Launch PheWeb2 API endpoint which will be available at `http://127.0.0.1:9543`:
