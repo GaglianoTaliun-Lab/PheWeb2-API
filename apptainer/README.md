@@ -59,9 +59,9 @@ Refer to the ["3. Run using your own data"](https://github.com/GaglianoTaliun-La
 The main thing to remember when using a container image is that you need to make sure the necessary directories are accessible by `singularity` (or `docker`, if you're using that instead).
 
 In particular, make sure that:
-- If you changed the default `PHEWEB_DATA_DIR` in `config.py`, remember you may need explicitly bind your new data directory in subsequent `apptainer` commands. For example:
+1. If you changed the default `PHEWEB_DATA_DIR` in `config.py`, remember you may need explicitly bind your new data directory in subsequent `apptainer` commands. For example:
   ```
   apptainer exec -B /path/to/my/pheweb/data/dir/ pheweb2-api-latest.sif pheweb2 ...
   ```
-
+2. Make sure the directory with your input GWAS files, which are listed in your Manifest file, is also accessible within the container image (i.e. bind it using `-B /path/to/my/gwas/files/` option). 
 
