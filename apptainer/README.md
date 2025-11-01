@@ -31,6 +31,8 @@ apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
    curl -O https://raw.githubusercontent.com/GaglianoTaliun-Lab/PheWeb2-API/main/manifest-example.csv
    apptainer exec pheweb2-api-latest.sif pheweb2 phenolist import-phenolist manifest-example.csv
    ```
+> [!NOTE]
+> For these and subsequent `apptainer` commands using the small example data, we rely on `apptainer`'s default behavior of mounting the current working directory (i.e. PheWeb2-API). This ensures the container has access to the `config.py` configuration file and other input files. If, for some reason, it doesn't work, try explicitly mounting the current working directory adding the corresponding `-B` option e.g. ``apprainer exec -B `pwd` pheweb2-api-latest.sif ...``.
    
 4. Ingest the example data into PheWeb2 (this can take some time):
    ```
