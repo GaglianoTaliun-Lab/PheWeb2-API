@@ -32,7 +32,7 @@ apptainer pull pheweb2-api-latest.sif docker://xiaoh11/pheweb2-api:latest
    apptainer exec pheweb2-api-latest.sif pheweb2 phenolist import-phenolist manifest-example.csv
    ```
 > [!NOTE]
-> For these and subsequent `apptainer` commands using the small example data, we rely on `apptainer`'s default behavior of mounting the current working directory (i.e. PheWeb2-API). This ensures the container has access to the `config.py` configuration file and other input files. If, for some reason, it doesn't work, try explicitly mounting the current working directory adding the corresponding `-B` option e.g. ``apprainer exec -B `pwd` pheweb2-api-latest.sif ...``.
+> For these and subsequent `apptainer` commands using the small example data, we rely on `apptainer`'s default behavior of mounting the current working directory (i.e. PheWeb2-API). This ensures the container has access to the `config.py` configuration file and other input files. If, for some reason, it doesn't work, try explicitly mounting the current working directory adding the corresponding `-B` option e.g. ``apprainer exec -B `pwd` pheweb2-api-latest.sif pheweb2 ...``.
    
 4. Ingest the example data into PheWeb2 (this can take some time):
    ```
@@ -58,16 +58,10 @@ Refer to the ["3. Run using your own data"](https://github.com/GaglianoTaliun-La
 
 The main thing to remember when using a container image is that you need to make sure the necessary directories are accessible by `singularity` (or `docker`, if you're using that instead).
 
-> [!IMPORTANT]
-> Important things to know before copying the code: 
-> 1. `config.py` must be projected to `/app/` in the container
-> 2. `/PATH/TO/YOUR/PHEWEB2/DATA/DIR` must exist (could be empty). This path must match the `PHEWEB_DATA_DIR` in `config.py`. If you are using the default setting, project `/PATH/TO/YOUR/PHEWEB2/DATA/DIR` to `/app/generated-by-pheweb/` using
->```
->--bind /PATH/TO/YOUR/PHEWEB2/DATA/DIR/:/app/generated-by-pheweb
->```
->3. If you specify you association data path (i.e. `/PATH/TO/YOUR/GWAS/DATA/DIR/`), make sure this path match the `assoc_files` column in your manifest csv file. If you are using the example data we provided, project `/PATH/TO/YOUR/GWAS/DATA/DIR/` to `/app/example_regenie/` using
->```
->--bind /PATH/TO/YOUR/GWAS/DATA/DIR/example_regenie:/app/example_regenie:ro
->```
+In particular, make sure that:
+- If you changed the default `PHEWEB_DATA_DIR` in `config.py`, remember you may need explicitly bind your new data directory in subsequent `apptainer` commands. For example:
+  ```
+  apptainer exec -B /path/to/my/pheweb/data/dir/ pheweb2-api-latest.sif pheweb2 ...
+  ```
 
 
