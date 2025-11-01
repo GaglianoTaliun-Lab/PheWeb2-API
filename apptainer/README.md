@@ -1,7 +1,7 @@
 # Use a container image to deploy PheWeb 2 API
 
 The PheWeb 2 API container image is available through the [Docker Hub image repository](https://hub.docker.com/r/xiaoh11/pheweb2-api).
-The sections below describe how to use it with [Apptainer](https://apptainer.org/). The process for [Docker](https://www.docker.com/) is very similar.
+The sections below describe how to use it with [Apptainer](https://apptainer.org/). The process for [Docker](https://www.docker.com/) is quite similar; however, with Docker, you must always explicitly bind/mount directories.
 
 ## 1. Download the latest image
 ```
