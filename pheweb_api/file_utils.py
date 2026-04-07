@@ -14,6 +14,7 @@ from contextlib import contextmanager
 import json
 import gzip
 import datetime
+import shutil
 from boltons.fileutils import AtomicSaver, mkdir_p
 import pysam
 import itertools
@@ -27,7 +28,6 @@ def get_generated_path(*path_parts: str) -> str:
     make_basedir(path)
     return path
 
-
 def get_filepath(kind: str, *, must_exist: bool = True) -> str:
     if kind not in _single_filepaths:
         raise Exception("Unknown kind of filepath: {}".format(repr(kind)))
@@ -39,6 +39,35 @@ def get_filepath(kind: str, *, must_exist: bool = True) -> str:
             )
         )
     return filepath
+
+_data_subdirs : List[str] = [
+    "best_of_pheno", "interaction", "manhattan",
+    "matrix", "matrix-stratified", "parsed", "pheno_gz",
+    "phenolist", "qq", "resources", 
+    "sites", ""
+]
+
+def extract_data_subdir_from_filepath(filepath: str) -> str:
+    data_dir = Path(conf.get_pheweb_data_dir())
+    path = Path(filepath)
+
+    try:
+        rel = path.relative_to(data_dir)
+    except ValueError:
+        print(f"Pheweb data dir ({data_dir}) not part of filepath.")
+        return "Error"
+
+    parts = rel.parts
+    if len(parts) == 0:
+        return ""
+
+    data_sub_dir = parts[0]
+
+    if data_sub_dir not in _data_subdirs:
+        print("File not part of available data_subdirs")
+        return ""
+
+    return data_sub_dir
 
 
 _single_filepaths: Dict[str, Callable[[], str]] = {
@@ -188,6 +217,64 @@ def get_dated_tmp_path(prefix: str) -> str:
     time_str = datetime.datetime.isoformat(datetime.datetime.now()).replace(":", "-")
     return get_tmp_path(prefix + "-" + time_str)
 
+def get_backup_path():
+    return get_generated_path("backups")
+
+def backup_file(filepath: str,
+                data_subdir: str = "",
+                method: str = "copy",
+                add_iso_date = True) -> str:
+
+    if not os.path.exists(filepath):
+        print(f"{filepath} does not exist. Nothing to backup.")
+        return
+
+    if not data_subdir :
+        data_subdir = extract_data_subdir_from_filepath(filepath)
+
+    if data_subdir not in _data_subdirs:
+        raise PheWebError(
+            f"Invalid data_subdir '{data_subdir}' for {filepath}"
+        )
+
+    _methods = ["copy", "move"]
+
+    if method not in _methods:
+        raise PheWebError(
+            "method must be one of the following: {}".format(
+                ", ".join(_methods)
+            )
+        )
+
+    dest_dir = os.path.join(get_backup_path(), data_subdir)
+
+    if add_iso_date:
+        backup_filename = "{}-{}".format(
+            datetime.datetime.now().isoformat(),
+            os.path.basename(filepath)
+        )
+    else:
+        backup_filename = os.path.basename(filepath)
+
+    backup_filepath = os.path.join(dest_dir, backup_filename)
+
+    make_basedir(backup_filepath)
+
+    if method == "move":
+        print(f"NOTE: moving the old {filepath!r} to {backup_filepath!r}")
+        shutil.move(filepath, backup_filepath)
+    else:
+        print(f"NOTE: copying the old {filepath!r} to {backup_filepath!r}")
+        shutil.copy(filepath, backup_filepath)
+
+    return backup_filepath
+
+def get_matrix_subdir():
+
+    if conf.has_stratifications():
+        return  "matrix-stratified"
+    
+    return "matrix"
 
 csv.register_dialect(
     "pheweb-internal-dialect",
@@ -483,6 +570,9 @@ class _mr(_ivfr):
                     variant["phenos"][phenocode] = p
         return variant
 
+    def __iter__(self):
+        for row in self._tabix_file.fetch():
+            yield self._parse_variant_row(row.split("\t"))
 
 def with_chrom_idx(variants: Iterator[Dict[str, Any]]) -> Iterator[Dict[str, Any]]:
     for v in variants:

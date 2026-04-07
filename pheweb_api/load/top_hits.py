@@ -6,6 +6,7 @@ from ..file_utils import (
     get_filepath,
     get_pheno_filepath,
     get_phenocode_with_stratifications,
+    backup_file
 )
 
 import json
@@ -114,13 +115,20 @@ just the top phenotype for each, use `pheweb top-loci`.
 
     hits = get_all_hits()
 
+    backup_file(out_filepath_json, "", "move")
+
     write_json(filepath=out_filepath_json, data=hits, sort_keys=True)
     print("wrote {} hits to {}".format(len(hits), out_filepath_json))
+
+    backup_file(out_filepath_1k_json, "", "move")
 
     write_json(filepath=out_filepath_1k_json, data=hits[:1000], sort_keys=True)
     print("wrote {} hits to {}".format(len(hits[:1000]), out_filepath_1k_json))
 
     if hits:  # If there are no hits, we can't write a proper tsv
         stringify_assocs(hits)
+
+        backup_file(out_filepath_tsv, "", "move")
+
         write_heterogenous_variantfile(out_filepath_tsv, hits, use_gzip=False)
         print("wrote {} hits to {}".format(len(hits), out_filepath_tsv))

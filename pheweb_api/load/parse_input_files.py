@@ -6,6 +6,7 @@ from ..file_utils import (
     get_generated_path,
     get_filepath,
     get_pheno_filepath,
+    backup_file
 )
 from .read_input_file import PhenoReader, R2FileReader
 from .load_utils import parallelize_per_pheno, indent, get_phenos_subset
@@ -122,9 +123,14 @@ def convert(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
         # if conf.stratified():
         #     pheno['phenocode'] = get_phenocode_with_stratifications(pheno)
         
+        out_filepath = get_pheno_filepath("parsed", pheno["phenocode"], must_exist=False)
+
         with VariantFileWriter(
-            get_pheno_filepath("parsed", pheno["phenocode"], must_exist=False)
+            out_filepath
         ) as writer:
+            
+            backup_file(out_filepath, "parsed", "move")
+
             pheno_reader = PhenoReader(pheno, minimum_maf=conf.get_assoc_min_maf())
             variants = pheno_reader.get_variants()
             debugging_limit_num_variants = conf.get_debugging_limit_num_variants()

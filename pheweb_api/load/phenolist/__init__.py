@@ -1,9 +1,9 @@
 from ...utils import PheWebError
 from ...file_utils import (
-    get_generated_path,
     make_basedir,
     get_filepath,
     read_maybe_gzip,
+    backup_file
 )
 from ..read_input_file import PhenoReader
 from ...conf import has_stratifications
@@ -21,7 +21,6 @@ import boltons.iterutils
 import tqdm
 import datetime
 import shutil
-
 
 def get_phenolist_with_globs(globs, star_is_phenocode):
     phenolist = []
@@ -481,6 +480,15 @@ def boolify_boolean_cols(phenolist):
 
     return phenolist
 
+def import_phenolist_post(phenolist, delimit_lists_with_pipe):
+    phenolist = interpret_json(phenolist)
+    if delimit_lists_with_pipe:
+        phenolist = split_values_on_pipes(phenolist)
+    phenolist = split_phenos_on_interaction(phenolist)
+    phenolist = listify_assoc_files(phenolist)
+    phenolist = numify_numeric_cols(phenolist)
+    phenolist = boolify_boolean_cols(phenolist)
+    return phenolist
 
 def print_as_csv(phenolist):
     phenolist = copy.deepcopy(phenolist)
@@ -550,6 +558,52 @@ def _get_hashable(obj):
     assert hasattr(obj, "__hash__")
     return obj
 
+
+def get_phenoc_strat_interaction(p):
+    """
+    Return frozenset of informations about a phenotype that makes it
+    unique (phenocode, stratifications, interaction).
+    Values order is irrelevent.
+    """
+    return frozenset([p["phenocode"]] + \
+            [v for v in list(p["stratification"].values())] + \
+            [str(p["interaction"])])
+
+def append_pheno_list(old_pheno_list, new_phenolist):
+    """
+    Replace entries in old_pheno_list with those from new_phenolist
+    when (phenocode, stratification) match, and append new ones.
+    """
+    
+    existing_phenos = [
+        get_phenoc_strat_interaction(p)
+        for p in old_pheno_list
+    ]
+
+    new_phenos = [
+        get_phenoc_strat_interaction(p)
+        for p in new_phenolist
+    ]
+
+    pheno_intersection = set(existing_phenos).intersection(new_phenos)
+
+    if len(pheno_intersection) > 0:
+        str_pheno_intersection = "\n".join( [" ".join(p) for p in pheno_intersection] )
+        raise PheWebError(
+            f"New pheno-list contains phenotypes already existing in current pheno-list:\n{str_pheno_intersection}"
+        )
+
+    # Keep only old entries not replaced
+    # filtered_old = [
+    #     p for p in old_pheno_list
+    #     if get_phenoc_strat_interaction(p) not in seen_keys
+    # ]
+
+    return old_pheno_list + new_phenolist
+
+
+def sort_by_phenocode(phenolist):
+    return sorted(phenolist, key=lambda pheno: pheno.get("phenocode", ""))
 
 def merge_in_info(phenolist, more_info_rows, allow_missing_fields=False):
     "This function assumes that every pheno in phenolist has exactly one match (ie, same phenocode) in more_info_rows"
@@ -694,7 +748,7 @@ def load_phenolist(filepath):
 def save_phenolist(phenolist, filepath=None):
     filepath = os.path.abspath(filepath)
     if os.path.exists(filepath):
-        backup_phenolist(filepath)
+        backup_file(filepath, "phenolist", "move")
     else:
         make_basedir(filepath)
     with open(os.path.join(filepath), "w") as f:
@@ -709,18 +763,9 @@ def save_phenolist(phenolist, filepath=None):
     )
 
 
-def backup_phenolist(filepath):
-    backup_filepath = "{}-{}".format(
-        datetime.datetime.isoformat(datetime.datetime.now()), os.path.basename(filepath)
-    )
-    backup_filepath = get_generated_path("phenolist-backups", backup_filepath)
-    make_basedir(backup_filepath)
-    print("NOTE: moving the old {!r} to {!r}".format(filepath, backup_filepath))
-    shutil.move(filepath, backup_filepath)
-
-
 def write_phenolist_to_file(phenolist, f):
-    phenolist = sorted(phenolist, key=lambda pheno: pheno.get("phenocode", ""))
+
+    phenolist = sort_by_phenocode(phenolist)
     json.dump(phenolist, f, sort_keys=True, indent=1)
 
 
@@ -1004,18 +1049,76 @@ def run(argv):
             default_phenolist_filepath
         ),
     )
+    
+    @add_subcommand("append-phenolist")
+    @modifies_phenolist
+    def appendToPhenoList(args, phenolist):
+        
+        # Maybe determine file with extension:
+        # append_suffixes = Path(args.append).suffixes
+        # if not any([s in [".json", ".csv", ".tsv"] for s in append_suffixes]):
+        #     return
+
+        # pheno-list json file
+        if args.append_file_type == "pheno-list":
+            phenolist_new = load_phenolist(args.append)
+
+        # Manifest file
+        else:
+            phenolist_new = import_phenolist(args.append, not args.no_header)
+            phenolist_new = import_phenolist_post(phenolist_new, args.delimit_lists_with_pipe)
+
+        # Deals with duplicated phenocode/stratification/ combination
+        # Keeps only old phenolist versions
+        phenolist = append_pheno_list(phenolist, phenolist_new)
+
+        return phenolist
+
+    p = subparsers.add_parser(
+        "append-phenolist",
+        help="append manifest/pheno-list to existing pheno-list.json file.",
+    )
+
+    p.add_argument(
+        "append",
+        help="pheno-list/manifest filepath to append.",
+    )
+
+    p.add_argument(
+        "-append-file-type",
+        dest="append_file_type",
+        choices=["manifest", "pheno-list"],
+        default="manifest",
+    )
+
+    # Maybe add something to detect if -f has an header
+    p.add_argument(
+        "--no-header",
+        dest="no_header",
+        action="store_true",
+        help="whether input_filepath has no header, in which case columns will just be numbered",
+    )
+
+    p.add_argument(
+        "--never-delimit-lists-with-pipe",
+        dest="delimit_lists_with_pipe",
+        action="store_false",
+        help="whether to split any fields that contain pipes into lists",
+    )
+
+    p.add_argument(
+        "-f",
+        dest="filepath",
+        help="pheno-list filepath, used for both input and output (default: {!r}).".format(
+            default_phenolist_filepath
+        ),
+    )
 
     @add_subcommand("import-phenolist")
     def importPhenolist(args):
         filepath = args.filepath or default_phenolist_filepath
         phenolist = import_phenolist(args.input_filepath, not args.no_header)
-        phenolist = interpret_json(phenolist)
-        if args.delimit_lists_with_pipe:
-            phenolist = split_values_on_pipes(phenolist)
-        phenolist = split_phenos_on_interaction(phenolist)
-        phenolist = listify_assoc_files(phenolist)
-        phenolist = numify_numeric_cols(phenolist)
-        phenolist = boolify_boolean_cols(phenolist)
+        phenolist = import_phenolist_post(phenolist, args.delimit_lists_with_pipe)
         save_phenolist(phenolist, filepath)
 
     p = subparsers.add_parser(

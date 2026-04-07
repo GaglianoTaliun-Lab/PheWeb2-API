@@ -13,6 +13,7 @@ from ..file_utils import (
     make_basedir,
     get_dated_tmp_path,
     get_tmp_path,
+    backup_file
 )
 from .load_utils import mtime, indent, ProgressBar
 
@@ -55,21 +56,42 @@ def run(argv):
 
     manna = MergeManager()
 
+    # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
+    # if os.path.exists(out_filepath) and not force:
+    #     if mtime(out_filepath) >= max(mtime(f["filepath"]) for f in manna.files):
+    #         print("The list of sites is up-to-date!")
+    #         return
+
+    # Only files that are newer than sites
+    if os.path.exists(out_filepath):
+        manna.set_files([f for f in manna.files if mtime(f["filepath"]) > mtime(out_filepath)])
+
+    if not manna.files and not force:
+        print("The list of sites is up-to-date!")
+        return
+
+    # Merging previous site file if it exists.
+    existing_out = None
+    if os.path.exists(out_filepath):
+
+        existing_out = out_filepath
+        print(f"Original '{existing_out}' will be included in files to merge.")
+
+        # Treating old site file as a merged file.
+        manna.append_file("merged", existing_out)
+
     if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
         MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
         MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
-        
-
-    # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
-    if os.path.exists(out_filepath) and not force:
-        if mtime(out_filepath) >= max(mtime(f["filepath"]) for f in manna.files):
-            print("The list of sites is up-to-date!")
-            return
+    
+    print("test")
+    for file in manna.files:
+        print(file["filepath"])
 
     taskq = multiprocessing.Queue()
     retq = multiprocessing.Queue()
     procs = [
-        multiprocessing.Process(target=mp_target, args=(taskq, retq))
+        multiprocessing.Process(target=mp_target, args=(taskq, retq, existing_out))
         for _ in range(manna.n_procs)
     ]
     for p in procs:
@@ -105,8 +127,16 @@ def run(argv):
         p.join()
         assert p.exitcode == 0
     make_basedir(out_filepath)
-    os.rename(manna.files[0]["filepath"], out_filepath)
 
+    if existing_out:
+
+        backup_file(out_filepath, "sites", "move")
+
+        final_tmp = get_tmp_path("final-merge")
+        os.rename(manna.files[0]["filepath"], final_tmp)
+        os.replace(final_tmp, out_filepath)
+    else:
+        os.rename(manna.files[0]["filepath"], out_filepath)
 
 class MergeManager:
     """Keeps track of what needs to get merged next."""
@@ -115,9 +145,11 @@ class MergeManager:
         self.n_procs = conf.get_num_procs(cmd="sites")
         self.files = []
 
+        # Get pheno from pheno list
         for pheno in get_phenolist():
             if conf.has_stratifications():
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
             self.files.append(
                 {
@@ -126,6 +158,15 @@ class MergeManager:
                     "pheno": pheno,
                 }
             )
+
+    def append_file(self, f_type, filepath):
+        self.files.append({
+                "type": f_type,
+                "filepath": filepath,
+            })
+
+    def set_files(self, files):
+        self.files = files
 
     def apply_ret(self, ret):
         if ret["type"] == "task-completion":
@@ -183,10 +224,10 @@ class MergeManager:
             )
 
 
-def mp_target(taskq, retq):
+def mp_target(taskq, retq, existing_out):
     for task in iter(taskq.get, {"exit": True}):
         try:
-            for ret in merge(task["files_to_merge"], task["out_filepath"]):
+            for ret in merge(task["files_to_merge"], task["out_filepath"], existing_out):
                 if isinstance(ret, dict) and ret["type"] == "warning":
                     retq.put(ret)
                 else:
@@ -213,7 +254,7 @@ def mp_target(taskq, retq):
             )
 
 
-def merge(files_to_merge, out_filepath):
+def merge(files_to_merge, out_filepath, existing_out):
     # files_to_merge is like [
     #   {filepath: "/foo/bar", type:"input", pheno:pheno},
     #   {filepath: "/foo/bar", type:"merged"},
@@ -268,7 +309,8 @@ def merge(files_to_merge, out_filepath):
         )
 
     for file_to_merge in files_to_merge:
-        if file_to_merge["type"] == "merged":
+        # Deleting merged file but not old sites file.
+        if file_to_merge["type"] == "merged" and file_to_merge["filepath"] != existing_out:
             os.remove(file_to_merge["filepath"])
     # print('{:8} variants in {} <- {}'.format(n_variants, os.path.basename(out_filepath), [os.path.basename(f['filepath']) for f in files_to_merge]))
 

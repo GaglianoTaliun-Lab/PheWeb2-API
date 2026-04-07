@@ -3,7 +3,7 @@ This script takes a file with the columns [chrom, pos, ...] (but no headers) and
 """
 
 from ..utils import get_gene_tuples
-from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath
+from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath, backup_file
 from .load_utils import mtime
 
 from intervaltree import IntervalTree, Interval
@@ -99,6 +99,9 @@ class GeneAnnotator(object):
 def annotate_genes(in_filepath: str, out_filepath: str) -> None:
     """Both args are filepaths"""
     ga = GeneAnnotator(get_gene_tuples())
+
+    backup_file(out_filepath, data_subdir="sites", method="copy")
+
     with VariantFileWriter(out_filepath) as out_f, VariantFileReader(
         in_filepath
     ) as variants:

@@ -1,4 +1,4 @@
-from ..file_utils import VariantFileReader, get_filepath, get_tmp_path
+from ..file_utils import VariantFileReader, get_filepath, get_tmp_path, backup_file
 
 import sqlite3
 from pathlib import Path
@@ -44,6 +44,8 @@ def run(argv: List[str]) -> None:
                 get_cpra_rsid_pairs(),
             )
             db_conn.execute("CREATE INDEX rsid_idx ON cpras_rsids (rsid)")
+
+        backup_file(cpras_rsids_filepath, data_subdir="sites", method="move")
 
         cpras_rsids_tmp_filepath.rename(cpras_rsids_filepath)
         print("Done making cpras-rsids sqlite3 at {}".format(str(cpras_rsids_filepath)))

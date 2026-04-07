@@ -6,7 +6,7 @@ This avoids reading any variant more than once.
 """
 
 from ..utils import get_padded_gene_tuples, get_phenolist, get_stratification_paths
-from ..file_utils import MatrixReader, get_filepath, get_tmp_path, get_pheno_filepath
+from ..file_utils import MatrixReader, get_filepath, get_tmp_path, get_pheno_filepath, backup_file
 from .load_utils import Parallelizer
 from .. import conf
 
@@ -18,7 +18,7 @@ from pathlib import Path
 from intervaltree import IntervalTree, Interval
 from typing import List, Any, Dict, Tuple
 import copy
-
+import os
 
 def run(argv: List[str]) -> None:
     if argv and "-h" in argv:
@@ -45,7 +45,7 @@ def run(argv: List[str]) -> None:
     out_tmp_filepath = Path(get_tmp_path(out_filepath))
 
     best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
-    for i, matrix_filepath in enumerate(matrix_filepaths):
+    for matrix_filepath in matrix_filepaths:
         if (
             out_filepath.exists()
             and matrix_filepath.stat().st_mtime < out_filepath.stat().st_mtime
@@ -90,6 +90,10 @@ def run(argv: List[str]) -> None:
             "INSERT INTO best_phenos_for_each_gene (gene, json) VALUES (?,?)",
             ((k, json.dumps(v)) for k, v in data.items()),
         )
+
+    if os.path.exists(out_filepath):
+        backup_file(out_filepath, "", "move")
+
     out_tmp_filepath.replace(out_filepath)
     print("Done making best-pheno-for-each-gene at {}".format(str(out_filepath)))
 

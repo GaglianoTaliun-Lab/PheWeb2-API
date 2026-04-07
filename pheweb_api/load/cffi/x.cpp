@@ -508,7 +508,122 @@ int make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, co
     return 0;
 }
 
+int append_to_matrix(const char *sites_filepath,
+    const char **pheno_files,
+    const size_t N_phenos,
+    const char *old_matrix_filepath,
+    const char *new_matrix_filepath){
 
+    // ======= Attaching line readers to files =======
+    BgzipWriter writer(new_matrix_filepath);
+
+    // attache line readers to sites files
+    LineReader sites_reader;
+    sites_reader.attach(sites_filepath);
+
+    // attach line readers to old matrix
+    LineReader old_matrix_reader;
+    old_matrix_reader.attach(old_matrix_filepath);
+
+    // attache line readers to augmented pheno files
+    std::vector<std::string> aug_filepaths(pheno_files, pheno_files + N_phenos);
+
+    std::cout << "N_phenos = " << N_phenos << std::endl;
+    std::vector<LineReader> aug_readers(N_phenos);
+    std::vector<std::string> aug_phenocodes(N_phenos);
+    std::vector<unsigned> aug_n_per_assoc_fields(N_phenos); // initialized to 0s.
+    // set_ulimit_num_files(N_phenos + 100); // are python files still open?
+    for (size_t i = 0; i < N_phenos; i++) {
+        aug_readers[i].attach(aug_filepaths[i]);
+        aug_phenocodes[i] = aug_filepaths[i];
+        size_t last_slash_idx = aug_phenocodes[i].find_last_of("/");
+        if (std::string::npos != last_slash_idx) {
+            aug_phenocodes[i].erase(0, last_slash_idx + 1);
+        }
+        if (endsWith(aug_phenocodes[i], ".gz")) {
+            aug_phenocodes[i] = aug_phenocodes[i].erase(aug_phenocodes[i].length() - 3);
+        }
+    }
+
+    // ======= Writing Header =======
+    // Writing first line of old matrix
+    writer.write(old_matrix_reader.line); // writing header
+
+    const size_t old_matrix_n_fields = n_fields(old_matrix_reader.line);
+    const size_t n_per_variant_fields = n_fields(sites_reader.line);
+
+    old_matrix_reader.next(); // skipping header
+    for (size_t i=0; i < N_phenos; i++) {
+        std::string per_assoc_fields = aug_readers[i].line.substr(sites_reader.line.size(), std::string::npos);
+        std::istringstream line_stream(per_assoc_fields);
+        std::string field;
+        std::getline(line_stream, field, '\t'); // consume first tab.
+        while(std::getline(line_stream, field, '\t')) {
+            writer.write("\t");
+            writer.write(field);
+            writer.write("@");
+            writer.write(aug_phenocodes[i]);
+            aug_n_per_assoc_fields[i]++;
+        }
+        aug_readers[i].next(); // skipping header
+    }
+    writer.write("\n");
+    
+    // ======= Writing sites =======
+    sites_reader.next(); // skipper header
+
+    while(1) {
+
+            size_t pos_after_cpra = pos_after_n_of_char(sites_reader.line, 4, '\t');
+
+            // If old matrix has this variant, add it
+            if (!old_matrix_reader.eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, old_matrix_reader.line, 0, pos_after_cpra)) { // CPRAs match.
+                writer.write(old_matrix_reader.line);
+                old_matrix_reader.next();
+            } else{
+                writer.write(sites_reader.line);
+
+                // write blanks for old matrix
+                for (size_t j=0; j<(old_matrix_n_fields - n_per_variant_fields); j++) writer.write("\t");
+            }
+
+            for (size_t i=0; i<N_phenos; i++) {
+                if (!aug_readers[i].eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, aug_readers[i].line, 0, pos_after_cpra)) { // CPRAs match.
+                    if (0 != aug_readers[i].line.compare(0, sites_reader.line.size(), sites_reader.line)) {
+                        std::ostringstream errstream;
+                        errstream << "[There's a variant in a pheno file that has different information from that same variant in sites.tsv.]";
+                        errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
+                        errstream << "[bad pheno line = " << aug_readers[i].line << "]";
+                        errstream << "[bad sites.tsv line = " << sites_reader.line << "]";
+                        throw std::runtime_error(errstream.str().c_str());
+                    }
+                    if (n_fields(aug_readers[i].line) != n_per_variant_fields + aug_n_per_assoc_fields[i]) { // correct number of fields on line.
+                        std::ostringstream errstream;
+                        errstream << "[a pheno has a line with a different number of tab-delimited fields than its header]";
+                        errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
+                        errstream << "[bad pheno line = " << aug_readers[i].line << "]";
+                        errstream << "[num fields on line = " << n_fields(aug_readers[i].line) << "]";
+                        errstream << "[num fields in header = " << n_per_variant_fields + aug_n_per_assoc_fields[i] << "]";
+                        throw std::runtime_error(errstream.str().c_str());
+                    }
+                    writer.write(aug_readers[i].line.c_str() + sites_reader.line.size(), aug_readers[i].line.size() - sites_reader.line.size()); //write per-assoc fields
+                    aug_readers[i].next();
+
+                } else { // CPRAs don't match
+                    // write blanks for this pheno
+                    for (size_t j=0; j<aug_n_per_assoc_fields[i]; j++) writer.write("\t");
+                }
+            }
+            writer.write("\n");
+
+            if (sites_reader.eof()) break;
+            sites_reader.next();
+        }
+
+    writer.close();
+
+    return 0;
+}
 
 // ------
 // entry points
@@ -524,10 +639,33 @@ const char* make_matrix_and_return_string(const char *sites_filepath, const char
   }
 }
 
+const char* append_to_matrix_and_return_string(const char *sites_filepath,
+                                            const char **pheno_files,
+                                            const size_t n_phenos,
+                                            const char *old_matrix_filepath,
+                                            const char *new_matrix_filepath) {
+  try {
+    append_to_matrix(sites_filepath, pheno_files, n_phenos, old_matrix_filepath, new_matrix_filepath);
+    return "ok";
+  } catch (const std::exception &exc) {
+    return exc.what();
+  } catch (...) {
+    return "[something broke]";
+  }
+}
+
 extern "C" { // we need C because C++ mangles names supposedly
   extern const char* cffi_make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, const char *matrix_filepath) {
     return make_matrix_and_return_string(sites_filepath, augmented_pheno_glob, matrix_filepath);
   }
+
+  extern const char* cffi_append_to_matrix(const char *sites_filepath,
+                                            const char **pheno_files,
+                                            const size_t n_phenos,
+                                            const char *old_matrix_filepath,
+                                            const char *new_matrix_filepath){
+    return append_to_matrix_and_return_string(sites_filepath, pheno_files, n_phenos, old_matrix_filepath, new_matrix_filepath);
+    }
 }
 
 // for use when compiling directly (for debugging)

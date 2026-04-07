@@ -17,7 +17,7 @@ from ..utils import (
     get_phenocode_with_suffixes,
 )
 from .. import conf
-from ..file_utils import VariantFileReader, write_json, get_pheno_filepath
+from ..file_utils import VariantFileReader, write_json, get_pheno_filepath, backup_file
 from .load_utils import (
     MaxPriorityQueue,
     parallelize_per_pheno,
@@ -109,6 +109,9 @@ def make_manhattan_json_file_explicit(in_filepath: str, out_filepath: str) -> No
         for variant in variants:
             binner.process_variant(variant)
     data = binner.get_result()
+
+    backup_file(out_filepath, "manhattan", "move")
+
     write_json(filepath=out_filepath, data=data)
 
 

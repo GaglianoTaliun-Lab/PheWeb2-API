@@ -21,7 +21,7 @@ from ..utils import (
     get_phenocode_with_suffixes,
 )
 from .. import conf
-from ..file_utils import VariantFileReader, write_json, get_pheno_filepath
+from ..file_utils import VariantFileReader, write_json, get_pheno_filepath, backup_file
 from .load_utils import get_maf, parallelize_per_pheno, get_phenos_subset
 
 from typing import Dict, Any, List, Iterator, Set, Tuple
@@ -119,6 +119,9 @@ def make_json_file_explicit(
     else:
         rv["overall"] = make_qq_unstratified(variants, include_qq=True)
         rv["ci"] = list(get_confidence_intervals(len(variants)))
+
+    backup_file(out_filepath, "qq", "move")
+
     write_json(filepath=out_filepath, data=rv)
 
 

@@ -2,7 +2,9 @@
 This script creates generated-by-pheweb/best-of-pheno/<pheno> which contains the strongest 100k associations for the phenotype.
 """
 
-from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath
+import os
+
+from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file
 from ..utils import (
     get_phenolist,
     get_phenocode_with_stratifications,
@@ -14,6 +16,7 @@ from .load_utils import (
     MaxPriorityQueue,
     parallelize_per_pheno,
     get_phenos_subset,
+    mtime
 )
 
 import argparse
@@ -21,7 +24,6 @@ from typing import List, Dict, Any
 
 
 NUM_VARIANTS = 100_000
-
 
 def run(argv: List[str]) -> None:
     parser = argparse.ArgumentParser(description="Make a file .")
@@ -91,5 +93,8 @@ def make_bestof_file_explicit(in_filepath: str, out_filepath: str) -> None:
             q.add_and_keep_size(v, v["pval"], NUM_VARIANTS)
     assocs = list(q.pop_all())
     assocs.sort(key=lambda v: (chrom_order[v["chrom"]], v["pos"]))
+
+    backup_file(out_filepath, "best_of_pheno", "move")
+
     with VariantFileWriter(out_filepath) as vfw:
         vfw.write_all(assocs)

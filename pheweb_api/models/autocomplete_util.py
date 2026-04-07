@@ -8,8 +8,11 @@ import tqdm
 from .models import create_phenotypes_list, create_genes
 from flask import g
 from ..conf import is_debug_mode, get_pheweb_data_dir
+from ..file_utils import backup_file
 
+from ..load.load_utils import mtime
 
+    
 class GenesServiceNotAvailable(Exception):
     pass
 
@@ -81,36 +84,61 @@ class AutocompleteLoading:
     
     def create_table(self):
         if os.path.exists(self.db_path):
+
             if is_debug_mode(): print(f"DEBUG: Found existing database at {self.db_path}")
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
             
-            if not self.table_exists(cur, "variants"):
+            # Checking if there are any changes that are required
+            modify_variants_table = False
+            if not self.table_exists(cur, "variants") or \
+                mtime(os.path.join(self.file_path, "sites.tsv")) > mtime(self.db_path):
+
+                modify_variants_table = True
+            
+            gene_db_filepath = os.path.join(
+                get_pheweb_data_dir(), "best-phenos-by-gene.sqlite3"
+            )
+
+            modify_genes_table = False
+            if not self.table_exists(cur, "genes") or \
+                mtime(gene_db_filepath) > mtime(self.db_path):
+                modify_genes_table = True
+
+            phenotypes_filepath = os.path.join(get_pheweb_data_dir(), "phenotypes.json")
+
+            modify_phenotypes_table = False
+            if not self.table_exists(cur, "phenotypes") or \
+                mtime(phenotypes_filepath) > mtime(self.db_path):
+                modify_phenotypes_table = True
+
+            modify_phenotypes_fts_table = False
+            if (self.table_exists(cur, "phenotypes") and not self.table_exists(cur, "phenotypes_fts")) or \
+                (self.table_exists(cur, "phenotypes") and mtime(phenotypes_filepath) > mtime(self.db_path)):
+                modify_phenotypes_fts_table = True
+
+            # If any changes to apply, make a backup
+            if modify_variants_table or modify_genes_table \
+                or modify_phenotypes_table or modify_phenotypes_fts_table:
+                backup_file(self.db_path, "sites", "copy")
+
+            # Applying changes
+            if modify_variants_table:
                 if is_debug_mode(): print(f"DEBUG: Creating variants table")
                 self.create_autocomplete_db_variants_table()
 
-            if not self.table_exists(cur, "genes"):
+            if modify_genes_table:
                 if is_debug_mode(): print(f"DEBUG: Creating genes table")
                 self.create_autocomplete_db_genes_table()
-
-            if not self.table_exists(cur, "phenotypes"):
+        
+            if modify_phenotypes_table:
                 if is_debug_mode(): print(f"DEBUG: Creating phenotypes table")
                 self.create_autocomplete_db_phenotypes_table()
 
-            if self.table_exists(cur, "phenotypes") and not self.table_exists(cur, "phenotypes_fts"):
+            if modify_phenotypes_fts_table:
                 if is_debug_mode(): print(f"DEBUG: Creating phenotypes_fts virtual table")
-                cur.execute("""
-                    CREATE VIRTUAL TABLE phenotypes_fts USING fts5(
-                        phenocode,
-                        phenostring,
-                        content=phenotypes,
-                        content_rowid=rowid
-                    )
-                """)
-                cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
-                conn.commit()
-                if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
-           
+                self.create_autocomplete_db_phenotypes_fts_table()
+
             conn.close()
             if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
             return
@@ -119,19 +147,7 @@ class AutocompleteLoading:
             self.create_autocomplete_db_variants_table()
             self.create_autocomplete_db_genes_table()
             self.create_autocomplete_db_phenotypes_table()
-            conn = sqlite3.connect(self.db_path)
-            cur = conn.cursor()
-            if is_debug_mode(): print("DEBUG: Creating phenotypes_fts virtual table...")
-            cur.execute("""
-                CREATE VIRTUAL TABLE IF NOT EXISTS phenotypes_fts USING fts5(
-                    phenocode,
-                    phenostring,
-                    content='phenotypes',
-                    content_rowid='rowid'
-                )
-            """)
-            cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
-            conn.commit()
+            self.create_autocomplete_db_phenotypes_fts_table()
             conn.close()
             if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
         
@@ -193,11 +209,15 @@ class AutocompleteLoading:
                     conn.commit()
 
             if is_debug_mode(): print("DEBUG: Creating indexes for rsid and variant_id...")
-            cur.execute("CREATE INDEX idx_variant_id ON variants(variant_id)")
-            cur.execute("CREATE INDEX idx_rsid ON variants(rsid)")
-            cur.execute("CREATE INDEX idx_chrom ON variants(chrom)")
-            cur.execute("CREATE INDEX idx_pos ON variants(pos)")
-            # cur.execute("CREATE INDEX idx_pos_str ON variants(pos_str)")
+
+            indexes = ["variant_id", "rsid", "chrom", "pos"]
+
+            for index in indexes:
+                try:
+                    cur.execute(f"CREATE INDEX idx_{index} ON variants({index})")
+                except sqlite3.OperationalError:
+                    if is_debug_mode(): print(f"{index} index already exists.")
+
             conn.commit()
 
             if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
@@ -295,7 +315,23 @@ class AutocompleteLoading:
         finally:
             conn.close()
 
+        def create_autocomplete_db_phenotypes_fts_table(self):
 
+            conn = sqlite3.connect(self.db_path)
+            cur = conn.cursor()
+
+            cur.execute("""
+                CREATE VIRTUAL TABLE phenotypes_fts USING fts5(
+                    phenocode,
+                    phenostring,
+                    content=phenotypes,
+                    content_rowid=rowid
+                )
+            """)
+            cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
+            conn.commit()
+            if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
+            
 
 
     # @lru_cache(maxsize=1000)

@@ -13,6 +13,7 @@ from ..file_utils import (
     with_chrom_idx,
     get_tmp_path,
     convert_VariantFile_to_IndexedVariantFile,
+    backup_file
 )
 from .load_utils import parallelize_per_pheno, get_phenos_subset, get_phenolist
 
@@ -84,15 +85,19 @@ def convert(pheno: Dict[str, Any], ignore=None) -> None:
     parsed_filepath = get_pheno_filepath("parsed", pheno["phenocode"])
 
     out_filepath = get_pheno_filepath("pheno_gz", pheno["phenocode"], must_exist=False)
+    out_subdir = "pheno_gz"
 
     if pheno["interaction"] is not None:
         out_filepath = get_pheno_filepath(
             "interaction", pheno["phenocode"], must_exist=False
         )
+        out_subdir = "interaction"
 
     sites_filepath = get_filepath("sites")
 
     out_unzipped_filepath = get_tmp_path(out_filepath)
+
+    backup_file(out_filepath, out_subdir, "move")
 
     with VariantFileReader(sites_filepath) as sites_reader, VariantFileReader(
         parsed_filepath

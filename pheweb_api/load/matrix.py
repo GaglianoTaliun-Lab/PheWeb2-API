@@ -6,13 +6,15 @@
 #  When all the child processes are done, the main thread needs to concatenate all the single-chrom matrix files and then append an empty bgzip block to signal EOF.
 
 
+from genericpath import exists
+
 from ..utils import (
     get_phenolist_no_interaction,
     PheWebError,
     get_stratification_paths,
-    get_phenocode_with_suffixes,
+    get_phenocode_with_suffixes
 )
-from ..file_utils import MatrixReader, get_tmp_path, get_filepath, get_pheno_filepath
+from ..file_utils import MatrixReader, get_tmp_path, get_filepath, get_pheno_filepath, backup_file, get_matrix_subdir
 from .load_utils import mtime, get_phenos_subset
 from .cffi._x import ffi, lib
 from .. import conf
@@ -23,23 +25,6 @@ import pysam
 import argparse
 from typing import List
 from ordered_set import OrderedSet
-
-
-def clear_out_junk() -> None:
-    # Remove files that shouldn't be there (and will confuse the glob in matrixify)
-    cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
-
-    if conf.has_stratifications():
-        cur_phenocodes = OrderedSet(
-            get_phenocode_with_suffixes(pheno)
-            for pheno in get_phenolist_no_interaction()
-        )
-
-    for filepath in glob.glob(get_filepath("pheno_gz") + "/*.gz"):
-        name = os.path.basename(filepath)
-        if name[:-3] not in cur_phenocodes:
-            print("Removing {} to help matrix glob".format(filepath))
-            os.remove(filepath)
 
 
 def should_run(matrix_gz_filepath) -> bool:
@@ -115,7 +100,6 @@ def run(argv: List[str]) -> None:
         matrix_gz_filepath = get_filepath("matrix", must_exist=False)
         run_matrix_functions(matrix_gz_filepath)
 
-
 def create_matrix(
     sites_filepath, pheno_gz_glob, matrix_gz_tmp_filepath, matrix_gz_filepath
 ):
@@ -131,6 +115,40 @@ def create_matrix(
             "The portion of `pheweb matrix` written in c++/cffi failed with the message "
             + repr(ret_bytes)
         )
+    
+    os.rename(matrix_gz_tmp_filepath, matrix_gz_filepath)
+
+
+def append_to_matrix(
+        sites_filepath, phenos_to_process, matrix_gz_tmp_filepath, matrix_gz_filepath
+):
+
+    pheno_files = [
+        get_pheno_filepath("pheno_gz", phenocode).encode("utf8")
+        for phenocode in phenos_to_process
+    ]
+
+    pheno_files_c = [ffi.new("char[]", path) for path in pheno_files]
+
+    c_files = ffi.new("char*[]", pheno_files_c)
+
+    ret = lib.cffi_append_to_matrix(
+        sites_filepath.encode("utf8"),
+        c_files,
+        len(pheno_files),
+        matrix_gz_filepath.encode("utf8"),
+        matrix_gz_tmp_filepath.encode("utf8"),
+    )
+
+    ret_bytes = ffi.string(ret, maxlen=1000)
+    if ret_bytes != b"ok":
+        raise PheWebError(
+            "The portion of `pheweb matrix` written in c++/cffi failed with the message "
+            + repr(ret_bytes)
+        )
+
+    backup_file(matrix_gz_filepath, get_matrix_subdir(), "move")
+
     os.rename(matrix_gz_tmp_filepath, matrix_gz_filepath)
 
 
@@ -139,6 +157,8 @@ def create_matrix_tbi(matrix_gz_filepath):
     if not os.path.exists(matrix_tbi_filepath) or mtime(matrix_tbi_filepath) < mtime(
         matrix_gz_filepath
     ):
+        if os.path.exists(matrix_tbi_filepath):
+            backup_file(matrix_tbi_filepath, get_matrix_subdir(), "move")
         print("tabixing matrix")
         pysam.tabix_index(
             filename=matrix_gz_filepath,
@@ -155,18 +175,46 @@ def run_matrix_functions(
     matrix_gz_filepath: str,
     stratification: str = None,
 ) -> None:
-    if should_run(matrix_gz_filepath):
-        clear_out_junk()
+    
+    sites_filepath = get_filepath("sites")
+    matrix_gz_tmp_filepath = get_tmp_path(matrix_gz_filepath)
 
-        sites_filepath = get_filepath("sites")
+    # Appending to matrix if matrix already exists
+    if os.path.exists(matrix_gz_filepath):
+
+        phenos_already_in_matrix = list(set(MatrixReader(matrix_gz_filepath).get_phenocodes()))
+
+        phenolist_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
+
+        if conf.has_stratifications():
+            phenolist_phenocodes = OrderedSet(
+                get_phenocode_with_suffixes(pheno)
+                for pheno in get_phenolist_no_interaction()
+            )
+
+        # Keep pheno from current stratification not in matrix
+        phenos_to_process = [
+            p for p in phenolist_phenocodes
+            if p not in phenos_already_in_matrix and
+            stratification in p
+        ]
+
+        if phenos_to_process:
+            print(f"appending {len(phenos_to_process)} news phenotypes to {matrix_gz_filepath}.")
+
+            append_to_matrix(
+                sites_filepath, phenos_to_process, matrix_gz_tmp_filepath, matrix_gz_filepath
+            )
+            
+        else:
+            print("matrix is up-to-date!")
+    # Writing matrix file from scratch
+    else:
+        print(f"Creating {matrix_gz_filepath}.")
+
         pheno_gz_glob = get_filepath("pheno_gz") + "/*" + stratification + "*.gz"
-        matrix_gz_tmp_filepath = get_tmp_path(matrix_gz_filepath)
-
         create_matrix(
             sites_filepath, pheno_gz_glob, matrix_gz_tmp_filepath, matrix_gz_filepath
         )
-
-    else:
-        print("matrix is up-to-date!")
 
     create_matrix_tbi(matrix_gz_filepath)

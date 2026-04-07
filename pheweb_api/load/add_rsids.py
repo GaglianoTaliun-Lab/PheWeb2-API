@@ -22,6 +22,7 @@ from ..file_utils import (
     VariantFileWriter,
     get_filepath,
     read_maybe_gzip,
+    backup_file
 )
 from .. import conf
 from .load_utils import mtime
@@ -162,6 +163,8 @@ def run(argv: List[str]) -> None:
     ) <= mtime(out_filepath):
         print("rsid annotation is up-to-date!")
         return
+
+    backup_file(out_filepath, data_subdir="sites", method="copy")
 
     with VariantFileReader(in_filepath) as in_reader, read_maybe_gzip(
         rsids_filepath

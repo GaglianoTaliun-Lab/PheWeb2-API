@@ -9,7 +9,7 @@ PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 
 # By default, the data ingested into PheWeb 2 is stored in the `{PHEWEB_BASE_DIR}/generated-by-pheweb`  directory.
 # If you would like to change this, please provide the full path to your preferred alternative directory.
-PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
+PHEWEB_DATA_DIR = os.path.join("/home/jordboul/scratch/PheWeb/Dev_data")
 #PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
 
 
@@ -40,7 +40,7 @@ ASSOC_TEST_NAME = ["ADD", "ADD-CONDTL"]
 ASSOC_MIN_MAF = 0.0
 
 # Please specify the value in the "test" column of your GWAS files that indicates rows with the interaction effect between the genotype and the interacting variable (e.g., sex). This value will depend on the specific name of the interacting variable in your dataset.
-INTERACTION_TEST_NAME = "ADD-INT_SNPxBSEX=2"
+INTERACTION_TEST_NAME = "ADD-INT_SNPxsex"
 
 # Please specify the threshold for minor allele count (MAC) for variants tested for interaction effects. Interaction test results for variants with a MAC below this threshold will be excluded during data ingestion. This threshold is study-dependent and is typically set to correspond to a much higher MAF than that in ASSOC_MIN_MAF.
 INTERACTION_MIN_MAC = 160
