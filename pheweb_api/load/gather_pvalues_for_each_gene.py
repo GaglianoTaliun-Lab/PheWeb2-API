@@ -91,8 +91,7 @@ def run(argv: List[str]) -> None:
             ((k, json.dumps(v)) for k, v in data.items()),
         )
 
-    if os.path.exists(out_filepath):
-        backup_file(out_filepath, "", "move")
+    backup_file(out_filepath, "", "move")
 
     out_tmp_filepath.replace(out_filepath)
     print("Done making best-pheno-for-each-gene at {}".format(str(out_filepath)))

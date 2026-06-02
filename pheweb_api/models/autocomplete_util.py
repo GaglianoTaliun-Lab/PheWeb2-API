@@ -246,6 +246,8 @@ class AutocompleteLoading:
         cur = conn.cursor()
 
         try:
+            cur.execute("""DROP TABLE IF EXISTS genes""")
+
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS genes (
                     gene_id TEXT PRIMARY KEY,

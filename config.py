@@ -9,7 +9,9 @@ PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 
 # By default, the data ingested into PheWeb 2 is stored in the `{PHEWEB_BASE_DIR}/generated-by-pheweb`  directory.
 # If you would like to change this, please provide the full path to your preferred alternative directory.
-PHEWEB_DATA_DIR = os.path.join("/home/jordboul/scratch/PheWeb/Dev_data")
+#PHEWEB_DATA_DIR = os.path.join("/home/jordboul/scratch/PheWeb/Dev_data")
+PHEWEB_DATA_DIR = "/home/jordboul/CLSA_PheWeb_shared/PheWeb_v2_final_data/generated-by-pheweb-binary"
+
 #PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
 
 
@@ -86,7 +88,7 @@ ENABLE_DEBUG = False
 HOST = '127.0.0.1'
 
 # Set the port number for the API endpoint.
-PORT = 9090
+PORT = 9091
 
 # Set the API URL prefix if applicable, e.g., when you are running the API behind a reverse proxy (e.g., using Apache).
 API_URL_PREFIX = ""

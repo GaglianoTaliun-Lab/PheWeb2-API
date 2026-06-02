@@ -57,10 +57,6 @@ def run(argv):
     manna = MergeManager()
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
-    # if os.path.exists(out_filepath) and not force:
-    #     if mtime(out_filepath) >= max(mtime(f["filepath"]) for f in manna.files):
-    #         print("The list of sites is up-to-date!")
-    #         return
 
     # Only files that are newer than sites
     if os.path.exists(out_filepath):
@@ -83,10 +79,6 @@ def run(argv):
     if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
         MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
         MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
-    
-    print("test")
-    for file in manna.files:
-        print(file["filepath"])
 
     taskq = multiprocessing.Queue()
     retq = multiprocessing.Queue()
