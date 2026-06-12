@@ -93,7 +93,6 @@ class AutocompleteLoading:
             modify_variants_table = False
             if not self.table_exists(cur, "variants") or \
                 mtime(os.path.join(self.file_path, "sites.tsv")) > mtime(self.db_path):
-
                 modify_variants_table = True
             
             gene_db_filepath = os.path.join(
@@ -139,9 +138,13 @@ class AutocompleteLoading:
                 if is_debug_mode(): print(f"DEBUG: Creating phenotypes_fts virtual table")
                 self.create_autocomplete_db_phenotypes_fts_table()
 
+            print("teeest")
+
             conn.close()
-            if is_debug_mode(): print(f"DEBUG: Database creation complete. Entries loaded.")
-            return
+
+            print("heeere")
+
+            if is_debug_mode(): print("DEBUG: Database creation complete. Entries loaded.")
         else:
             if is_debug_mode(): print(f"DEBUG: Creating new database at {self.db_path}")
             self.create_autocomplete_db_variants_table()
@@ -149,7 +152,7 @@ class AutocompleteLoading:
             self.create_autocomplete_db_phenotypes_table()
             self.create_autocomplete_db_phenotypes_fts_table()
             conn.close()
-            if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
+            if is_debug_mode(): print("DEBUG: Database creation complete. Entries loaded.")
         
     
     def create_autocomplete_db_variants_table(self):
@@ -288,8 +291,11 @@ class AutocompleteLoading:
         cur = conn.cursor()
 
         try:
+
+            cur.execute("DROP TABLE IF EXISTS phenotypes")
+
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS phenotypes (
+                CREATE TABLE phenotypes (
                     phenocode TEXT PRIMARY KEY,
                     phenostring TEXT
                 )
@@ -317,22 +323,22 @@ class AutocompleteLoading:
         finally:
             conn.close()
 
-        def create_autocomplete_db_phenotypes_fts_table(self):
+    def create_autocomplete_db_phenotypes_fts_table(self):
 
-            conn = sqlite3.connect(self.db_path)
-            cur = conn.cursor()
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
 
-            cur.execute("""
-                CREATE VIRTUAL TABLE phenotypes_fts USING fts5(
-                    phenocode,
-                    phenostring,
-                    content=phenotypes,
-                    content_rowid=rowid
-                )
-            """)
-            cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
-            conn.commit()
-            if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
+        cur.execute("""
+            CREATE VIRTUAL TABLE phenotypes_fts USING fts5(
+                phenocode,
+                phenostring,
+                content=phenotypes,
+                content_rowid=rowid
+            )
+        """)
+        cur.execute("INSERT INTO phenotypes_fts(phenotypes_fts) VALUES ('rebuild')")
+        conn.commit()
+        if is_debug_mode(): print("DEBUG: phenotypes_fts virtual table created and rebuilt.")
             
 
 

@@ -140,7 +140,7 @@ def check_that_phenocode_is_unique(phenolist):
         phenocodes_stratifications = [
             [pheno["phenocode"], pheno["stratification"]]
             for pheno in phenolist
-            if pheno["interaction"] is None
+            if "interaction" not in pheno.keys() or pheno["interaction"] is None
         ]
         seen = []
         duplicates = []
@@ -424,16 +424,6 @@ def listify_assoc_files(phenolist):
                 )
             pheno["assoc_files"] = [pheno["assoc_files"]]
     return phenolist
-
-
-# if present, change interaction variable name to the one specified
-# HX: need to delete
-# def convert_interaction(pheno: dict) -> dict:
-#     pheno["interaction"] = get_interaction_aliases().get(
-#         pheno["interaction"], pheno["interaction"]
-#     )
-#     return pheno
-
 
 # convert "null" string in interaction to actual null
 def split_phenos_on_interaction(phenolist):
