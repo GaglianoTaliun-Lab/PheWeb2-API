@@ -118,12 +118,8 @@ class PhewasMatrixReader:
                         # Split the phenocode into base + stratification values
                         phenocode_parts = phenocode.split(".")
                         # pheno_basic_info = self.phenotype_data_with_index.get((phenocode_parts[0],phenocode_parts[1],phenocode_parts[2]), [])[0]
-                        key = (
-                            phenocode_parts[0],
-                            phenocode_parts[1],
-                            phenocode_parts[2],
-                        )
-                        
+                        key = tuple(phenocode_parts)
+
                         pheno_list = self.phenotype_data_with_index.get(key, [])
                         #print(pheno_list)
                         if pheno_list:
@@ -132,15 +128,15 @@ class PhewasMatrixReader:
                             pheno_basic_info = None
                             
                         #print(pheno_basic_info)
-                        pheno_data = { #TODO : make this flexible for other stratification options?
+                        pheno_data = {
                             "phenocode": phenocode_parts[0],
                             "stratification": {
-                                "ancestry": phenocode_parts[1]
-                                if len(phenocode_parts) > 1
-                                else None,
-                                "sex": phenocode_parts[2]
-                                if len(phenocode_parts) > 2
-                                else None,
+                                name: value
+                                for name, value
+                                in zip(
+                                    self.phenotype_strat_keys,
+                                    phenocode_parts[1:],
+                                )
                             },
                             "category": pheno_basic_info["category"]
                             if pheno_basic_info is not None
@@ -151,10 +147,10 @@ class PhewasMatrixReader:
                             "num_samples": pheno_basic_info["num_samples"]
                             if pheno_basic_info is not None
                             else None,
-                            "num_controls": pheno_basic_info["num_controls"]
+                            "num_controls": pheno_basic_info.get("num_controls")
                             if pheno_basic_info is not None
                             else None,
-                            "num_cases": pheno_basic_info["num_cases"]
+                            "num_cases": pheno_basic_info.get("num_cases")
                             if pheno_basic_info is not None
                             else None,
                         }
