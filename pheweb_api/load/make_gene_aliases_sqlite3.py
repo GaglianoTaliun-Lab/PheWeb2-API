@@ -16,7 +16,7 @@ def get_genenamesorg_ensg_aliases_map(
 ) -> Dict[str, List[str]]:
     ensgs_to_consider = set(ensgs_to_consider)
     r = urllib.request.urlopen(
-        "https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/json/non_alt_loci_set.json"
+        "https://storage.googleapis.com/public-download-files/hgnc/json/json/non_alt_loci_set.json"
     )
     data = r.read().decode("utf-8")
     ensg_to_aliases = {}
