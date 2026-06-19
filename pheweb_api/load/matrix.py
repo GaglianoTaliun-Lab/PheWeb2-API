@@ -27,7 +27,8 @@ from ordered_set import OrderedSet
 
 def clear_out_junk() -> None:
     # Remove files that shouldn't be there (and will confuse the glob in matrixify)
-    cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
+    cur_phenocodes = set(pheno["phenocode"]
+                         for pheno in get_phenolist_no_interaction())
 
     if conf.has_stratifications():
         cur_phenocodes = OrderedSet(
@@ -49,7 +50,8 @@ def should_run(matrix_gz_filepath) -> bool:
         return True
 
     # If the matrix's columns don't match the phenos in pheno-list, rebuild.
-    cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
+    cur_phenocodes = set(pheno["phenocode"]
+                         for pheno in get_phenolist_no_interaction())
 
     if conf.has_stratifications():
         cur_phenocodes = OrderedSet(
@@ -105,13 +107,20 @@ def run(argv: List[str]) -> None:
         if args.phenos
         else get_phenolist_no_interaction()
     )
-    if conf.has_stratifications():
-        for stratification_path in set(get_stratification_paths(phenos)):
+
+    # One stratification can be "", if some phenos as no stratifications
+    stratification_paths = set(get_stratification_paths(phenos))
+
+    # Matrix stratified
+    for stratification_path in stratification_paths:
+        if stratification_path:
             matrix_gz_stratified_filepath = get_pheno_filepath(
                 "matrix-stratified", stratification_path, must_exist=False
             )
-            run_matrix_functions(matrix_gz_stratified_filepath, stratification_path)
-    else:
+            run_matrix_functions(
+                matrix_gz_stratified_filepath, stratification_path)
+    # Matrix non-stratified
+    if any([strat_path == "" for strat_path in stratification_paths]):
         matrix_gz_filepath = get_filepath("matrix", must_exist=False)
         run_matrix_functions(matrix_gz_filepath)
 
@@ -159,7 +168,8 @@ def run_matrix_functions(
         clear_out_junk()
 
         sites_filepath = get_filepath("sites")
-        pheno_gz_glob = get_filepath("pheno_gz") + "/*" + stratification + "*.gz"
+        pheno_gz_glob = get_filepath(
+            "pheno_gz") + "/*" + stratification + "*.gz"
         matrix_gz_tmp_filepath = get_tmp_path(matrix_gz_filepath)
 
         create_matrix(
