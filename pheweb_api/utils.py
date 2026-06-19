@@ -202,10 +202,14 @@ def get_phenocode_with_stratifications(pheno: dict) -> str:
 
 def get_phenocode_with_suffixes(pheno: dict) -> str:
     phenocode = pheno["phenocode"]
+
     if pheno["interaction"] is not None:
         phenocode += ".interaction-" + pheno["interaction"]
-    for stratification in pheno["stratification"]:
-        phenocode += "." + pheno["stratification"][stratification]
+
+    if pheno["stratification"] is not None:
+        for stratification in pheno["stratification"]:
+            phenocode += "." + pheno["stratification"][stratification]
+            
     return phenocode
 
 

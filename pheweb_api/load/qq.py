@@ -54,8 +54,9 @@ def run(argv: List[str]) -> None:
         if pheno["interaction"] is not None:
             pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
             interaction_phenos.append(pheno)
-        elif conf.has_stratifications():
-            pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+        else:
+            if conf.has_stratifications():
+                pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             non_interaction_phenos.append(pheno)
 
     parallelize_per_pheno(

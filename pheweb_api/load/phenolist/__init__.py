@@ -37,7 +37,8 @@ def get_phenolist_with_globs(globs, star_is_phenocode):
                 progressbar.update()
             if num_files_in_this_glob == 0:
                 progressbar.write(
-                    "\rWARNING: the shell-glob {!r} didn't match any files\n".format(g)
+                    "\rWARNING: the shell-glob {!r} didn't match any files\n".format(
+                        g)
                 )
     print("NOTE: found {} association files".format(len(phenolist)))
     return phenolist
@@ -59,9 +60,11 @@ def _extract_star(glob_pattern, filepath):
     )
 
 
-assert _extract_star("/foo/pheno-*.epacts.gz", "/foo/pheno-bar.epacts.gz") == "bar"
+assert _extract_star("/foo/pheno-*.epacts.gz",
+                     "/foo/pheno-bar.epacts.gz") == "bar"
 assert (
-    _extract_star("/foo/*/pheno-*.epacts.gz", "/foo/bar/pheno-bar.epacts.gz") == "bar"
+    _extract_star("/foo/*/pheno-*.epacts.gz",
+                  "/foo/bar/pheno-bar.epacts.gz") == "bar"
 )
 
 
@@ -194,7 +197,8 @@ def check_that_all_phenos_have_same_columns(phenolist):
 def check_that_all_phenotypes_have_assoc_files(phenolist):
     for pheno in phenolist:
         if "assoc_files" not in pheno:
-            raise PheWebError("Some phenotypes don't have any association files")
+            raise PheWebError(
+                "Some phenotypes don't have any association files")
         if not isinstance(pheno["assoc_files"], list):
             raise PheWebError(
                 "Assoc_files is not a list for some phenotypes.  I don't know how that happened but it's bad."
@@ -209,7 +213,8 @@ def check_that_num_samples_controls_cases_agree(phenolist):
     for pheno in phenolist:
         if all(key in pheno for key in ["num_samples", "num_cases", "num_controls"]):
             if pheno["num_cases"] != "" and pheno["num_controls"] != "":
-                total_samples = int(pheno["num_cases"]) + int(pheno["num_controls"])
+                total_samples = int(pheno["num_cases"]) + \
+                    int(pheno["num_controls"])
                 if int(pheno["num_samples"]) != total_samples:
                     raise PheWebError(
                         "The pheno {} has num_samples={} but num_cases+num_controls={}: {}".format(
@@ -241,7 +246,8 @@ def filter_phenolist(phenolist, filter_func, name_for_debugging=""):
         )
     )
     if failing_phenos:
-        print("Here's the first phenotype that failed:", json.dumps(failing_phenos[0]))
+        print("Here's the first phenotype that failed:",
+              json.dumps(failing_phenos[0]))
     return passing_phenos
 
 
@@ -254,12 +260,13 @@ def hide_small_numbers_of_samples(phenolist, minimum_visible_number=50):
     return phenolist
 
 
-def import_phenolist(filepath, has_header):
+def import_phenolist(filepath):
     # Return a list-of-dicts with the original column names, or integers if none.
     # It'd be great to use pandas for this.
     if not os.path.exists(filepath):
         raise PheWebError(
-            "ERROR: unable to import {!r} because it doesn't exist".format(filepath)
+            "ERROR: unable to import {!r} because it doesn't exist".format(
+                filepath)
         )
     with read_maybe_gzip(filepath) as f:
         # Try json.load(f)
@@ -274,15 +281,16 @@ def import_phenolist(filepath, has_header):
                 )
         # Try csv.reader() with csv.Sniffer().sniff()
         f.seek(0)
-        phenos = _import_phenolist_csv(f, has_header)
+        phenos = _import_phenolist_csv(f)
         if phenos is not None:
             return phenos
         raise PheWebError(
-            "I couldn't figure out how to open the file {!r}, sorry.".format(filepath)
+            "I couldn't figure out how to open the file {!r}, sorry.".format(
+                filepath)
         )
 
 
-def _import_phenolist_csv(f, has_header):
+def _import_phenolist_csv(f):
     # Note: If a csv (1) contains commas in quoted cells and (2) doesn't have any line that starts with a quoted cell,
     #       then sometimes this makes very bad choices.
     #       In particular, if all lines have the same number of some other character (even a letter), that character might become the delimeter.
@@ -304,20 +312,22 @@ def _import_phenolist_csv(f, has_header):
     except ValueError:
         return None
     num_cols = len(rows[0])
-    if has_header:
-        fieldnames, rows = rows[0], rows[1:]
-        if any(fieldname is None or fieldname == "" for fieldname in fieldnames):
-            if has_header == "augment":
-                fieldnames = [
-                    i if fieldname is None else fieldname
-                    for i, fieldname in enumerate(fieldnames)
-                ]
-            else:
-                raise PheWebError("bad csv header")
-        assert len(set(fieldnames)) == len(fieldnames)
-    else:
-        fieldnames = list(range(num_cols))
 
+    fieldnames, rows = rows[0], rows[1:]
+    if any(fieldname is None or fieldname == "" for fieldname in fieldnames):
+        raise PheWebError("bad csv header")
+
+    # Columns names are uniques
+    assert len(set(fieldnames)) == len(fieldnames)
+
+    # Ensuring manifest file have required fields
+    required_fields = ("phenocode", "phenostring",
+                       "assoc_files", "num_samples")
+
+    if any([field not in required_fields for field in fieldnames]):
+        raise PheWebError(f"Csv manifest file does not contains one of the following columns: {", ".join(required_fields)}")
+
+    # Adding stratification fields
     if has_stratifications():
         stratification_colnumbers = [
             i
@@ -350,28 +360,23 @@ def _import_phenolist_csv(f, has_header):
             json_object["stratification"] = stratification_list[index]
             json_file.append(json_object)
 
-    # if stratified:
-    #     col_stratification = fieldnames.index("stratification")
-    #     stratification_list = [value[col_stratification].split(";") for value in rows]
-    #     stratifications_list = []
-    #     for stratifications in stratification_list:
-    #         stratification_dict = {}
-    #         for stratification in stratifications:
-    #             stratification_dict[stratification.split(":")[0]] = (
-    #                 stratification.split(":")[1]
-    #             )
-    #         stratifications_list.append(stratification_dict)
-
-    #     json_file = []
-    #     for index, row in enumerate(rows):
-    #         json_object = {}
-    #         for i in range(num_cols):
-    #             if i != col_stratification:
-    #                 json_object[fieldnames[i]] = row[i]
-    #         json_object["stratification"] = stratifications_list[index]
-    #         json_file.append(json_object)
     else:
-        json_file = [{fieldnames[i]: row[i] for i in range(num_cols)} for row in rows]
+        json_file = [{fieldnames[i]: row[i]
+                      for i in range(num_cols)} for row in rows]
+
+    # Extra fields that are not required in manifest file, but required in pheno-list.
+    extra_fields = ("num_cases", "num_controls", "category", "interaction")
+
+    for field in extra_fields:
+        if field not in fieldnames:
+            for pheno in json_file:
+                pheno[field] = None
+
+    # Ensuring stratification is always there, even if it is empty.
+    if all([not field.startswith("stratification.") for field in fieldnames]):
+        for pheno in json_file:
+            pheno["stratification"] = {}
+
     return json_file
 
 
@@ -379,7 +384,7 @@ def interpret_json(phenolist):
     for pheno in phenolist:
         for k in pheno:
             if isinstance(pheno[k], str) and pheno[k].startswith("json:"):
-                s = pheno[k][len("json:") :]
+                s = pheno[k][len("json:"):]
                 try:
                     pheno[k] = json.loads(s)
                 except Exception as exc:
@@ -426,17 +431,9 @@ def listify_assoc_files(phenolist):
             pheno["assoc_files"] = [pheno["assoc_files"]]
     return phenolist
 
-
-# if present, change interaction variable name to the one specified
-# HX: need to delete
-# def convert_interaction(pheno: dict) -> dict:
-#     pheno["interaction"] = get_interaction_aliases().get(
-#         pheno["interaction"], pheno["interaction"]
-#     )
-#     return pheno
-
-
 # convert "null" string in interaction to actual null
+
+
 def split_phenos_on_interaction(phenolist):
     all_keys = list(set(itertools.chain.from_iterable(phenolist)))
 
@@ -477,7 +474,8 @@ def boolify_boolean_cols(phenolist):
     for pheno in phenolist:
         for key, value in pheno.items():
             if is_bool_string(value):
-                pheno[key] = value.strip().lower() == "true"  # Convert to boolean
+                pheno[key] = value.strip().lower(
+                ) == "true"  # Convert to boolean
 
     return phenolist
 
@@ -659,7 +657,8 @@ def unique_phenocode(phenolist, new_column_name):
         return new_phenolist
     else:
         new_phenolist = []
-        print("Putting all new info into the column {!r}".format(new_column_name))
+        print("Putting all new info into the column {!r}".format(
+            new_column_name))
         for phenocode_group in phenocode_groups:
             new_pheno = {}
             for key in phenocode_group[0]:
@@ -687,7 +686,8 @@ def load_phenolist(filepath):
         try:
             phenolist = json.load(f)
         except json.JSONDecodeError:
-            raise PheWebError("Failed to load json from {!r}.".format(filepath))
+            raise PheWebError(
+                "Failed to load json from {!r}.".format(filepath))
         return phenolist
 
 
@@ -711,11 +711,13 @@ def save_phenolist(phenolist, filepath=None):
 
 def backup_phenolist(filepath):
     backup_filepath = "{}-{}".format(
-        datetime.datetime.isoformat(datetime.datetime.now()), os.path.basename(filepath)
+        datetime.datetime.isoformat(
+            datetime.datetime.now()), os.path.basename(filepath)
     )
     backup_filepath = get_generated_path("phenolist-backups", backup_filepath)
     make_basedir(backup_filepath)
-    print("NOTE: moving the old {!r} to {!r}".format(filepath, backup_filepath))
+    print("NOTE: moving the old {!r} to {!r}".format(
+        filepath, backup_filepath))
     shutil.move(filepath, backup_filepath)
 
 
@@ -772,7 +774,8 @@ def run(argv):
     p.add_argument(
         "-f",
         dest="filepath",
-        help="output filepath (default: {!r})".format(default_phenolist_filepath),
+        help="output filepath (default: {!r})".format(
+            default_phenolist_filepath),
     )
 
     @add_subcommand("glob")
@@ -797,11 +800,13 @@ def run(argv):
     p = subparsers.add_parser(
         "glob", help="use one or more shell-glob patterns to select association files"
     )
-    p.add_argument("patterns", nargs="+", help="one or more shell-glob patterns")
+    p.add_argument("patterns", nargs="+",
+                   help="one or more shell-glob patterns")
     p.add_argument(
         "-f",
         dest="filepath",
-        help="output filepath (default: {!r})".format(default_phenolist_filepath),
+        help="output filepath (default: {!r})".format(
+            default_phenolist_filepath),
     )
     p.add_argument(
         "--simple-phenocode",
@@ -826,7 +831,8 @@ def run(argv):
                 + r"(?:\.epacts|\.gz|\.tsv)*$"
             )
         if not args.pattern:
-            raise PheWebError("You must either supply a pattern or use --simple")
+            raise PheWebError(
+                "You must either supply a pattern or use --simple")
         extract_phenocode_from_filepath(phenolist, args.pattern)
 
     p = subparsers.add_parser(
@@ -890,7 +896,8 @@ def run(argv):
         check_that_phenocode_is_unique(phenolist)
         check_that_all_phenotypes_have_assoc_files(phenolist)
         check_that_num_samples_controls_cases_agree(phenolist)
-        print("The {} phenotypes in {!r} look good.".format(len(phenolist), filepath))
+        print("The {} phenotypes in {!r} look good.".format(
+            len(phenolist), filepath))
 
     p = subparsers.add_parser(
         "verify",
@@ -917,7 +924,8 @@ def run(argv):
         if args.minimum_num_cases is not None:
             phenolist = filter_phenolist(
                 phenolist,
-                lambda p: p.get("num_cases", float("inf")) >= args.minimum_num_cases,
+                lambda p: p.get("num_cases", float(
+                    "inf")) >= args.minimum_num_cases,
                 "minimum_num_cases",
             )
         if args.minimum_num_controls is not None:
@@ -1008,7 +1016,7 @@ def run(argv):
     @add_subcommand("import-phenolist")
     def importPhenolist(args):
         filepath = args.filepath or default_phenolist_filepath
-        phenolist = import_phenolist(args.input_filepath, not args.no_header)
+        phenolist = import_phenolist(args.input_filepath)
         phenolist = interpret_json(phenolist)
         if args.delimit_lists_with_pipe:
             phenolist = split_values_on_pipes(phenolist)
@@ -1026,13 +1034,8 @@ def run(argv):
     p.add_argument(
         "-f",
         dest="filepath",
-        help="output filepath (default: {!r})".format(default_phenolist_filepath),
-    )
-    p.add_argument(
-        "--no-header",
-        dest="no_header",
-        action="store_true",
-        help="whether input_filepath has no header, in which case columns will just be numbered",
+        help="output filepath (default: {!r})".format(
+            default_phenolist_filepath),
     )
     p.add_argument(
         "--never-delimit-lists-with-pipe",
@@ -1055,7 +1058,8 @@ def run(argv):
     p.add_argument(
         "-f",
         dest="filepath",
-        help="output filepath (default: {!r})".format(default_phenolist_filepath),
+        help="output filepath (default: {!r})".format(
+            default_phenolist_filepath),
     )
     # TODO: maybe make this be `view --csv`
 

@@ -1,3 +1,4 @@
+import gzip
 import pysam
 import os
 from collections import defaultdict
@@ -34,7 +35,8 @@ class SNPFetcher:
                 current_group.append(snp)
                 current_chrom, current_start = chrom, pos
             else:
-                grouped_snps[(current_chrom, current_start)].extend(current_group)
+                grouped_snps[(current_chrom, current_start)
+                             ].extend(current_group)
                 current_group = [snp]
                 current_chrom, current_start = chrom, pos
 
@@ -57,10 +59,13 @@ class SNPFetcher:
         file_path = os.path.join(self.file_base_path, f"{key}.gz")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
-        # print("found file")
+
+        with gzip.open(file_path, "rt") as f:
+            header = tuple(f.readline().rstrip().split("\t"))
+
         tabix_file = pysam.TabixFile(file_path)
         grouped_snps = self.group_snps_by_region(snp_list)
-        # print(grouped_snps)
+
         results = []
 
         for (chrom, start), snps in grouped_snps.items():
@@ -68,57 +73,36 @@ class SNPFetcher:
             region_end = int(start) + 100 * self.window_size
             try:
                 for record in tabix_file.fetch(chrom, region_start, region_end):
-                    # TODO: it seems like tabix index doesn't match the position
-                    record_data = record.strip().split("\t")
-                    # print(record_data)
-                    pos = record_data[1]
-                    # print(pos)
+
+                    record_data = dict(zip(header, record.strip().split("\t")))
+
+                    pos = record_data["pos"]
+
                     for snp in snps:
                         parts = snp.split("-")
                         if (
                             int(parts[1]) == int(pos)
-                            and record_data[2] == parts[2]
-                            and record_data[3] == parts[3]
+                            and record_data["ref"] == parts[2]
+                            and record_data["alt"] == parts[3]
                         ):
-                            # print("found snp in raw file")
-                            # print(record_data[2] == parts[2] and record_data[3] == parts[3])
+
                             results.append(
                                 {
                                     "chrom": chrom,
                                     "pos": pos,
-                                    "ref": record_data[2],
-                                    "alt": record_data[3],
-                                    "rsids": record_data[4],
-                                    "nearest_genes": record_data[5],
-                                    "pval": record_data[-6],
-                                    "beta": record_data[-5],
-                                    "sebeta": record_data[-4],
-                                    "af": record_data[-3],
-                                    "imp_quality": record_data[-2],
-                                    "n_samples":record_data[-1]
+                                    "ref": record_data.get("ref"),
+                                    "alt": record_data.get("alt"),
+                                    "rsids": record_data.get("rsids"),
+                                    "nearest_genes": record_data.get("nearest_genes"),
+                                    "pval": record_data.get("pval"),
+                                    "beta": record_data.get("beta"),
+                                    "sebeta": record_data.get("sebeta"),
+                                    "af": record_data.get("af"),
+                                    "maf": record_data.get("maf"),
+                                    "imp_quality": record_data.get("imp_quality"),
+                                    "n_samples": record_data.get("n_samples"),
                                 }
                             )
-                    # if any((int(snp.split('-')[1]) == int(pos) and record_data[2] == snp.split('-')[2] and record_data[3] == snp.split('-')[3]) for snp in snps):
-                    #     print("found snp in raw file")
-                    #     for snp in snps:
-                    #         parts = snp.split('-')
-                    #         if len(parts) >= 4:  # 确保 snp 格式正确
-                    #             print(record_data[2] == parts[2] and record_data[3] == parts[3])
-                    #         else:
-                    #             print(f"Invalid SNP format: {snp}")
-                    #     # print(record_data[2] == snp.split('-')[2] and record_data[3] == snp.split('-')[3])
-                    #     results.append({
-                    #         "chrom": chrom,
-                    #         "pos": pos,
-                    #         "ref": record_data[2],
-                    #         "alt": record_data[3],
-                    #         "rsids": record_data[4],
-                    #         "nearest_genes": record_data[5],
-                    #         "pval": record_data[-4],
-                    #         "beta": record_data[-3],
-                    #         "sebeta": record_data[-2],
-                    #         "af": record_data[-1],
-                    #     })
             except ValueError as e:
                 print(
                     f"Error fetching region {chrom}:{region_start}-{region_end} -> {e}"
@@ -137,10 +121,9 @@ class SNPFetcher:
             dict: missing SNP info list, format {stratification: [SNP GWAS info]}
         """
         results = {}
-        # print("Processing keys")
 
         for key, snp_list in api_data.items():
-            # print(f"Fetching SNPs for {key}")
+
             try:
                 snp_info = self.fetch_snp_info_with_tbi(key, snp_list)
                 results[key] = snp_info

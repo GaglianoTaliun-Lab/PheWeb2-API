@@ -54,8 +54,9 @@ def run(argv: List[str]) -> None:
         if pheno["interaction"] is not None:
             pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
             interaction_phenos.append(pheno)
-        elif conf.has_stratifications():
-            pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+        else:
+            if conf.has_stratifications():
+                pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             non_interaction_phenos.append(pheno)
 
     parallelize_per_pheno(
@@ -92,7 +93,7 @@ def get_output_filepaths(pheno: dict) -> List[str]:
 
 
 def make_manhattan_json_file(pheno: Dict[str, Any], ignore=None) -> None:
-    if pheno["interaction"] is not None:
+    if "interaction" in pheno and pheno["interaction"] is not None:
         input_filepath = get_pheno_filepath("interaction", pheno["phenocode"])
     else:
         input_filepath = get_pheno_filepath("pheno_gz", pheno["phenocode"])
