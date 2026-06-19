@@ -19,7 +19,7 @@ from typing import Dict, Any, List, Iterator
 def get_hits(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
     if pheno["interaction"] is not None:
         pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-    if conf.has_stratifications():
+    if pheno["stratification"]:
         pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
 
     with open(get_pheno_filepath("manhattan", pheno["phenocode"])) as f:
@@ -56,20 +56,20 @@ def should_run() -> bool:
     if not all(fp.exists() for fp in output_filepaths):
         return True
     oldest_output_mtime = min(fp.stat().st_mtime for fp in output_filepaths)
-    if conf.has_stratifications():
-        input_filepaths = [
-            Path(
+
+    input_filepaths = []
+
+    for pheno in get_phenolist():
+        if pheno["stratification"]:
+            input_filepaths.append(Path(
                 get_pheno_filepath(
                     "manhattan", get_phenocode_with_stratifications(pheno)
                 )
-            )
-            for pheno in get_phenolist()
-        ]
-    else:
-        input_filepaths = [
-            Path(get_pheno_filepath("manhattan", pheno["phenocode"]))
-            for pheno in get_phenolist()
-        ]
+            ))
+        else:
+            input_filepaths.append(
+                Path(get_pheno_filepath("manhattan", pheno["phenocode"])))
+
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:
         return True

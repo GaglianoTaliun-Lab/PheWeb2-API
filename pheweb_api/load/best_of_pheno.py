@@ -42,7 +42,7 @@ def run(argv: List[str]) -> None:
             pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
             interaction_phenos.append(pheno)
         else:
-            if conf.has_stratifications():
+            if pheno["stratification"]:
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             non_interaction_phenos.append(pheno)
 
@@ -74,14 +74,16 @@ def run(argv: List[str]) -> None:
 def make_bestof_file(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("pheno_gz", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 
 def make_bestof_file_interaction(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("interaction", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 

@@ -1,4 +1,5 @@
-from ..utils import get_phenolist, PheWebError, get_phenocode_with_stratifications
+from ..utils import get_phenolist, PheWebError, get_phenocode_with_suffixes
+
 from .. import conf
 from ..file_utils import (
     VariantFileWriter,
@@ -30,10 +31,7 @@ def run(argv: List[str]) -> None:
 
     # Single loop to handle both updates
     for pheno in phenos:
-        if pheno["interaction"] is not None:
-            pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-        if conf.has_stratifications():
-            pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+        pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
 
     results_by_phenocode = parallelize_per_pheno(
         get_input_filepaths=get_input_filepaths,
@@ -51,7 +49,8 @@ def run(argv: List[str]) -> None:
     if failed_results:
         # failed_filepath = get_generated_path("tmp", f"parse-failures-{}.txt") #TODO: generate a unique filename for each slurm job?
         run_id = uuid.uuid4().hex[:8]
-        failed_filepath = get_generated_path("tmp", f"parse-failures-{run_id}.txt")
+        failed_filepath = get_generated_path(
+            "tmp", f"parse-failures-{run_id}.txt")
         print(f"Failed filepath: {failed_filepath}")
 
         write_json(
@@ -67,7 +66,8 @@ def run(argv: List[str]) -> None:
             )
         )
 
-        succeeded_phenos = [p for p in phenos if p["phenocode"] not in failed_results]
+        succeeded_phenos = [
+            p for p in phenos if p["phenocode"] not in failed_results]
         succeeded_filepath = get_generated_path(
             "tmp", f"pheno-list-successful-only-{run_id}.json"
         )
@@ -90,7 +90,8 @@ def run(argv: List[str]) -> None:
                 )
                 + "To continue with only these phenotypes, run:\n"
                 + "cp {!r} {!r}\n".format(
-                    succeeded_filepath, get_filepath("phenolist", must_exist=False)
+                    succeeded_filepath, get_filepath(
+                        "phenolist", must_exist=False)
                 )
                 + "The errors for each failed phenotype are in {!r}\n".format(
                     failed_filepath
@@ -121,15 +122,17 @@ def convert(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
     try:
         # if conf.stratified():
         #     pheno['phenocode'] = get_phenocode_with_stratifications(pheno)
-        
+
         with VariantFileWriter(
             get_pheno_filepath("parsed", pheno["phenocode"], must_exist=False)
         ) as writer:
-            pheno_reader = PhenoReader(pheno, minimum_maf=conf.get_assoc_min_maf())
+            pheno_reader = PhenoReader(
+                pheno, minimum_maf=conf.get_assoc_min_maf())
             variants = pheno_reader.get_variants()
             debugging_limit_num_variants = conf.get_debugging_limit_num_variants()
             if debugging_limit_num_variants:
-                variants = itertools.islice(variants, 0, debugging_limit_num_variants)
+                variants = itertools.islice(
+                    variants, 0, debugging_limit_num_variants)
             writer.write_all(variants)
 
     except Exception as exc:

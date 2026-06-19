@@ -27,14 +27,11 @@ from ordered_set import OrderedSet
 
 def clear_out_junk() -> None:
     # Remove files that shouldn't be there (and will confuse the glob in matrixify)
-    cur_phenocodes = set(pheno["phenocode"]
-                         for pheno in get_phenolist_no_interaction())
 
-    if conf.has_stratifications():
-        cur_phenocodes = OrderedSet(
-            get_phenocode_with_suffixes(pheno)
-            for pheno in get_phenolist_no_interaction()
-        )
+    cur_phenocodes = OrderedSet(
+        get_phenocode_with_suffixes(pheno)
+        for pheno in get_phenolist_no_interaction()
+    )
 
     for filepath in glob.glob(get_filepath("pheno_gz") + "/*.gz"):
         name = os.path.basename(filepath)
@@ -50,31 +47,27 @@ def should_run(matrix_gz_filepath) -> bool:
         return True
 
     # If the matrix's columns don't match the phenos in pheno-list, rebuild.
-    cur_phenocodes = set(pheno["phenocode"]
-                         for pheno in get_phenolist_no_interaction())
 
-    if conf.has_stratifications():
-        cur_phenocodes = OrderedSet(
-            get_phenocode_with_suffixes(pheno)
-            for pheno in get_phenolist_no_interaction()
+    cur_phenocodes = OrderedSet(
+        get_phenocode_with_suffixes(pheno)
+        for pheno in get_phenolist_no_interaction()
+    )
+
+    try:
+        matrix_phenocodes = set(MatrixReader().get_phenocodes())
+    except Exception:
+        return True  # if something broke, let's just rebuild the matrix.
+    if matrix_phenocodes != cur_phenocodes:
+        print("re-running because cur matrix has wrong phenos.")
+        print(
+            "- phenos in pheno-list.json but not matrix.tsv.gz:",
+            ", ".join(repr(p) for p in cur_phenocodes - matrix_phenocodes),
         )
-
-    if not conf.has_stratifications():
-        try:
-            matrix_phenocodes = set(MatrixReader().get_phenocodes())
-        except Exception:
-            return True  # if something broke, let's just rebuild the matrix.
-        if matrix_phenocodes != cur_phenocodes:
-            print("re-running because cur matrix has wrong phenos.")
-            print(
-                "- phenos in pheno-list.json but not matrix.tsv.gz:",
-                ", ".join(repr(p) for p in cur_phenocodes - matrix_phenocodes),
-            )
-            print(
-                "- phenos in matrix.tsv.gz but not pheno-list.json:",
-                ", ".join(repr(p) for p in matrix_phenocodes - cur_phenocodes),
-            )
-            return True
+        print(
+            "- phenos in matrix.tsv.gz but not pheno-list.json:",
+            ", ".join(repr(p) for p in matrix_phenocodes - cur_phenocodes),
+        )
+        return True
 
     # If pheno_gz or sites.tsv are newer than matrix, rebuild.
     infilepaths = [

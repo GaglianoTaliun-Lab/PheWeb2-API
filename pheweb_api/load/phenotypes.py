@@ -14,50 +14,6 @@ from typing import Iterator, Dict, Any, List
 
 def get_phenotypes_including_top_variants() -> Iterator[Dict[str, Any]]:
     for pheno in get_phenolist():
-        # if there's an interaction, add it to filename
-        # if pheno["interaction"]:
-        #     phenocode = phenocode + ".inter-" + pheno["interaction"]
-
-        with open(get_pheno_filepath("qq", pheno["phenocode"])) as f:
-            # GC lambda 0.01 isn't set if it was infinite or otherwise broken.
-            gc_lambda_hundred = json.load(f)["overall"]["gc_lambda"].get("0.01", None)
-
-        with open(get_pheno_filepath("manhattan", pheno["phenocode"])) as f:
-            variants = json.load(f)["unbinned_variants"]
-
-        top_variant = min(variants, key=lambda v: v["pval"])
-        num_peaks = sum(
-            variant.get("peak", False) and variant["pval"] <= 5e-8
-            for variant in variants
-        )
-        ret = {
-            "phenocode": pheno["phenocode"],
-            "pval": top_variant["pval"],
-            "nearest_genes": top_variant["nearest_genes"],
-            "chrom": top_variant["chrom"],
-            "pos": top_variant["pos"],
-            "ref": top_variant["ref"],
-            "alt": top_variant["alt"],
-            "rsids": top_variant["rsids"],
-            "num_peaks": num_peaks,
-            "gc_lambda_hundred": gc_lambda_hundred,  # numbers in keys break streamtable
-        }
-        for key in [
-            "num_samples",
-            "num_controls",
-            "num_cases",
-            "category",
-            "phenostring",
-        ]:
-            if key in pheno:
-                ret[key] = pheno[key]
-        if isinstance(ret["nearest_genes"], list):
-            ret["nearest_genes"] = ",".join(ret["nearest_genes"])
-        yield ret
-
-
-def get_phenotypes_including_top_variants_stratified() -> Iterator[Dict[str, Any]]:
-    for pheno in get_phenolist():
         phenocode = pheno["phenocode"]
 
         # if there's an interaction, add it to filename
@@ -122,7 +78,8 @@ def should_run() -> bool:
         phenocode = pheno["phenocode"]
         for strats in pheno["stratification"]:
             phenocode = phenocode + "." + pheno["stratification"][strats]
-        input_filepaths.append(Path(get_pheno_filepath("manhattan", phenocode)))
+        input_filepaths.append(
+            Path(get_pheno_filepath("manhattan", phenocode)))
 
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:
@@ -141,12 +98,9 @@ def run(argv: List[str]) -> None:
         print("Already up-to-date!")
         return
 
-    if conf.has_stratifications():
-        data = sorted(
-            get_phenotypes_including_top_variants_stratified(), key=lambda p: p["pval"]
-        )
-    else:
-        data = sorted(get_phenotypes_including_top_variants(), key=lambda p: p["pval"])
+    data = sorted(
+        get_phenotypes_including_top_variants(), key=lambda p: p["pval"]
+    )
 
     out_filepath = get_filepath("phenotypes_summary", must_exist=False)
     write_json(filepath=out_filepath, data=data)

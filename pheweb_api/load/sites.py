@@ -31,7 +31,6 @@ MIN_NUM_FILES_TO_MERGE_AT_ONCE = (
 )
 
 
-
 def run(argv):
     global MAX_NUM_FILES_TO_MERGE_AT_ONCE, MIN_NUM_FILES_TO_MERGE_AT_ONCE
 
@@ -56,9 +55,10 @@ def run(argv):
     manna = MergeManager()
 
     if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
-        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
-        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
-        
+        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            len(manna.files) // manna.n_procs, 2)
+        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
     if os.path.exists(out_filepath) and not force:
@@ -116,7 +116,7 @@ class MergeManager:
         self.files = []
 
         for pheno in get_phenolist():
-            if conf.has_stratifications():
+            if pheno["stratification"]:
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
             self.files.append(
@@ -147,7 +147,8 @@ class MergeManager:
                     + "\n"
                 )
             raise PheWebError(
-                "Child process had exception, info dumped to {}".format(exc_filepath)
+                "Child process had exception, info dumped to {}".format(
+                    exc_filepath)
             )
         else:
             raise PheWebError("Unknown ret type: {}".format(ret["type"]))
@@ -174,7 +175,8 @@ class MergeManager:
             # MAKE A TASK FOR THE WORKER
             files_to_merge = self.files[:MAX_NUM_FILES_TO_MERGE_AT_ONCE]
             self.files = self.files[MAX_NUM_FILES_TO_MERGE_AT_ONCE:]
-            out_filepath = get_tmp_path(f"merging-{random.randrange(int(1e10))}")
+            out_filepath = get_tmp_path(
+                f"merging-{random.randrange(int(1e10))}")
             taskq.put(
                 {
                     "files_to_merge": files_to_merge,

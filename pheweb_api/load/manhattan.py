@@ -55,7 +55,7 @@ def run(argv: List[str]) -> None:
             pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
             interaction_phenos.append(pheno)
         else:
-            if conf.has_stratifications():
+            if pheno["stratification"]:
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
             non_interaction_phenos.append(pheno)
 
@@ -119,11 +119,13 @@ class Binner:
         self._peak_last_chrpos = None
         self._peak_pq = MaxPriorityQueue()
         self._unbinned_variant_pq = MaxPriorityQueue()
-        self._bins = {}  # like {<chrom>: {<pos // bin_length>: [{chrom, startpos, qvals}]}}
+        # like {<chrom>: {<pos // bin_length>: [{chrom, startpos, qvals}]}}
+        self._bins = {}
         self._qval_bin_size = (
             0.05  # this makes 200 bins for the minimum-allowed y-axis covering 0-10
         )
-        self._num_significant_in_current_peak = 0  # num variants stronger than manhattan_peak_variant_counting_pval_threshold
+        # num variants stronger than manhattan_peak_variant_counting_pval_threshold
+        self._num_significant_in_current_peak = 0
         assert (
             conf.get_manhattan_peak_variant_counting_pval_threshold()
             < conf.get_manhattan_peak_pval_threshold()
@@ -145,10 +147,12 @@ class Binner:
         if variant["pval"] != 0:
             qval = -math.log10(variant["pval"])
             if qval > 40:
-                self._qval_bin_size = 0.2  # this makes 200 bins for a y-axis extending past 40 (but folded so that the lower half is 0-20)
+                # this makes 200 bins for a y-axis extending past 40 (but folded so that the lower half is 0-20)
+                self._qval_bin_size = 0.2
             elif qval > 20:
                 self._qval_bin_size = (
-                    0.1  # this makes 200-400 bins for a y-axis extending up to 20-40.
+                    # this makes 200-400 bins for a y-axis extending up to 20-40.
+                    0.1
                 )
 
         if variant["pval"] < conf.get_manhattan_peak_pval_threshold():  # part of a peak
