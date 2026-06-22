@@ -280,7 +280,7 @@ def force_extra_fields(phenolist: List[dict],
     return phenolist
 
 
-def import_phenolist(filepath):
+def import_phenolist(filepath, import_func, required_fields):
     """
     Return a list-of-dicts with the original column names, or integers if none.
     """
@@ -303,7 +303,7 @@ def import_phenolist(filepath):
                 )
         # Try csv.reader() with csv.Sniffer().sniff()
         f.seek(0)
-        phenos = _import_phenolist_csv(f)
+        phenos = import_func(f, required_fields)
         if phenos is not None:
             return phenos
         raise PheWebError(
@@ -1055,7 +1055,8 @@ def run(argv):
         required_fields = ("phenocode", "phenostring",
                            "assoc_files", "num_samples")
 
-        phenolist = import_phenolist(args.input_filepath, required_fields)
+        phenolist = import_phenolist(
+            args.input_filepath, _import_phenolist_csv, required_fields)
 
         # Some field are extras, but required even if empty
         # (stratification already being forced in _import_phenolist_csv)
