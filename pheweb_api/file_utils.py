@@ -28,6 +28,7 @@ def get_generated_path(*path_parts: str) -> str:
     make_basedir(path)
     return path
 
+
 def get_filepath(kind: str, *, must_exist: bool = True) -> str:
     if kind not in _single_filepaths:
         raise Exception("Unknown kind of filepath: {}".format(repr(kind)))
@@ -40,12 +41,14 @@ def get_filepath(kind: str, *, must_exist: bool = True) -> str:
         )
     return filepath
 
-_data_subdirs : List[str] = [
+
+_data_subdirs: List[str] = [
     "best_of_pheno", "interaction", "manhattan",
     "matrix", "matrix-stratified", "parsed", "pheno_gz",
-    "phenolist", "qq", "resources", 
+    "phenolist", "qq", "resources",
     "sites", ""
 ]
+
 
 def extract_data_subdir_from_filepath(filepath: str) -> str:
     data_dir = Path(conf.get_pheweb_data_dir())
@@ -73,7 +76,8 @@ def extract_data_subdir_from_filepath(filepath: str) -> str:
 _single_filepaths: Dict[str, Callable[[], str]] = {
     # in data_dir:
     "correlations-raw": (
-        lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-correlations.txt")
+        lambda: os.path.join(conf.get_pheweb_base_dir(),
+                             "pheno-correlations.txt")
     ),
     # "phenolist": (lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-list.json")),
     "phenolist": (lambda: get_generated_path("pheno-list.json")),
@@ -103,14 +107,17 @@ _single_filepaths: Dict[str, Callable[[], str]] = {
         )
     ),
     "genes-hg19": (
-        lambda: get_generated_path("resources/genes-v{}-hg19.bed".format(conf.get_gencode_version()))
+        lambda: get_generated_path(
+            "resources/genes-v{}-hg19.bed".format(conf.get_gencode_version()))
     ),
     "genes-hg38": (
-        lambda: get_generated_path("resources/genes-v{}-hg38.bed".format(conf.get_gencode_version()))
+        lambda: get_generated_path(
+            "resources/genes-v{}-hg38.bed".format(conf.get_gencode_version()))
     ),
     "gene-aliases-sqlite3": (
         lambda: get_generated_path(
-            "resources/gene_aliases-v{}.sqlite3".format(conf.get_gencode_version())
+            "resources/gene_aliases-v{}.sqlite3".format(
+                conf.get_gencode_version())
         )
     ),
     # simple:
@@ -160,20 +167,25 @@ def get_pheno_filepath(kind: str, phenocode: str, *, must_exist: bool = True) ->
 _pheno_filepaths: Dict[str, Callable[[str], str]] = {
     "parsed": (lambda phenocode: get_generated_path("parsed", phenocode)),
     "pheno_gz": (
-        lambda phenocode: get_generated_path("pheno_gz", "{}.gz".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "pheno_gz", "{}.gz".format(phenocode))
     ),
     "pheno_gz_tbi": (
-        lambda phenocode: get_generated_path("pheno_gz", "{}.gz.tbi".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "pheno_gz", "{}.gz.tbi".format(phenocode))
     ),
     "interaction": (
-        lambda phenocode: get_generated_path("interaction", "{}.gz".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "interaction", "{}.gz".format(phenocode))
     ),
     "interaction_tbi": (
-        lambda phenocode: get_generated_path("interaction", "{}.gz.tbi".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "interaction", "{}.gz.tbi".format(phenocode))
     ),
     "best_of_pheno": (lambda phenocode: get_generated_path("best_of_pheno", phenocode)),
     "manhattan": (
-        lambda phenocode: get_generated_path("manhattan", "{}.json".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "manhattan", "{}.json".format(phenocode))
     ),
     "qq": (lambda phenocode: get_generated_path("qq", "{}.json".format(phenocode))),
     "matrix-stratified": (
@@ -194,7 +206,7 @@ def get_tmp_path(arg: Union[Path, str]) -> str:
     if arg.startswith(get_generated_path()):
         mkdir_p(get_generated_path("tmp"))
         tmp_basename = (
-            arg[len(get_generated_path()) :]
+            arg[len(get_generated_path()):]
             .lstrip(os.path.sep)
             .replace(os.path.sep, "-")
         )
@@ -207,29 +219,36 @@ def get_tmp_path(arg: Union[Path, str]) -> str:
     assert ret != arg, (ret, arg)
     while os.path.exists(ret):
         ret = "{}/{}-{}".format(
-            os.path.dirname(ret), random.choice("123456789"), os.path.basename(ret)
+            os.path.dirname(ret), random.choice(
+                "123456789"), os.path.basename(ret)
         )
     return ret
 
 
 def get_dated_tmp_path(prefix: str) -> str:
     assert "/" not in prefix, prefix
-    time_str = datetime.datetime.isoformat(datetime.datetime.now()).replace(":", "-")
+    time_str = datetime.datetime.isoformat(
+        datetime.datetime.now()).replace(":", "-")
     return get_tmp_path(prefix + "-" + time_str)
+
 
 def get_backup_path():
     return get_generated_path("backups")
 
+
 def backup_file(filepath: str,
                 data_subdir: str = "",
                 method: str = "copy",
-                add_iso_date = True) -> str:
+                add_iso_date=True) -> str:
+
+    if not conf.is_backups_enabled():
+        return
 
     if not os.path.exists(filepath):
         print(f"{filepath} does not exist. Nothing to backup.")
         return
 
-    if not data_subdir :
+    if not data_subdir:
         data_subdir = extract_data_subdir_from_filepath(filepath)
 
     if data_subdir not in _data_subdirs:
@@ -269,12 +288,14 @@ def backup_file(filepath: str,
 
     return backup_filepath
 
+
 def get_matrix_subdir():
 
     if conf.has_stratifications():
-        return  "matrix-stratified"
-    
+        return "matrix-stratified"
+
     return "matrix"
+
 
 csv.register_dialect(
     "pheweb-internal-dialect",
@@ -288,7 +309,7 @@ csv.register_dialect(
 )
 
 
-## Readers
+# Readers
 
 
 @contextmanager
@@ -304,11 +325,13 @@ def VariantFileReader(
                 print(variant)
     """
     with read_maybe_gzip(filepath) as f:
-        reader: Iterator[List[str]] = csv.reader(f, dialect="pheweb-internal-dialect")
+        reader: Iterator[List[str]] = csv.reader(
+            f, dialect="pheweb-internal-dialect")
         try:
             fields = next(reader)
         except StopIteration:
-            raise PheWebError("It looks like the file {} is empty".format(filepath))
+            raise PheWebError(
+                "It looks like the file {} is empty".format(filepath))
         if fields[
             0
         ].startswith(
@@ -381,7 +404,8 @@ class _vfr_only_per_variant_fields:
 def IndexedVariantFileReader(phenocode: str):
     filepath = get_pheno_filepath("pheno_gz", phenocode)
     with read_gzip(filepath) as f:
-        reader: Iterator[List[str]] = csv.reader(f, dialect="pheweb-internal-dialect")
+        reader: Iterator[List[str]] = csv.reader(
+            f, dialect="pheweb-internal-dialect")
         fields = next(reader)
     if fields[0].startswith(
         "#"
@@ -436,7 +460,8 @@ class _ivfr:
         # Doesn't make much sense to me.  There must be a reason that I don't understand.
 
         try:
-            tabix_iter = self._tabix_file.fetch(chrom, start - 1, end - 1, parser=None)
+            tabix_iter = self._tabix_file.fetch(
+                chrom, start - 1, end - 1, parser=None)
         except Exception as exc:
             raise PheWebError(
                 "ERROR when fetching {}-{}-{} from {}".format(
@@ -502,7 +527,8 @@ class MatrixReader:
                 field, phenocode = x
                 assert field in parse_utils.fields, field
                 assert phenocode in phenocodes, phenocode
-                self._colidxs_for_pheno.setdefault(phenocode, {})[field] = colnum
+                self._colidxs_for_pheno.setdefault(phenocode, {})[
+                    field] = colnum
             else:
                 field = colname
                 assert field in parse_utils.fields, field
@@ -574,6 +600,7 @@ class _mr(_ivfr):
         for row in self._tabix_file.fetch():
             yield self._parse_variant_row(row.split("\t"))
 
+
 def with_chrom_idx(variants: Iterator[Dict[str, Any]]) -> Iterator[Dict[str, Any]]:
     for v in variants:
         v["chrom_idx"] = chrom_order[v["chrom"]]
@@ -607,7 +634,7 @@ def read_maybe_gzip(filepath: Union[str, Path]):
             yield f
 
 
-## Writers
+# Writers
 
 
 @contextmanager
@@ -708,7 +735,8 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
         force=True,
         seq_col=0,
         start_col=1,
-        end_col=1,  # note: `pysam.tabix_index` calls the first column `0`, but cmdline `tabix` calls it `1`.
+        # note: `pysam.tabix_index` calls the first column `0`, but cmdline `tabix` calls it `1`.
+        end_col=1,
         line_skip=1,  # skip header
     )
 

@@ -34,7 +34,8 @@ def should_run(matrix_gz_filepath) -> bool:
         return True
 
     # If the matrix's columns don't match the phenos in pheno-list, rebuild.
-    cur_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
+    cur_phenocodes = set(pheno["phenocode"]
+                         for pheno in get_phenolist_no_interaction())
 
     if conf.has_stratifications():
         cur_phenocodes = OrderedSet(
@@ -95,10 +96,12 @@ def run(argv: List[str]) -> None:
             matrix_gz_stratified_filepath = get_pheno_filepath(
                 "matrix-stratified", stratification_path, must_exist=False
             )
-            run_matrix_functions(matrix_gz_stratified_filepath, stratification_path)
+            run_matrix_functions(
+                matrix_gz_stratified_filepath, stratification_path)
     else:
         matrix_gz_filepath = get_filepath("matrix", must_exist=False)
         run_matrix_functions(matrix_gz_filepath)
+
 
 def create_matrix(
     sites_filepath, pheno_gz_glob, matrix_gz_tmp_filepath, matrix_gz_filepath
@@ -115,7 +118,7 @@ def create_matrix(
             "The portion of `pheweb matrix` written in c++/cffi failed with the message "
             + repr(ret_bytes)
         )
-    
+
     os.rename(matrix_gz_tmp_filepath, matrix_gz_filepath)
 
 
@@ -175,16 +178,18 @@ def run_matrix_functions(
     matrix_gz_filepath: str,
     stratification: str = None,
 ) -> None:
-    
+
     sites_filepath = get_filepath("sites")
     matrix_gz_tmp_filepath = get_tmp_path(matrix_gz_filepath)
 
     # Appending to matrix if matrix already exists
     if os.path.exists(matrix_gz_filepath):
 
-        phenos_already_in_matrix = list(set(MatrixReader(matrix_gz_filepath).get_phenocodes()))
+        phenos_already_in_matrix = list(
+            set(MatrixReader(matrix_gz_filepath).get_phenocodes()))
 
-        phenolist_phenocodes = set(pheno["phenocode"] for pheno in get_phenolist_no_interaction())
+        phenolist_phenocodes = set(pheno["phenocode"]
+                                   for pheno in get_phenolist_no_interaction())
 
         if conf.has_stratifications():
             phenolist_phenocodes = OrderedSet(
@@ -194,25 +199,27 @@ def run_matrix_functions(
 
         # Keep pheno from current stratification not in matrix
         phenos_to_process = [
-            p for p in phenolist_phenocodes
-            if p not in phenos_already_in_matrix and
-            stratification in p
+            pheno for pheno in phenolist_phenocodes
+            if pheno not in phenos_already_in_matrix and
+            stratification in pheno
         ]
 
         if phenos_to_process:
-            print(f"appending {len(phenos_to_process)} news phenotypes to {matrix_gz_filepath}.")
+            print(
+                f"appending {len(phenos_to_process)} news phenotypes to {matrix_gz_filepath}.")
 
             append_to_matrix(
                 sites_filepath, phenos_to_process, matrix_gz_tmp_filepath, matrix_gz_filepath
             )
-            
+
         else:
             print("matrix is up-to-date!")
     # Writing matrix file from scratch
     else:
         print(f"Creating {matrix_gz_filepath}.")
 
-        pheno_gz_glob = get_filepath("pheno_gz") + "/*" + stratification + "*.gz"
+        pheno_gz_glob = get_filepath(
+            "pheno_gz") + "/*" + stratification + "*.gz"
         create_matrix(
             sites_filepath, pheno_gz_glob, matrix_gz_tmp_filepath, matrix_gz_filepath
         )
