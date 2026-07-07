@@ -3,14 +3,14 @@ import os.path
 
 # SECTION A: Data location
 # ================================================
- 
+
 # This is the parent directory for PheWeb 2, which contains the `config.py` file.
 PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 
 # By default, the data ingested into PheWeb 2 is stored in the `{PHEWEB_BASE_DIR}/generated-by-pheweb`  directory.
 # If you would like to change this, please provide the full path to your preferred alternative directory.
 PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
-#PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
+# PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
 
 
 # SECTION B: Public databases
@@ -22,9 +22,8 @@ HG_BUILD_NUMBER = 38
 # Please specify the dbSNP version for mapping to rsIDs
 DBSNP_VERSION = 157
 
-# Please specify the GENOCODE version for mapping to genes 
+# Please specify the GENOCODE version for mapping to genes
 GENCODE_VERSION = 48
-
 
 
 # SECTION C: Data ingestion
@@ -46,7 +45,7 @@ INTERACTION_TEST_NAME = "ADD-INT_SNPxBSEX=2"
 INTERACTION_MIN_MAC = 160
 
 # This parameter functions similarly to INTERACTION_MIN_MAC but is measured on the minor allele frequency (MAF) scale. Only one of the two parameters, INTERACTION_MIN_MAC or INTERACTION_MIN_MAF, may be set at any given time.
-#INTERACTION_MIN_MAF = 0.05
+# INTERACTION_MIN_MAF = 0.05
 
 # Set this to True if you have stratified GWAS results (default). Otherwise, set it to False.
 ENABLE_STRATIFICATIONS = True
@@ -59,16 +58,16 @@ MIN_IMP_QUALITY = 0.3
 
 # Please provide a mapping from the field names in your GWAS files to the names used by PheWeb. For instance, an entry like `"CHROM": "chrom"` indicates that the chromosome name in your GWAS files is stored in the “CHROM” field.
 FIELD_ALIASES = {
-    "CHROM": "chrom", # Chromosome
-    "GENPOS": "pos", # Position
-    "ALLELE0": "ref", # Reference allele
-    "ALLELE1": "alt", # Effect (tested) allele
-    "A1FREQ": "af", # Frequency of the effect allele
-    "N": "n_samples", # Number of samples
-    "BETA": "beta", #  Effect size
-    "SE": "sebeta", # Standard error of the effect
-    "LOG10P": "pval", # P-value
-    "TEST": "test", # Reported statistical test/model
+    "CHROM": "chrom",  # Chromosome
+    "GENPOS": "pos",  # Position
+    "ALLELE0": "ref",  # Reference allele
+    "ALLELE1": "alt",  # Effect (tested) allele
+    "A1FREQ": "af",  # Frequency of the effect allele
+    "N": "n_samples",  # Number of samples
+    "BETA": "beta",  # Effect size
+    "SE": "sebeta",  # Standard error of the effect
+    "LOG10P": "pval",  # P-value
+    "TEST": "test",  # Reported statistical test/model
 
     # If you have imputation quality scores saved in the GWAS results (e.g. in the "INFO" field), then you can map them as follows:
     "INFO": "imp_quality",
@@ -97,6 +96,12 @@ NUM_API_WORKERS = 4
 # Specify the comma-separated list of origins allowed to access the API. By default, all are allowed, i.e., '*'.
 CORS_ORIGINS = '*'
 
+# Set corresponding stratifications to use for SDE test, i.e., "interaction-sex.all.both": ["all.female", "all.male"].
+SDE_TEST = {
+    "interaction-sex.all.both": ["all.female", "all.male"],
+    "interaction-sex.european.both": ["european.female", "european.male"],
+}
+
 # SECTION E: Internal parameters (no need to modify)
 # ===============================================
 
@@ -111,11 +116,3 @@ MANHATTAN_PEAK_SPRAWL_DIST = 200_000
 MANHATTAN_PEAK_VARIANT_COUNTING_PVAL_THRESHOLD = 5e-8
 TOP_HITS_PVAL_CUTOFF = 1e-6
 PHENO_CORRELATIONS_PVALUE_THRESHOLD = 0.05
-
-
-
-
-
-
-
-
