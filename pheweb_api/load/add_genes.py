@@ -12,6 +12,7 @@ import os
 import os.path
 import boltons.iterutils
 from typing import List, Tuple, Optional, Dict, Iterator
+from ..models.variant_utils import VariantLoading
 
 Chrom = str
 GeneName = str
@@ -45,7 +46,8 @@ class GeneAnnotator(object):
     def __init__(self, interval_tuples: Iterator[Tuple[Chrom, int, int, GeneName]]):
         """interval_tuples is like [('22', 12321, 12345, 'APOL1'), ...]"""
         self._its: Dict[Chrom, IntervalTree] = {}
-        gene_start_tuples_by_chrom: Dict[Chrom, List[Tuple[int, GeneName]]] = {}
+        gene_start_tuples_by_chrom: Dict[Chrom,
+                                         List[Tuple[int, GeneName]]] = {}
         gene_end_tuples_by_chrom: Dict[Chrom, List[Tuple[int, GeneName]]] = {}
         for chrom, pos_start, pos_end, gene_name in interval_tuples:
             if chrom not in self._its:
@@ -77,7 +79,8 @@ class GeneAnnotator(object):
         if overlapping_genes:
             return ",".join(
                 sorted(
-                    boltons.iterutils.unique_iter(og.data for og in overlapping_genes)
+                    boltons.iterutils.unique_iter(
+                        og.data for og in overlapping_genes)
                 )
             )
         nearest_gene_end = self._gene_ends[chrom].get_item_before(pos)
@@ -131,5 +134,12 @@ def run(argv: List[str]) -> None:
         mtime(genes_filepath), mtime(input_filepath)
     ) <= mtime(out_filepath):
         print("gene annotation is up-to-date!")
+        return
     else:
         annotate_genes(input_filepath, out_filepath)
+
+    # Variant database
+    print("Generating sites/variants.db")
+
+    backup_file(get_filepath("variants_db", must_exist=False), "sites", "move")
+    VariantLoading()

@@ -148,6 +148,8 @@ _single_filepaths: Dict[str, Callable[[], str]] = {
     "manhattan": (lambda: get_generated_path("manhattan")),
     "qq": (lambda: get_generated_path("qq")),
     "matrix-stratified": (lambda: get_generated_path("matrix")),
+    "autocomplete_db": (lambda: get_generated_path("sites/autocomplete.db")),
+    "variants_db": (lambda: get_generated_path("sites/variants.db"))
 }
 
 

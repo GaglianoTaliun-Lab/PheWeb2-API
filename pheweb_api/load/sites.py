@@ -32,7 +32,6 @@ MIN_NUM_FILES_TO_MERGE_AT_ONCE = (
 )
 
 
-
 def run(argv):
     global MAX_NUM_FILES_TO_MERGE_AT_ONCE, MIN_NUM_FILES_TO_MERGE_AT_ONCE
 
@@ -60,7 +59,8 @@ def run(argv):
 
     # Only files that are newer than sites
     if os.path.exists(out_filepath):
-        manna.set_files([f for f in manna.files if mtime(f["filepath"]) > mtime(out_filepath)])
+        manna.set_files([f for f in manna.files if mtime(
+            f["filepath"]) > mtime(out_filepath)])
 
     if not manna.files and not force:
         print("The list of sites is up-to-date!")
@@ -77,13 +77,16 @@ def run(argv):
         manna.append_file("merged", existing_out)
 
     if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
-        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
-        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
+        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            len(manna.files) // manna.n_procs, 2)
+        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
 
     taskq = multiprocessing.Queue()
     retq = multiprocessing.Queue()
     procs = [
-        multiprocessing.Process(target=mp_target, args=(taskq, retq, existing_out))
+        multiprocessing.Process(
+            target=mp_target, args=(taskq, retq, existing_out))
         for _ in range(manna.n_procs)
     ]
     for p in procs:
@@ -130,6 +133,7 @@ def run(argv):
     else:
         os.rename(manna.files[0]["filepath"], out_filepath)
 
+
 class MergeManager:
     """Keeps track of what needs to get merged next."""
 
@@ -153,9 +157,9 @@ class MergeManager:
 
     def append_file(self, f_type, filepath):
         self.files.append({
-                "type": f_type,
-                "filepath": filepath,
-            })
+            "type": f_type,
+            "filepath": filepath,
+        })
 
     def set_files(self, files):
         self.files = files
@@ -180,7 +184,8 @@ class MergeManager:
                     + "\n"
                 )
             raise PheWebError(
-                "Child process had exception, info dumped to {}".format(exc_filepath)
+                "Child process had exception, info dumped to {}".format(
+                    exc_filepath)
             )
         else:
             raise PheWebError("Unknown ret type: {}".format(ret["type"]))
@@ -207,7 +212,8 @@ class MergeManager:
             # MAKE A TASK FOR THE WORKER
             files_to_merge = self.files[:MAX_NUM_FILES_TO_MERGE_AT_ONCE]
             self.files = self.files[MAX_NUM_FILES_TO_MERGE_AT_ONCE:]
-            out_filepath = get_tmp_path(f"merging-{random.randrange(int(1e10))}")
+            out_filepath = get_tmp_path(
+                f"merging-{random.randrange(int(1e10))}")
             taskq.put(
                 {
                     "files_to_merge": files_to_merge,

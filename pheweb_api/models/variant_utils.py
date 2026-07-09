@@ -6,20 +6,23 @@ import csv
 from functools import lru_cache
 import tqdm
 
-class VariantLoading:
-    def __init__(self, file_path):
-        self.variants = {}
-        self.file_path = file_path
+from ..file_utils import get_filepath, backup_file
 
-        self.db_path = os.path.join(file_path, "variants.db")
-        self.load_or_create_variant_db(file_path)
-    
-    def load_or_create_variant_db(self, file_path):
-        
+
+class VariantLoading:
+    def __init__(self):
+        self.variants = {}
+
+        self.db_path = get_filepath("variants_db", must_exist=False)
+        self.load_or_create_variant_db()
+
+    def load_or_create_variant_db(self):
+
         db_path = self.db_path
-        
+
         if os.path.exists(db_path):
-            print(f"DEBUG: Found existing database at {db_path}, skipping creation.")
+            print(
+                f"DEBUG: Found existing database at {db_path}, skipping creation.")
             return
 
         print(f"DEBUG: Creating new database at {db_path}")
@@ -40,7 +43,7 @@ class VariantLoading:
             )
             """)
 
-            tsv_path = os.path.join(file_path, "sites.tsv")
+            tsv_path = get_filepath("sites")
             print(f"DEBUG: Loading data from {tsv_path}")
             rows = []
             with gzip.open(tsv_path, "rt") as tsvfile:
@@ -81,7 +84,6 @@ class VariantLoading:
         finally:
             conn.close()
 
-    
     @lru_cache(maxsize=1000)
     def query_variants(self, prefix, max_results=4):
         db_path = self.db_path
@@ -116,9 +118,6 @@ class VariantLoading:
         except Exception as e:
             print(f"DEBUG: Error querying variants: {e}")
             raise e
-            
 
-
-    
     def get_variants(self):
         return self.variants

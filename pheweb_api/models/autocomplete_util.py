@@ -8,7 +8,7 @@ import tqdm
 from .models import create_phenotypes_list, create_genes
 from flask import g
 from ..conf import is_debug_mode, get_pheweb_data_dir
-from ..file_utils import backup_file
+from ..file_utils import get_filepath, backup_file
 
 from ..load.load_utils import mtime
 
@@ -16,35 +16,12 @@ from ..load.load_utils import mtime
 class GenesServiceNotAvailable(Exception):
     pass
 
-# def get_genes_service():
-#     if "genes" not in g:
-#         g.genes = create_genes()
-#         if g.genes is None:
-#             raise GenesServiceNotAvailable(
-#                 "Could not create gene service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-#             )
-#     return g.genes
-
-
-# class PhenotypeServiceNotAvailable(Exception):
-#     pass
-
-
-# def get_pheno_service():
-#     if "pheno" not in g:
-#         g.pheno = create_phenotypes_list()
-#         if g.pheno is None:
-#             raise PhenotypeServiceNotAvailable(
-#                 "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
-#             )
-#     return g.pheno
-
 
 class AutocompleteLoading:
     def __init__(self):
         self.variants = {}
-        self.file_path = os.path.join(get_pheweb_data_dir(), "sites")
-        self.db_path = os.path.join(self.file_path, "autocomplete.db")
+
+        self.db_path = get_filepath("autocomplete_db", must_exist=False)
         print(f"DEBUG: db_path: {self.db_path}")
         self.create_table()
         self._load_to_memory()
@@ -99,7 +76,7 @@ class AutocompleteLoading:
             # Sites file is newer than autocomplete.db
             modify_variants_table = False
             if not self.table_exists(cur, "variants") or \
-                    mtime(os.path.join(self.file_path, "sites.tsv")) > mtime(self.db_path):
+                    mtime(get_filepath("sites")) > mtime(self.db_path):
                 modify_variants_table = True
 
             gene_db_filepath = os.path.join(
@@ -193,7 +170,7 @@ class AutocompleteLoading:
                 )
             """)
 
-            tsv_path = os.path.join(self.file_path, "sites.tsv")
+            tsv_path = get_filepath("sites")
             if is_debug_mode():
                 print(f"DEBUG: Loading data from {tsv_path}")
             rows = []
