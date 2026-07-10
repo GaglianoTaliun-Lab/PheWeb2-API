@@ -11,7 +11,8 @@ def run(argv: List[str]) -> None:
         exit(1)
 
     sites_filepath = Path(get_filepath("sites"))
-    cpras_rsids_filepath = Path(get_filepath("cpras-rsids-sqlite3", must_exist=False))
+    cpras_rsids_filepath = Path(get_filepath(
+        "cpras-rsids-sqlite3", must_exist=False))
 
     if (
         cpras_rsids_filepath.exists()
@@ -32,7 +33,8 @@ def run(argv: List[str]) -> None:
                         yield (cpra, None)
 
         if cpras_rsids_filepath.exists():
-            cpras_rsids_filepath.unlink()
+            backup_file(str(cpras_rsids_filepath),
+                        data_subdir="sites", method="move")
         cpras_rsids_tmp_filepath = Path(get_tmp_path(cpras_rsids_filepath))
         if cpras_rsids_tmp_filepath.exists():
             cpras_rsids_tmp_filepath.unlink()
@@ -44,8 +46,6 @@ def run(argv: List[str]) -> None:
                 get_cpra_rsid_pairs(),
             )
             db_conn.execute("CREATE INDEX rsid_idx ON cpras_rsids (rsid)")
-
-        backup_file(cpras_rsids_filepath, data_subdir="sites", method="move")
 
         cpras_rsids_tmp_filepath.rename(cpras_rsids_filepath)
         print("Done making cpras-rsids sqlite3 at {}".format(str(cpras_rsids_filepath)))

@@ -103,8 +103,6 @@ def annotate_genes(in_filepath: str, out_filepath: str) -> None:
     """Both args are filepaths"""
     ga = GeneAnnotator(get_gene_tuples())
 
-    backup_file(out_filepath, data_subdir="sites", method="copy")
-
     with VariantFileWriter(out_filepath) as out_f, VariantFileReader(
         in_filepath
     ) as variants:
@@ -135,8 +133,9 @@ def run(argv: List[str]) -> None:
     ) <= mtime(out_filepath):
         print("gene annotation is up-to-date!")
         return
-    else:
-        annotate_genes(input_filepath, out_filepath)
+
+    backup_file(out_filepath, data_subdir="sites", method="move")
+    annotate_genes(input_filepath, out_filepath)
 
     # Variant database
     print("Generating sites/variants.db")

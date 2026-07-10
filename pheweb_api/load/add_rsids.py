@@ -106,8 +106,10 @@ def get_rsid_reader(
                 for alt in alt_group.split(","):
                     # Alt can be a comma-separated list
                     if alt == ".":
-                        continue  # TODO: I don't understand what this means or why it happens.  Probably it should match any alt.
-                    assert all(base in "ATCGN" for base in alt), (chrom, pos, ref, alt)
+                        # TODO: I don't understand what this means or why it happens.  Probably it should match any alt.
+                        continue
+                    assert all(
+                        base in "ATCGN" for base in alt), (chrom, pos, ref, alt)
                     yield {
                         "chrom": chrom,
                         "pos": int(pos),
@@ -164,7 +166,7 @@ def run(argv: List[str]) -> None:
         print("rsid annotation is up-to-date!")
         return
 
-    backup_file(out_filepath, data_subdir="sites", method="copy")
+    backup_file(out_filepath, data_subdir="sites", method="move")
 
     with VariantFileReader(in_filepath) as in_reader, read_maybe_gzip(
         rsids_filepath
