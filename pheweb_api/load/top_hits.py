@@ -1,4 +1,4 @@
-from ..utils import get_phenolist
+from ..utils import get_phenotype_summary
 from .. import conf
 from ..file_utils import (
     write_json,
@@ -37,7 +37,7 @@ def get_hits(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
 
 def get_all_hits() -> List[Dict[str, Any]]:
     return sorted(
-        (hit for pheno in get_phenolist() for hit in get_hits(pheno)),
+        (hit for pheno in get_phenotype_summary() for hit in get_hits(pheno)),
         key=lambda hit: hit["pval"],
     )
 
@@ -64,12 +64,12 @@ def should_run() -> bool:
                     "manhattan", get_phenocode_with_stratifications(pheno)
                 )
             )
-            for pheno in get_phenolist()
+            for pheno in get_phenotype_summary()
         ]
     else:
         input_filepaths = [
             Path(get_pheno_filepath("manhattan", pheno["phenocode"]))
-            for pheno in get_phenolist()
+            for pheno in get_phenotype_summary()
         ]
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:

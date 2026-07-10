@@ -171,7 +171,7 @@ def create_matrix_tbi(matrix_gz_filepath):
             end_col=1,  # note: column indexes start at 0, whereas `/usr/bin/tabix` starts at 1
         )
     else:
-        print("matrix.tbi is up-to-date!")
+        print(f"{matrix_tbi_filepath} is up-to-date!")
 
 
 def run_matrix_functions(
@@ -213,7 +213,7 @@ def run_matrix_functions(
             )
 
         else:
-            print("matrix is up-to-date!")
+            print(f"{matrix_gz_filepath} is up-to-date!")
     # Writing matrix file from scratch
     else:
         print(f"Creating {matrix_gz_filepath}.")

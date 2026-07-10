@@ -1,6 +1,7 @@
 from .utils import (
     PheWebError,
     get_phenolist,
+    get_phenotype_summary,
     chrom_order,
     get_phenocode_with_stratifications,
 )
@@ -243,11 +244,7 @@ def backup_file(filepath: str,
                 method: str = "copy",
                 add_iso_date=True) -> str:
 
-    if not conf.is_backups_enabled():
-        return
-
-    if not os.path.exists(filepath):
-        print(f"{filepath} does not exist. Nothing to backup.")
+    if not conf.is_backups_enabled() or not os.path.exists(filepath):
         return
 
     if not data_subdir:
@@ -497,21 +494,6 @@ class MatrixReader:
             else matrix_filepath
         )
 
-        phenos: List[Dict[str, Any]] = get_phenolist()
-        phenocodes: List[str] = [pheno["phenocode"] for pheno in phenos]
-
-        if conf.has_stratifications():
-            phenocodes: List[str] = [
-                get_phenocode_with_stratifications(pheno) for pheno in phenos
-            ]
-
-        self._info_for_pheno = {
-            get_phenocode_with_stratifications(pheno): {
-                k: v for k, v in pheno.items() if k != "assoc_files"
-            }
-            for pheno in phenos
-        }
-
         with read_gzip(self._filepath) as f:
             reader = csv.reader(f, dialect="pheweb-internal-dialect")
             colnames = next(reader)
@@ -528,13 +510,40 @@ class MatrixReader:
                 assert len(x) == 2, x
                 field, phenocode = x
                 assert field in parse_utils.fields, field
-                assert phenocode in phenocodes, phenocode
                 self._colidxs_for_pheno.setdefault(phenocode, {})[
                     field] = colnum
             else:
                 field = colname
                 assert field in parse_utils.fields, field
                 self._colidxs[field] = colnum
+
+        # First add phenotypes from phenotype.json if it exists,
+        if os.path.exists(get_filepath("phenotypes_summary")):
+
+            phenos = get_phenotype_summary()
+
+            keys_black_list = ("num_peaks", "rsids", "alt", "ref", "pos",
+                               "chrom", "nearest_genes", "pval")
+
+            self._info_for_pheno = {
+                get_phenocode_with_stratifications(pheno): {
+                    k: v for k, v in pheno.items() if k not in keys_black_list
+                }
+                for pheno in phenos
+            }
+
+        # uses pheno-list.json afterwards
+        # TODO: maybe get_phenolist_no_interaction instead?
+        phenos: List[Dict[str, Any]] = get_phenolist()
+
+        self._info_for_pheno.update({
+            get_phenocode_with_stratifications(pheno): {
+                k: v for k, v in pheno.items() if k != "assoc_files"
+            }
+            # TODO: allowing overwrites here
+            for pheno in phenos
+            if get_phenocode_with_stratifications(pheno) not in self._info_for_pheno
+        })
 
     def get_phenocodes(self) -> List[str]:
         return list(self._colidxs_for_pheno)
