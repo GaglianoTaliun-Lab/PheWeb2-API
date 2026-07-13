@@ -1,6 +1,6 @@
 # Ingesting new data
 
-The goal of these instructions is to append new GWAS data to an existing PheWeb 2.0 instance. They assume that the initial data ingestion has already been completed with a first dataset.
+The goal of these instructions is to append new GWAS data to an existing PheWeb2 instance. They assume that the initial data ingestion has already been completed with a first dataset.
 
 ## 1. Test it out using our second small example data
 
