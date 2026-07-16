@@ -58,7 +58,7 @@ def run(argv):
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
 
-    if not manna.files or not conf.is_overwrite_enabled() or not force:
+    if not manna.files or not force:
         print("The list of sites is up-to-date!")
         return
 
