@@ -121,6 +121,10 @@ def get_phenotype_summary(
     from .file_utils import get_filepath
 
     filepath = filepath or get_filepath("phenotypes_summary")
+
+    if not os.path.exists(filepath):
+        return []
+
     try:
         with open(os.path.join(filepath)) as f:
             phenotype_summary = json.load(f)

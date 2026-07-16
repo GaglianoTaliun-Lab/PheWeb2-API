@@ -1,6 +1,7 @@
 from ..utils import (
     chrom_order,
     get_phenolist,
+    get_phenotype_summary,
     PheWebError,
     get_phenocode_with_stratifications,
 )
@@ -57,12 +58,7 @@ def run(argv):
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
 
-    # Only files that are newer than sites
-    if os.path.exists(out_filepath):
-        manna.set_files([f for f in manna.files if mtime(
-            f["filepath"]) > mtime(out_filepath)])
-
-    if not manna.files and not force:
+    if not manna.files or not conf.is_overwrite_enabled() or not force:
         print("The list of sites is up-to-date!")
         return
 
@@ -141,10 +137,22 @@ class MergeManager:
         self.n_procs = conf.get_num_procs(cmd="sites")
         self.files = []
 
+        # Get pheno from pheno summary
+        existing_phenotypes = get_phenotype_summary()
+        if conf.has_stratifications():
+            existing_phenocodes = [get_phenocode_with_stratifications(
+                pheno) for pheno in existing_phenotypes]
+        else:
+            existing_phenocodes = [pheno["phenocode"]
+                                   for pheno in existing_phenotypes]
+
         # Get pheno from pheno list
         for pheno in get_phenolist():
             if conf.has_stratifications():
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+
+            if pheno["phenocode"] in existing_phenocodes:
+                continue
 
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
             self.files.append(
