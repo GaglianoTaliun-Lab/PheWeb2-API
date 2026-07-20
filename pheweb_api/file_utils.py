@@ -242,7 +242,9 @@ def get_backup_path():
 def backup_file(filepath: str,
                 data_subdir: str = "",
                 method: str = "copy",
-                add_iso_date=True) -> str:
+                add_iso_date=True,
+                log=False
+                ) -> str:
 
     if not conf.is_backups_enabled() or not os.path.exists(filepath):
         return
@@ -279,10 +281,12 @@ def backup_file(filepath: str,
     make_basedir(backup_filepath)
 
     if method == "move":
-        print(f"NOTE: moving the old {filepath!r} to {backup_filepath!r}")
+        if log:
+            print(f"NOTE: moving the old {filepath!r} to {backup_filepath!r}")
         shutil.move(filepath, backup_filepath)
     else:
-        print(f"NOTE: copying the old {filepath!r} to {backup_filepath!r}")
+        if log:
+            print(f"NOTE: copying the old {filepath!r} to {backup_filepath!r}")
         shutil.copy(filepath, backup_filepath)
 
     return backup_filepath

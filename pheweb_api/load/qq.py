@@ -19,6 +19,7 @@ from ..utils import (
     PheWebError,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
+    get_phenotypes_to_process
 )
 from .. import conf
 from ..file_utils import VariantFileReader, write_json, get_pheno_filepath, backup_file
@@ -37,14 +38,16 @@ NUM_MAF_RANGES = 4
 
 
 def run(argv: List[str]) -> None:
-    parser = argparse.ArgumentParser(description="Make a QQ plot for each phenotype.")
+    parser = argparse.ArgumentParser(
+        description="Make a QQ plot for each phenotype.")
     parser.add_argument(
         "--phenos",
         help="Can be like '4,5,6,12' or '4-6,12' to run on only the phenos at those positions (0-indexed) in pheno-list.json (and only if they need to run)",
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenotypes_to_process()
 
     interaction_phenos = []
     non_interaction_phenos = []
@@ -115,7 +118,8 @@ def make_json_file_explicit(
         rv["overall"] = make_qq_unstratified(
             variants, include_qq=False
         )  # Must run AFTER `_stratified()`, because it sorts by qval, which could bias the maf_range strata.
-        rv["ci"] = list(get_confidence_intervals(len(variants) / len(rv["by_maf"])))
+        rv["ci"] = list(get_confidence_intervals(
+            len(variants) / len(rv["by_maf"])))
     else:
         rv["overall"] = make_qq_unstratified(variants, include_qq=True)
         rv["ci"] = list(get_confidence_intervals(len(variants)))
@@ -175,7 +179,7 @@ def make_qq_stratified(variants: np.ndarray) -> List[Dict[str, Any]]:
             len(variants) * (idx + 1) // NUM_MAF_RANGES,
         )
         qvals = variants["qval"][
-            slice_indices[0] : slice_indices[1]
+            slice_indices[0]: slice_indices[1]
         ].copy()  # Make sure to copy so we don't modify `variants`.
         qvals *= -1
         qvals.sort()
@@ -270,7 +274,8 @@ def gc_value(pval: float, quantile: float = 0.5) -> float:
     return scipy.stats.chi2.ppf(1 - pval, 1) / scipy.stats.chi2.ppf(1 - quantile, 1)
 
 
-assert approx_equal(gc_value(0.49), 1.047457)  # I computed these using that R code.
+# I computed these using that R code.
+assert approx_equal(gc_value(0.49), 1.047457)
 assert approx_equal(gc_value(0.5), 1)
 assert approx_equal(gc_value(0.50001), 0.9999533)
 assert approx_equal(gc_value(0.6123), 0.5645607)

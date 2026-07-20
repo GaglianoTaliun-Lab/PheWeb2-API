@@ -20,14 +20,15 @@ from typing import List, Any, Dict, Tuple
 import copy
 import os
 
+
 def run(argv: List[str]) -> None:
     if argv and "-h" in argv:
         print("get info for genes")
         exit(0)
 
-    print("running matrix")
     # Check whether we're already up-to-date.
-    out_filepath = Path(get_filepath("best-phenos-by-gene-sqlite3", must_exist=False))
+    out_filepath = Path(get_filepath(
+        "best-phenos-by-gene-sqlite3", must_exist=False))
 
     if conf.has_stratifications():
         matrix_filepaths = []
@@ -50,8 +51,9 @@ def run(argv: List[str]) -> None:
             out_filepath.exists()
             and matrix_filepath.stat().st_mtime < out_filepath.stat().st_mtime
         ):
-            print("{} is up-to-date!".format(str(out_filepath)))
-            return
+            print(
+                f"skipping {out_filepath}, it is newer than {matrix_filepath}")
+            continue
 
         else:
             regions_on_chrom = get_regions_on_chrom()
@@ -60,9 +62,9 @@ def run(argv: List[str]) -> None:
                 for chrom, regions in regions_on_chrom.items()
                 for (start, end) in regions
             ]
-            
+
             print(f"{len(regions)=}")
-            
+
             task_results = Parallelizer().run_multiple_tasks(
                 tasks=regions,
                 do_multiple_tasks=process_regions,
@@ -145,7 +147,8 @@ def process_regions(taskq, retq, parent_overrides, matrix_filepath) -> None:
     # TODO: fix this
     with MatrixReader(matrix_filepath=matrix_filepath).context() as matrix_reader:
         f = functools.partial(get_region_info, matrix_reader, tree_for_chrom)
-        Parallelizer._make_multiple_tasks_doer(f)(taskq, retq, parent_overrides)
+        Parallelizer._make_multiple_tasks_doer(
+            f)(taskq, retq, parent_overrides)
 
 
 def get_region_info(
@@ -187,7 +190,8 @@ def get_region_info(
         assoc["phenocode"] = phenocode
         phenos_in_gene.setdefault(genename, []).append(assoc)
     for genename in phenos_in_gene:
-        phenos_in_gene[genename] = order_and_truncate_phenos(phenos_in_gene[genename])
+        phenos_in_gene[genename] = order_and_truncate_phenos(
+            phenos_in_gene[genename])
     return phenos_in_gene
 
 
@@ -198,24 +202,13 @@ def get_gene_intervaltree_for_chrom() -> Dict[str, IntervalTree]:
         if chrom not in tree_for_chrom:
             tree_for_chrom[chrom] = IntervalTree()
         # Interval from intervaltree can only take 3 args
-        tree_for_chrom[chrom].add(Interval(start, end, (genename, true_start, true_end)))
+        tree_for_chrom[chrom].add(
+            Interval(start, end, (genename, true_start, true_end)))
     return tree_for_chrom
 
 
 def order_and_truncate_phenos(phenos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    # Decide how many phenotypes to show.
-    #  - Always show all significant phenotypes (with pvalue < 5e-8).
-    #  - Always show the three strongest phenotypes (even if none are significant).
-    #  - Look at the p-values of the 4th to 10th strongest phenotypes to decide how many of them to show.
-    phenos.sort(key=lambda a: a["pval"]) # HX: we get all the phenos instead of the top 3
-    # biggest_idx_to_include = 2 
-    # for idx in range(biggest_idx_to_include, len(phenos)):
-    #     if phenos[idx]["pval"] < 5e-8:
-    #         biggest_idx_to_include = idx
-    #     elif idx < 10 and phenos[idx]["pval"] < 10 ** (
-    #         -4 - idx // 2
-    #     ):  # formula is arbitrary
-    #         biggest_idx_to_include = idx
-    #     else:
-    #         break
+
+    phenos.sort(key=lambda a: a["pval"])
+
     return phenos

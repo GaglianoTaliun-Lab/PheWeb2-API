@@ -6,7 +6,7 @@ import os
 
 from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file
 from ..utils import (
-    get_phenolist,
+    get_phenotypes_to_process,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
     chrom_order,
@@ -25,6 +25,7 @@ from typing import List, Dict, Any
 
 NUM_VARIANTS = 100_000
 
+
 def run(argv: List[str]) -> None:
     parser = argparse.ArgumentParser(description="Make a file .")
     parser.add_argument(
@@ -33,7 +34,8 @@ def run(argv: List[str]) -> None:
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenotypes_to_process()
 
     interaction_phenos = []
     non_interaction_phenos = []
@@ -75,14 +77,16 @@ def run(argv: List[str]) -> None:
 def make_bestof_file(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("pheno_gz", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 
 def make_bestof_file_interaction(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("interaction", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 

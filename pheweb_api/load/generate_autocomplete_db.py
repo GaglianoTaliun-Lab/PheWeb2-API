@@ -1,6 +1,6 @@
 from flask import Flask
 from ..models.autocomplete_util import AutocompleteLoading
-from ..conf import is_debug_mode, get_pheweb_data_dir
+from ..conf import is_debug_mode
 from ..file_utils import get_filepath
 import os
 

@@ -141,7 +141,6 @@ class AutocompleteLoading:
             self.create_autocomplete_db_genes_table()
             self.create_autocomplete_db_phenotypes_table()
             self.create_autocomplete_db_phenotypes_fts_table()
-            conn.close()
             if is_debug_mode():
                 print("DEBUG: Database creation complete. Entries loaded.")
 

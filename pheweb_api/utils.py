@@ -143,6 +143,24 @@ def get_phenotype_summary(
     return phenotype_summary
 
 
+def get_phenotypes_to_process() -> ty.List[ty.Dict[str, ty.Any]]:
+    """
+    Return phenotypes to process based on phenolist file.
+    Discounting any phenotypes already processed from summary.
+    """
+
+    phenos_to_process = get_phenolist()
+
+    summary = get_phenotype_summary()
+    summary_phenocodes = [get_phenocode_with_suffixes(
+        pheno) for pheno in summary]
+
+    phenos_to_process = [pheno for pheno in phenos_to_process
+                         if get_phenocode_with_suffixes(pheno) not in summary_phenocodes]
+
+    return phenos_to_process
+
+
 def pad_gene(start: int, end: int) -> ty.Tuple[int, int]:
     """
     Calculates a range to show in LocusZoom region views for a gene.
