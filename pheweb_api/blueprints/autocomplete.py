@@ -2,14 +2,20 @@ from flask import Blueprint, request, current_app
 from flask_restx import Namespace, Resource
 import re
 from ..models.autocomplete_util import AutocompleteLoading
+from ..conf import get_enable_phenotype_mask
+from ..utils import (get_phenotype_summary,
+                     get_phenotype_mask,
+                     get_phenocode_with_stratifications,
+                     get_phenocode_mask)
 
 autocomplete_service = AutocompleteLoading()
 
 bp = Blueprint("autocomplete", __name__)
 api = Namespace("autocomplete", description="Routes related to autocomplete")
 
+
 def search_gene_names(query):
-    
+
     results = autocomplete_service.query_genes(query)
     # print(f"DEBUG: results: {results}")
     output = []
@@ -24,11 +30,52 @@ def search_gene_names(query):
     return output
 
 
+def _mask_from_autocomplete(pheno):
+    """
+    Masking phenotype from autocomplete suggestions
+    """
+    phenocode = ""
+
+    if isinstance(pheno, str):
+        phenocode = pheno.split(".")[0]
+    else:  # dict
+        phenocode = pheno["phenocode"]
+
+    # If phenocode not in mask, don't mask it
+    phenocode_mask = get_phenocode_mask(with_suffixes=False)
+    if not phenocode in phenocode_mask:
+        return False
+
+    # All stratifications must be masked to hide phenotype from autocomplete
+    summary = get_phenotype_summary()
+    mask = get_phenotype_mask()
+
+    pheno_summary = list(set([get_phenocode_with_stratifications(
+        p) for p in summary if p["phenocode"] == phenocode]))
+    pheno_mask = list(set([get_phenocode_with_stratifications(
+        p) for p in mask if p["phenocode"] == phenocode]))
+
+    # print(pheno_summary)
+    # print(pheno_mask)
+
+    if not all([p in pheno_mask for p in pheno_summary]):
+        return False
+
+    return True
+
+
 def search_pheno_names(query):
     results = autocomplete_service.query_phenotypes(query)
     # print(f"DEBUG: results: {results}")
     output = []
+
+    using_mask = get_enable_phenotype_mask()
+
     for phenocode, phenostring in results:
+
+        if using_mask and _mask_from_autocomplete(phenocode):
+            continue
+
         output.append({
             "phenocode": phenocode,
             "phenostring": phenostring,
@@ -42,7 +89,8 @@ def search_variant_names(query, chrom=None, pos=None):
     print(f"DEBUG: query: {query}")
     # autocomplete_service = current_app.config["AUTOCOMPLETE"]
     if chrom and pos:
-        results = autocomplete_service.query_variants(query, chrom=chrom, pos=pos)
+        results = autocomplete_service.query_variants(
+            query, chrom=chrom, pos=pos)
         print(f"DEBUG: variant query results: {results}")
     else:
         results = autocomplete_service.query_variants(query)
@@ -71,9 +119,10 @@ def extract_standard_variant_id(query):
         return f"{chrom}-{pos}-{ref}-{alt}"
     return None
 
+
 def extract_partial_variant_id(query):
     query = query.strip().upper()
-    
+
     full_pattern = re.compile(
         r"^(CHR)?(?P<chrom>\d+|X|Y|MT)[:\-](?P<pos>\d+)[:\-](?P<ref>[ACGT]+)[:\-](?P<alt>[ACGT]+)$"
     )
@@ -91,7 +140,7 @@ def extract_partial_variant_id(query):
             pos = match.group("pos")
             ref = match.groupdict().get("ref")
             alt = match.groupdict().get("alt")
-            
+
             variant_parts = [chrom, pos]
             if ref:
                 variant_parts.append(ref)
@@ -101,7 +150,6 @@ def extract_partial_variant_id(query):
 
     return None
 
-    
 
 def aggregate(raw_query):
     query = raw_query.lstrip()
@@ -113,17 +161,14 @@ def aggregate(raw_query):
             return {"suggestions": search_variant_names(partial_variant_id_list[0], chrom=partial_variant_id_list[1], pos=int(partial_variant_id_list[2]))}
     elif query.lower().startswith("rs"):
         return {"suggestions": search_variant_names(query.lower())}
-    
+
     elif query == "":
-        return({"suggestions": []})
+        return ({"suggestions": []})
     else:
         pheno_results = search_pheno_names(query)
         gene_results = search_gene_names(query)
         all_results = [*pheno_results, *gene_results]
         return {"suggestions": all_results}
-
-
-
 
 
 @api.route("/")

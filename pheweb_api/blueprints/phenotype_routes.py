@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, g
-from flask import current_app 
+from flask import current_app
 from ..models import create_phenotypes_list, create_tophits
 from ..models.utils import extract_variants
 from flask_restx import Namespace, Resource, reqparse
@@ -13,8 +13,10 @@ api = Namespace("phenotypes", description="Routes related to phenotypes")
 class PhenotypeServiceNotAvailable(Exception):
     pass
 
+
 class TopHitsServiceNotAvailable(Exception):
     pass
+
 
 def get_pheno_service():
     if "pheno" not in g:
@@ -24,6 +26,7 @@ def get_pheno_service():
                 "Could not create phenotype service. Check if data path (named generated-by-pheweb/ by default) is correctly configured in .env or config.py."
             )
     return g.pheno
+
 
 def get_tophits_service():
     if "tophits" not in g:
@@ -42,7 +45,8 @@ class PhenotypeList(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode=None):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
             result = pheno_service.get_phenotypes_list(phenocode)
             if result:
@@ -51,7 +55,8 @@ class PhenotypeList(Resource):
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting phenotypes list for {phenocode}: {e}")
+            current_app.logger.error(
+                f"Error getting phenotypes list for {phenocode}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -60,7 +65,8 @@ class TopHits(Resource):
     @cache.cached(timeout=300)
     def get(self):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             tophits_service = get_tophits_service()
             result = tophits_service.get_tophits()
             if result:
@@ -90,7 +96,8 @@ class InteractionList(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode=None):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
             result = pheno_service.get_interaction_list(phenocode)
             if result:
@@ -99,7 +106,8 @@ class InteractionList(Resource):
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting interaction list for {phenocode}: {e}")
+            current_app.logger.error(
+                f"Error getting interaction list for {phenocode}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -107,14 +115,16 @@ class InteractionList(Resource):
 class Manhattan(Resource):
     def get(self, phenocode, stratification=None):
         try:
-            current_app.logger.debug(f"Getting pheno for {phenocode} and {stratification}")
+            current_app.logger.debug(
+                f"Getting pheno for {phenocode} and {stratification}")
             pheno_service = get_pheno_service()
             result = pheno_service.get_pheno(phenocode, stratification)
             return result
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting pheno for {phenocode} and {stratification}: {e}")
+            current_app.logger.error(
+                f"Error getting pheno for {phenocode} and {stratification}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -129,16 +139,19 @@ class PhenoFilterSingle(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode, stratification=None):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             args = parser.parse_args()
             min_maf = args["min_maf"]
             max_maf = args["max_maf"]
             indel = args["indel"]
 
-            data = extract_variants(phenocode, stratification, min_maf, max_maf, indel)
+            data = extract_variants(
+                phenocode, stratification, min_maf, max_maf, indel)
             return data
         except Exception as e:
-            current_app.logger.error(f"Error getting pheno filter for {phenocode} and {stratification}: {e}")
+            current_app.logger.error(
+                f"Error getting pheno filter for {phenocode} and {stratification}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -146,7 +159,8 @@ class PhenoFilterSingle(Resource):
 class SumStats(Resource):
     def get(self, phenocode, stratification=None):
         try:
-            current_app.logger.debug(f"Getting sum stats for {phenocode} and {stratification}")
+            current_app.logger.debug(
+                f"Getting sum stats for {phenocode} and {stratification}")
             args = parser.parse_args()
             filtering_options = {
                 "min_maf": args["min_maf"],
@@ -154,13 +168,15 @@ class SumStats(Resource):
                 "indel": args["indel"],
             }
             pheno_service = get_pheno_service()
-            result = pheno_service.get_sumstats(phenocode, filtering_options, stratification)
+            result = pheno_service.get_sumstats(
+                phenocode, filtering_options, stratification)
             print(result)
             return result
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting sum stats for {phenocode} and {stratification}: {e}")
+            current_app.logger.error(
+                f"Error getting sum stats for {phenocode} and {stratification}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -168,14 +184,16 @@ class SumStats(Resource):
 class QQ(Resource):
     def get(self, phenocode, stratification=None):
         try:
-            current_app.logger.debug(f"Getting qq for {phenocode} and {stratification}")
+            current_app.logger.debug(
+                f"Getting qq for {phenocode} and {stratification}")
             pheno_service = get_pheno_service()
             result = pheno_service.get_qq(phenocode, stratification)
             return result
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting qq for {phenocode} and {stratification}: {e}")
+            current_app.logger.error(
+                f"Error getting qq for {phenocode} and {stratification}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -185,9 +203,11 @@ class Region(Resource):
     @cache.cached(timeout=300)
     def get(self, phenocode, region_code, stratification=None):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             pheno_service = get_pheno_service()
-            result = pheno_service.get_region(phenocode, stratification, region_code)
+            result = pheno_service.get_region(
+                phenocode, stratification, region_code)
             if not result:
                 return jsonify({
                     "data": [],
@@ -197,7 +217,8 @@ class Region(Resource):
         except PhenotypeServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting region for {phenocode} and {stratification}: {e}")
+            current_app.logger.error(
+                f"Error getting region for {phenocode} and {stratification}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -206,7 +227,8 @@ class GetVariants(Resource):
     @cache.cached(timeout=300)
     def post(self):
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             data = api.payload
             if not data:
                 return {"message": "No data provided"}, 400
@@ -214,7 +236,7 @@ class GetVariants(Resource):
             pheno_service = get_pheno_service()
             results = pheno_service.get_gwas_missing(data)
 
-            # process data using SNPFetcher            
+            # process data using SNPFetcher
             results = g.pheno.get_gwas_missing(data)
             processed_data = {
                 "message": "success",

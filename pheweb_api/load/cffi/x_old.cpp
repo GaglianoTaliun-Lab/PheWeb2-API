@@ -1,7 +1,7 @@
 
 /*
 compile with:
-  g++ -std=c++11 -lz -o _x.abi3.so x.cpp
+  g++ -std=c++11 -lz -o x x.cpp
 */
 
 #include <cstring> // memcpy on Linux
@@ -10,10 +10,6 @@ compile with:
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <memory>
 #include <vector>
 #include <string>
 #include <glob.h>
@@ -62,7 +58,7 @@ public:
             }
         }
     }
-    void write(const std::string& src_string) {
+    void write(const std::string src_string) {
         write(src_string.c_str(), src_string.length());
     }
     void close() {
@@ -169,6 +165,7 @@ private:
         "\0\xff" // no info about compression method or OS
         "\x06\0BC\x02\0\0"/* implicit \0 */; // 6-byte extra field named BC with 2-byte value (currently empty)
 };
+
 
 // ------
 // Gzip reader with the istream interface
@@ -397,171 +394,6 @@ bool endsWith (std::string const &str, std::string const &suffix) {
 }
 
 
-struct Matrix {
-    std::unique_ptr<LineReader> reader;
-    std::unique_ptr<BgzipWriter> writer;
-
-    std::string current_line;
-    std::vector<int> idx_to_exclude;
-
-    bool keep_reading = true;
-    bool write_variant = false;
-
-    std::string filepath;
-    std::string tmp_filepath;
-};
-
-
-
-struct SiteFile {
-    std::string filepath;
-    std::string tmp_filepath;
-    std::unique_ptr<LineReader> reader;
-    std::unique_ptr<BgzipWriter> writer;
-};
-
-
-struct Variant {
-    int chrom_idx;
-    int pos;
-    std::string ref;
-    std::string alt;
-};
-
-std::unordered_map<std::string, int> get_chrom_order_list()
-{
-
-    std::vector<std::string> chrom_order_list;
-
-    for (int i = 1; i <= 22; i++) {
-        chrom_order_list.push_back(std::to_string(i));
-    }
-
-    chrom_order_list.push_back("X");
-    chrom_order_list.push_back("Y");
-    chrom_order_list.push_back("MT");
-
-    std::unordered_map<std::string, int> chrom_order;
-
-    for (size_t i = 0; i < chrom_order_list.size(); i++) {
-        chrom_order[chrom_order_list[i]] = static_cast<int>(i);
-    }
-
-return chrom_order;
-}
-
-Variant lineToVariant(const std::string& line,
-    std::unordered_map<std::string, int>& chrom_order)
-{
-    Variant variant;
-
-    size_t start = 0;
-    size_t end = line.find('\t');
-
-    // chrom
-    variant.chrom_idx = chrom_order.at(line.substr(start, end - start));
-
-    // pos
-    start = end + 1;
-    end = line.find('\t', start);
-    variant.pos = std::stoi(line.substr(start, end - start));
-
-    // ref
-    start = end + 1;
-    end = line.find('\t', start);
-    variant.ref.assign(line, start, end - start);
-
-    // alt
-    start = end + 1;
-    end = line.find('\t', start);
-
-    if (end == std::string::npos)
-        variant.alt.assign(line, start, line.size() - start);
-    else
-        variant.alt.assign(line, start, end - start);
-
-    return variant;
-}
-
-int which_variant_is_bigger(const Variant& v1, const Variant& v2)
-{
-    auto t1 = std::tie(v1.chrom_idx, v1.pos, v1.ref, v1.alt);
-    auto t2 = std::tie(v2.chrom_idx, v2.pos, v2.ref, v2.alt);
-
-    if (t1 == t2)
-        return 0;
-
-    return (t1 > t2) ? 1 : 2;
-}
-
-bool matrixVariantIsEmpty(const std::string& line) {
-    std::stringstream ss(line);
-    std::string field;
-    std::vector<std::string> fields;
-
-    while (std::getline(ss, field, '\t')) {
-        fields.push_back(field);
-    }
-
-    for (size_t i = 4; i < fields.size(); i++) {
-        if (!fields[i].empty()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
-std::string removeMatrixFields(
-    const std::string& line,
-    const std::vector<int>& idx_to_exclude
-) {
-    std::string result;
-    result.reserve(line.size());
-
-    size_t start = 0;
-    size_t end = 0;
-
-    size_t exclude_idx = 0;
-    int column = 0;
-    bool first = true;
-
-    while (true) {
-
-        end = line.find('\t', start);
-
-        bool exclude =
-            exclude_idx < idx_to_exclude.size() &&
-            column == idx_to_exclude[exclude_idx];
-
-        if (!exclude) {
-
-            if (!first)
-                result.push_back('\t');
-
-            if (end == std::string::npos)
-                result.append(line, start, line.size() - start);
-            else
-                result.append(line, start, end - start);
-
-            first = false;
-
-        } else {
-            exclude_idx++;
-        }
-
-        if (end == std::string::npos)
-            break;
-
-        start = end + 1;
-        column++;
-    }
-
-    return result;
-}
-
-
 // ------
 // main
 
@@ -678,281 +510,6 @@ int make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, co
 
 
 
-int filter_matrices_and_sites(const char *sites_filepaths_str,
-                    const char *sites_tmp_filepaths_str,
-                    const char *matrices_filepaths_str,
-                    const char *matrices_tmp_filepaths_str,
-                    const char *phenocodes_to_exclude_str)
-{
-
-    // ==== Setting up sites reader and writer ====
-
-    // Parse "path1;path2;path3"
-    std::vector<std::string> sites_filepaths;
-    {
-        std::stringstream ss(sites_filepaths_str);
-        std::string filepath;
-
-        while (std::getline(ss, filepath, ';')) {
-            if (!filepath.empty())
-                sites_filepaths.push_back(filepath);
-        }
-    }
-
-    if (sites_filepaths.size() != 3)
-        throw std::runtime_error("Expected exactly 3 site filepaths.");
-
-    std::vector<std::string> sites_tmp_filepaths;
-    {
-        std::stringstream ss(sites_tmp_filepaths_str);
-        std::string filepath;
-
-        while (std::getline(ss, filepath, ';')) {
-            if (!filepath.empty())
-            sites_tmp_filepaths.push_back(filepath);
-        }
-    }
-
-    std::vector<SiteFile> sitesFiles;
-
-    for (int i = 0; i < sites_filepaths.size(); i++) {
-
-        SiteFile site;
-
-        site.filepath = sites_filepaths[i];
-        // TODO: ensuring proper tmp filepath, could also pass in 
-        site.tmp_filepath = sites_tmp_filepaths[i];
-        
-        site.reader = std::unique_ptr<LineReader>(new LineReader());
-        site.reader->attach(site.filepath);
-
-        site.writer = std::unique_ptr<BgzipWriter>(new BgzipWriter(site.tmp_filepath));
-
-        // Writing header
-        site.writer->write(site.reader->line);
-        site.writer->write("\n");
-
-        // Placing on first variant
-        site.reader->next();
-
-        sitesFiles.push_back(std::move(site));
-    }
-
-
-    // ==== Setting up phenocodes to exclude ====
-    std::vector<std::string> phenocodes_to_exclude;
-    {
-        std::stringstream ss(phenocodes_to_exclude_str);
-        std::string phenocode;
-
-        while (std::getline(ss, phenocode, ';')) {
-            if (!phenocode.empty())
-                phenocodes_to_exclude.push_back(phenocode);
-        }
-    }
-
-    // ==== Setting up matrices reader and writer ====
-
-    // Parse "path1;path2;path3"
-    std::vector<std::string> matrices_filepaths;
-    {
-        std::stringstream ss(matrices_filepaths_str);
-        std::string filepath;
-
-        while (std::getline(ss, filepath, ';')) {
-            if (!filepath.empty())
-                matrices_filepaths.push_back(filepath);
-        }
-    }
-
-    std::vector<std::string> matrices_tmp_filepaths;
-    {
-        std::stringstream ss(matrices_tmp_filepaths_str);
-        std::string filepath;
-
-        while (std::getline(ss, filepath, ';')) {
-            if (!filepath.empty())
-            matrices_tmp_filepaths.push_back(filepath);
-        }
-    }
-
-    if (matrices_filepaths.size() != matrices_tmp_filepaths.size())
-    throw std::runtime_error("Number of matrix filepaths don't match number of tmp matrix files.");
-
-
-    std::vector<Matrix> matrices;
-    for (int i = 0; i < matrices_filepaths.size(); i++) {
-
-        Matrix matrix;
-
-        matrix.filepath = matrices_filepaths[i];
-        matrix.tmp_filepath = matrices_tmp_filepaths[i];
-
-        // attach reader and writer
-        matrix.reader = std::unique_ptr<LineReader>(new LineReader());
-        matrix.reader->attach(matrix.filepath);
-
-        matrix.writer = std::unique_ptr<BgzipWriter>(new BgzipWriter(matrix.tmp_filepath));
-        // filtering header and gathering idx to keep
-        //matrix.reader->next();
-        std::string header = matrix.reader->line;
-
-        std::vector<std::string> fields_to_keep;
-
-        std::stringstream ss(header);
-
-        std::string column;
-        int idx = 0;
-
-        while (std::getline(ss, column, '\t')) {
-
-            bool exclude = false;
-
-            for (const auto& pheno : phenocodes_to_exclude) {
-                if (column.find(pheno) != std::string::npos) {
-                    exclude = true;
-                    break;
-                }
-            }
-
-            if (exclude)
-                matrix.idx_to_exclude.push_back(idx);
-            else
-                fields_to_keep.push_back(column);
-
-            idx++;
-        }
-
-
-        std::string new_header;
-
-        for (size_t i = 0; i < fields_to_keep.size(); i++) {
-
-            if (i)
-                new_header += "\t";
-
-            new_header += fields_to_keep[i];
-        }
-
-
-        matrix.writer->write(new_header);
-        matrix.writer->write("\n");
-
-
-        matrix.reader->next();
-        matrix.current_line = matrix.reader->line;
-
-        matrices.push_back(std::move(matrix));
-    }
-
-    size_t active_matrices = matrices.size();
-    std::unordered_map<std::string, int> order_list = get_chrom_order_list();
-
-    // Iterating through sites
-    while (!sitesFiles[0].reader->eof()) {
-
-        int empty_counter = 0;
-
-        Variant siteVariant = lineToVariant(sitesFiles[0].reader->line, order_list);
-
-        for (Matrix &matrix : matrices) {
-
-            if (!matrix.keep_reading)
-                continue;
-            
-            // Fetching variant
-            while (true) {
-                
-                // Comparing site and matrix variant
-                
-                Variant matrixVariant = lineToVariant(matrix.reader->line, order_list);
-
-                int cmp = which_variant_is_bigger(
-                    siteVariant,
-                    matrixVariant);
-                
-                // Found same site
-                if (cmp == 0) {
-
-                    // TODO:  removeMatrixFields & matrixVariantIsEmpty can be combined in one function
-                    // std::pair<std::string, bool> removeMatrixFieldsAndCheckEmpty
-
-
-                    matrix.current_line = removeMatrixFields(matrix.reader->line, matrix.idx_to_exclude);
-
-                    matrix.write_variant = true;
-                    // If matrix line is empty for every matrix, it will be discarded
-                    if (matrixVariantIsEmpty(matrix.current_line))
-                        empty_counter++;
-                    break;
-                }
-                // If sites is further than matrix, fetch next variant in matrix
-                if (cmp == 1) {
-                    matrix.reader->next();
-
-                    if (matrix.reader->eof()) {
-                        matrix.keep_reading = false;
-                        active_matrices--;
-                        break;
-                    }
-                }
-                // If matrix is further than site, skip until sites arrives at same position
-                else {
-                    matrix.write_variant = false;
-                    empty_counter++;
-                    break;
-                }
-            }
-        }
-
-        // IF site is present in some matrices
-        if (empty_counter != active_matrices) {
-
-            // writing back to sites
-            for(SiteFile &siteFile : sitesFiles){
-                siteFile.writer->write(siteFile.reader->line);
-                siteFile.writer->write("\n");
-            }
-
-            // 
-            for (Matrix &matrix : matrices) {
-
-                if (!matrix.keep_reading || !matrix.write_variant){
-                    continue;
-                }
-
-                matrix.writer->write(matrix.current_line);
-                matrix.writer->write("\n");
-
-                matrix.reader->next();
-
-                if (matrix.reader->eof()) {
-                    matrix.keep_reading = false;
-                    active_matrices--;
-                }
-            }
-        }
-
-        // Advancing sites
-        for(SiteFile &siteFile : sitesFiles){
-            siteFile.reader->next();
-        }
-    }
-
-
-    for(SiteFile &siteFile : sitesFiles){
-            siteFile.writer->close();
-        } 
-
-    
-    for (Matrix &matrix : matrices) {
-        matrix.writer->close();
-    }
-
-    return 0;
-}
-
-
 // ------
 // entry points
 
@@ -967,41 +524,11 @@ const char* make_matrix_and_return_string(const char *sites_filepath, const char
   }
 }
 
-
-const char* filter_matrices_and_sites_and_return_string(const char *sites_filepaths_str,
-                                                        const char *sites_tmp_filepaths_str,
-                                                        const char *matrices_filepaths_str,
-                                                        const char *matrices_tmp_filepaths_str,
-                                                        const char *phenocodes_to_exclude_str) {
-  try {
-    filter_matrices_and_sites(sites_filepaths_str,
-                    sites_tmp_filepaths_str,
-                    matrices_filepaths_str,
-                    matrices_tmp_filepaths_str,
-                    phenocodes_to_exclude_str);
-    return "ok";
-  } catch (const std::exception &exc) {
-    return exc.what();
-  } catch (...) {
-    return "[something broke]";
-  }
-}
-
 extern "C" { // we need C because C++ mangles names supposedly
   extern const char* cffi_make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, const char *matrix_filepath) {
     return make_matrix_and_return_string(sites_filepath, augmented_pheno_glob, matrix_filepath);
   }
-
-  extern const char* cffi_filter_matrices_and_sites(const char *sites_filepaths_str,
-                                                    const char *sites_tmp_filepaths_str,
-                                                    const char *matrices_filepaths_str,
-                                                    const char *matrices_tmp_filepaths_str,
-                                                    const char *phenocodes_to_exclude_str){
-    return filter_matrices_and_sites_and_return_string(sites_filepaths_str,sites_tmp_filepaths_str,matrices_filepaths_str,matrices_tmp_filepaths_str,phenocodes_to_exclude_str);
-    }
-
 }
-
 
 // for use when compiling directly (for debugging)
 int main(int argc, char **argv) {

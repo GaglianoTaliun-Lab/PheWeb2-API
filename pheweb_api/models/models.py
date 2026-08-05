@@ -10,7 +10,8 @@ import json
 from .variant import PhewasMatrixReader
 from .gwas_missing import SNPFetcher
 import gzip
-from ..conf import get_pheweb_data_dir
+from ..conf import get_pheweb_data_dir, get_enable_phenotype_mask
+from ..utils import pheno_is_masked, get_phenocode_mask
 
 """
 My eventual aspiration is to have an SQLite3 database for all these 
@@ -51,7 +52,8 @@ class Genes:
         # get best phenos for the selected gene
         connection = self.connect_to_sqlite()
         cursor = connection.cursor()
-        cursor.execute(f"SELECT * FROM best_phenos_for_each_gene WHERE gene='{gene}'")
+        cursor.execute(
+            f"SELECT * FROM best_phenos_for_each_gene WHERE gene='{gene}'")
         results = cursor.fetchone()
         connection.close()
 
@@ -79,7 +81,7 @@ class Genes:
 
         gene_names = [row["gene"] for row in results]
         return gene_names
-    
+
     def get_all_genes(self):
         # Fetch all gene names from the sqlite3 database
         connection = self.connect_to_sqlite()
@@ -112,7 +114,7 @@ class Pheno:
         self.pheno = {}
         self.phenotypes_list = phenotypes_list
         self.interaction_list = interaction_list
-    
+
     def get_all_pheno_names(self):
         pheno_dict = {}
         for pheno in self.phenotypes_list:
@@ -150,7 +152,8 @@ class Pheno:
             phenocode += stratification
 
         response = send_from_directory(
-            os.path.join(get_pheweb_data_dir(), "manhattan"), f"{phenocode}.json"
+            os.path.join(get_pheweb_data_dir(),
+                         "manhattan"), f"{phenocode}.json"
         )
         return response
 
@@ -164,9 +167,10 @@ class Pheno:
         return response
 
     def get_sumstats(self, phenocode, filtering_options, suffix=None):
-        
-        download_function = getDownloadFunction(phenocode, filtering_options, suffix)
-        
+
+        download_function = getDownloadFunction(
+            phenocode, filtering_options, suffix)
+
         return download_function
 
     def get_region(self, phenocode, stratification, region):
@@ -181,18 +185,18 @@ class Pheno:
         return get_pheno_region(phenocode, chrom, pos_start, pos_end)
 
     def get_gwas_missing(self, gwas_missing_data):
-        #print(f"{gwas_missing_data=}")
-        #print(f"{'6-162025704-T-G' in gwas_missing_data['GS_EXAM_MAX_COM.all.male']}")
+        # print(f"{gwas_missing_data=}")
+        # print(f"{'6-162025704-T-G' in gwas_missing_data['GS_EXAM_MAX_COM.all.male']}")
         fetcher = SNPFetcher(os.path.join(get_pheweb_data_dir(), "pheno_gz"))
         response = fetcher.process_keys(gwas_missing_data)
-        
-        #print(f"{response=}")
+
+        # print(f"{response=}")
 
         return response
 
 
 class Variant:
-    def __init__(self, stratifications: list = None, categories: list = None, all_phenos : list = None, stratification_categories : list = None):
+    def __init__(self, stratifications: list = None, categories: list = None, all_phenos: list = None, stratification_categories: list = None):
         self.variants = {}
         self.stratifications = stratifications
         self.stratification_categories = stratification_categories
@@ -201,23 +205,33 @@ class Variant:
 
     def get_stratifications(self):
         return self.stratifications
-    
+
     def get_categories(self):
         return self.categories
 
     def get_variant(self, variant_code, stratification):
-        reader = PhewasMatrixReader(variant_code, stratification, self.all_phenos, self.stratification_categories)
+        reader = PhewasMatrixReader(
+            variant_code, stratification, self.all_phenos, self.stratification_categories)
         reader.read_matrix()
         response = reader.find_matching_row()
-        # print("DEBUG: response", response)
+
+        if get_enable_phenotype_mask():
+            from copy import deepcopy
+            c_response = deepcopy(response)
+            for pheno in c_response["phenos"]:
+                if pheno_is_masked(pheno):
+                    response["phenos"].remove(pheno)
+
         return response
-    
+
     def get_nearest_genes(self, variant_code):
         try:
-            db_path = os.path.join(get_pheweb_data_dir(), "sites", "variants.db")
+            db_path = os.path.join(get_pheweb_data_dir(),
+                                   "sites", "variants.db")
             conn = sqlite3.connect(db_path)
             cur = conn.cursor()
-            cur.execute("SELECT nearest_genes FROM variants WHERE variant_id = ?", (variant_code,))
+            cur.execute(
+                "SELECT nearest_genes FROM variants WHERE variant_id = ?", (variant_code,))
             nearest_genes = cur.fetchone()[0].split(",")
             print("DEBUG: nearest_genes", nearest_genes)
             print("DEBUG: type of nearest_genes", type(nearest_genes))
@@ -226,13 +240,15 @@ class Variant:
         except Exception as e:
             print("DEBUG: error", e)
             return {}
-    
+
     def get_variant_rsid(self, variant_code):
         try:
-            db_path = os.path.join(get_pheweb_data_dir(), "sites", "autocomplete.db")
+            db_path = os.path.join(get_pheweb_data_dir(),
+                                   "sites", "autocomplete.db")
             conn = sqlite3.connect(db_path)
             cur = conn.cursor()
-            cur.execute("SELECT rsid FROM variants WHERE variant_id = ?", (variant_code,))
+            cur.execute(
+                "SELECT rsid FROM variants WHERE variant_id = ?", (variant_code,))
             rsid = cur.fetchone()
             print("DEBUG: rsid", rsid)
             print("DEBUG: type of rsid", type(rsid))
@@ -241,7 +257,6 @@ class Variant:
         except Exception as e:
             print("DEBUG: error", e)
             return {}
-
 
 
 def create_genes() -> Genes:
@@ -259,6 +274,13 @@ def create_tophits() -> Tophits:
     ) as f:
         data = json.load(f)
 
+    if get_enable_phenotype_mask():
+        from copy import deepcopy
+        data_c = deepcopy(data)
+        for top_hit in data_c:
+            if pheno_is_masked(top_hit):
+                data.remove(top_hit)
+
     return Tophits(data)
 
 
@@ -274,7 +296,11 @@ def create_phenotypes_list() -> Pheno:
         interaction_list = []
 
         for pheno in data:
-            if "interaction" not in pheno or not pheno["interaction"]:
+
+            if get_enable_phenotype_mask() and pheno_is_masked(pheno):
+                continue
+
+            if not pheno["interaction"]:
                 phenotypes_list.append(pheno)
             else:
                 interaction_list.append(pheno)
@@ -298,27 +324,32 @@ def create_variant() -> Variant:
         # TODO: logger instead of print?
         print(e)
         return None
-    
+
     stratifications = set()
     stratification_categories = set()
     categories = set()
     all_phenos = []
-    
+
     for pheno in data:
+
+        if get_enable_phenotype_mask() and pheno_is_masked(pheno):
+            continue
+
         if "stratification" in pheno:
             stratification_categories = list(pheno["stratification"].keys())
             stratifications.add(".".join(pheno["stratification"].values()))
         if "category" in pheno:
             categories.add(pheno['category'])
         pheno_subset = {
-            'phenocode' : pheno['phenocode'],
-            'category' : pheno['category'],
-            'phenostring' : pheno['phenostring']
-            }
-        
+            'phenocode': pheno['phenocode'],
+            'category': pheno['category'],
+            'phenostring': pheno['phenostring']
+        }
+
         if pheno_subset not in all_phenos:
-            all_phenos.append(pheno_subset)        
-            
-    stratifications, categories, all_phenos = list(stratifications), list(categories), list(all_phenos)
+            all_phenos.append(pheno_subset)
+
+    stratifications, categories, all_phenos = list(
+        stratifications), list(categories), list(all_phenos)
 
     return Variant(stratifications, categories, all_phenos, stratification_categories)

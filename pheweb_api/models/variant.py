@@ -158,31 +158,6 @@ class PhewasMatrixReader:
                             if pheno_basic_info is not None
                             else None,
                         }
-# =======
-#                         base_phenocode = phenocode_parts[0]
-#                         strat_values = phenocode_parts[1:]
-
-#                         # Sort strat keys alphabetically for consistency with the index
-#                         strat_keys = sorted(self.phenotype_strat_keys)  # This must be set elsewhere
-#                         stratification = {
-#                             key: strat_values[i] if i < len(strat_values) else None
-#                             for i, key in enumerate(strat_keys)
-# >>>>>>> f1d323d2dc3dea68bba79e6b4b1d33acd41af983
-#                         }
-
-#                         key = (base_phenocode,) + tuple(stratification[k] for k in strat_keys)
-#                         pheno_list = self.phenotype_data_with_index.get(key, [])
-#                         pheno_basic_info = pheno_list[0] if pheno_list else None
-
-#                         pheno_data = {
-#                             "phenocode": base_phenocode,
-#                             "stratification": stratification,
-#                             "category": pheno_basic_info.get("category") if pheno_basic_info else None,
-#                             "phenostring": pheno_basic_info.get("phenostring") if pheno_basic_info else None,
-#                             "num_samples": pheno_basic_info.get("num_samples") if pheno_basic_info else None,
-#                             "num_controls": pheno_basic_info.get("num_controls") if pheno_basic_info else None,
-#                             "num_cases": pheno_basic_info.get("num_cases") if pheno_basic_info else None,
-#                         }
 
                         subset_pheno = {
                             'phenocode': pheno_data['phenocode'],

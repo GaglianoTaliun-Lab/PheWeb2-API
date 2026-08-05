@@ -1,4 +1,4 @@
-from ..utils import get_phenolist
+from ..utils import get_phenotype_mask, get_phenolist, get_phenotype_summary
 from .. import conf
 from ..file_utils import (
     write_json,
@@ -8,6 +8,7 @@ from ..file_utils import (
     get_phenocode_with_stratifications,
 )
 
+import argparse
 import json
 from pathlib import Path
 from typing import Dict, Any, List, Iterator
@@ -34,9 +35,9 @@ def get_hits(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
             yield v
 
 
-def get_all_hits() -> List[Dict[str, Any]]:
+def get_all_hits(phenos) -> List[Dict[str, Any]]:
     return sorted(
-        (hit for pheno in get_phenolist() for hit in get_hits(pheno)),
+        (hit for pheno in phenos for hit in get_hits(pheno)),
         key=lambda hit: hit["pval"],
     )
 
@@ -47,7 +48,7 @@ def stringify_assocs(assocs: List[Dict[str, Any]]) -> None:
             a["nearest_genes"] = ",".join(a["nearest_genes"])
 
 
-def should_run() -> bool:
+def should_run(phenos) -> bool:
     output_filepaths = [
         Path(get_filepath(name, must_exist=False))
         for name in ["top-hits", "top-hits-1k", "top-hits-tsv"]
@@ -63,12 +64,12 @@ def should_run() -> bool:
                     "manhattan", get_phenocode_with_stratifications(pheno)
                 )
             )
-            for pheno in get_phenolist()
+            for pheno in phenos
         ]
     else:
         input_filepaths = [
             Path(get_pheno_filepath("manhattan", pheno["phenocode"]))
-            for pheno in get_phenolist()
+            for pheno in phenos
         ]
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:
@@ -81,38 +82,53 @@ def run(argv: List[str]) -> None:
     out_filepath_1k_json = get_filepath("top-hits-1k", must_exist=False)
     out_filepath_tsv = get_filepath("top-hits-tsv", must_exist=False)
 
-    if argv and argv[0] == "-h":
+    parser = argparse.ArgumentParser(
+        description="Make lists of top hits for this PheWeb.",
+        add_help=False,
+    )
+
+    parser.add_argument('-h', '--help', action='store_true')
+    parser.add_argument('-f', '--force', action='store_true')
+    parser.add_argument('-r', "--remove", action='store_true')
+    args = parser.parse_args(argv)
+
+    if args.help:
+        pvalue = "{:0.0e}".format(
+            min(
+                conf.get_top_hits_pval_cutoff(),
+                conf.get_manhattan_peak_pval_threshold(),
+            )
+        ).replace("e-0", "e-")
         print(
-            """
-Make lists of top hits for this PheWeb in {} and {}.
+            f"""
+Make lists of top hits for this PheWeb in {out_filepath_json} and {out_filepath_tsv}.
 
 To count as a top hit, a variant must:
-- have a p-value < {}
-- be among the top {:,} associations in its phenotype
-- have the smallest p-value within {:,} bases within its phenotype (well, not exactly, but pretty much)
+- have a p-value < {pvalue}
+- be among the top {conf.get_manhattan_num_unbinned()} associations in its phenotype
+- have the smallest p-value within {conf.get_within_pheno_mask_around_peak()} bases within its phenotype (well, not exactly, but pretty much)
 
 Some loci may have hits for multiple phenotypes.  If you want a list of loci with
 just the top phenotype for each, use `pheweb top-loci`.
-""".format(
-                out_filepath_json,
-                out_filepath_tsv,
-                "{:0.0e}".format(
-                    min(
-                        conf.get_top_hits_pval_cutoff(),
-                        conf.get_manhattan_peak_pval_threshold(),
-                    )
-                ).replace("e-0", "e-"),
-                conf.get_manhattan_num_unbinned(),
-                conf.get_within_pheno_mask_around_peak(),
-            )
-        )
+""")
         exit(1)
 
-    if not should_run():
-        print("Already up-to-date!")
-        return
+    if args.remove:
+        phenos = get_phenotype_summary()
+        mask = get_phenotype_mask()
 
-    hits = get_all_hits()
+        for pheno in mask:
+            if pheno in phenos:
+                phenos.remove(pheno)
+    else:
+        phenos = get_phenolist()
+
+    if not args.force:
+        if not should_run(phenos):
+            print("Already up-to-date!")
+            return
+
+    hits = get_all_hits(phenos)
 
     write_json(filepath=out_filepath_json, data=hits, sort_keys=True)
     print("wrote {} hits to {}".format(len(hits), out_filepath_json))

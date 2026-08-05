@@ -51,10 +51,12 @@ for submodule in """
  top_loci
  detect_ref
  generate_autocomplete_db
+ remove_phenotypes
 """.split():
 
     def f(submodule: str, argv: List[str]) -> None:
-        module = importlib.import_module(".load.{}".format(submodule), __package__)
+        module = importlib.import_module(
+            ".load.{}".format(submodule), __package__)
         module_run = getattr(module, "run", None)
         if not callable(module_run):
             raise Exception(
@@ -71,9 +73,10 @@ handlers["process"] = handlers["process-assoc-files"]
 handlers["parse"] = handlers["parse-input-files"]
 
 
-def serve(argv:List[str]) -> None:
-     from pheweb_api.api_app import run
-     run(argv)
+def serve(argv: List[str]) -> None:
+    from pheweb_api.api_app import run
+    run(argv)
+
 
 handlers['serve'] = serve
 

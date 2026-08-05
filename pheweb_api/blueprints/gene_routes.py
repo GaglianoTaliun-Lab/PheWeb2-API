@@ -2,12 +2,15 @@ from flask import Blueprint, g, current_app
 from ..models import create_genes
 from flask_restx import Namespace, Resource
 from .cache import cache
+from ..utils import get_phenocode_mask
 
 bp = Blueprint("gene_routes", __name__)
 api = Namespace("gene", description="Routes related to genes")
 
+
 class GenesServiceNotAvailable(Exception):
     pass
+
 
 def get_genes_service():
     if "genes" not in g:
@@ -27,7 +30,8 @@ class GeneNames(Resource):
         Get a list of all available gene names
         """
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             gene_list = genes_service.get_gene_names()
             return gene_list, 200
@@ -37,6 +41,7 @@ class GeneNames(Resource):
             current_app.logger.error(f"Error getting gene names: {e}")
             return {"message": "Internal server error."}, 500
 
+
 @api.route("/<gene>")
 class SignificantAssociationTable(Resource):
     @cache.cached(timeout=300)
@@ -45,11 +50,20 @@ class SignificantAssociationTable(Resource):
         Get association information for a specific gene name.
         """
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             table_data = genes_service.get_genes_table(gene)
 
             if table_data:
+
+                pheno_mask = get_phenocode_mask()
+                if pheno_mask:
+                    table_data["data"] = [
+                        pheno for pheno in table_data["data"]
+                        if pheno["phenocode"].split(".")[0] not in pheno_mask
+                    ]
+
                 return table_data, 200
             else:
                 return {"data": [], "message": "No data found for this gene"}, 404
@@ -57,7 +71,8 @@ class SignificantAssociationTable(Resource):
         except GenesServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting gene table for {gene}: {e}")
+            current_app.logger.error(
+                f"Error getting gene table for {gene}: {e}")
             return {"message": "Internal server error."}, 500
 
 
@@ -69,7 +84,8 @@ class GenePosition(Resource):
         Get base-pair and chromosome position of a given gene name
         """
         try:
-            current_app.logger.debug(f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
+            current_app.logger.debug(
+                f"Cache missed. Executing {self.__module__}.{self.__class__.__name__}.")
             genes_service = get_genes_service()
             chrom, start, end = genes_service.get_gene_position(gene)
 
@@ -84,5 +100,6 @@ class GenePosition(Resource):
         except GenesServiceNotAvailable as e:
             return {"message": str(e)}, 404
         except Exception as e:
-            current_app.logger.error(f"Error getting gene position for {gene}: {e}")
+            current_app.logger.error(
+                f"Error getting gene position for {gene}: {e}")
             return {"message": "Internal server error."}, 500

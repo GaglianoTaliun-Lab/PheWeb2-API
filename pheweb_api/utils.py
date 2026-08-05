@@ -6,6 +6,7 @@ import csv
 import boltons.mathutils
 import urllib.parse
 import types
+from functools import lru_cache
 import typing as ty
 from typing import Dict
 
@@ -59,17 +60,19 @@ assert fmt_seconds(900) == "15 minutes"
 assert fmt_seconds(90000) == "25 hours"
 
 
+@lru_cache(maxsize=1)
 def get_phenolist(filepath: ty.Optional[str] = None) -> ty.List[ty.Dict[str, ty.Any]]:
-    # TODO: should this be memoized?
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenolist")  # Allow override for unit testing
+    # Allow override for unit testing
+    filepath = filepath or get_filepath("phenolist")
     try:
         with open(os.path.join(filepath)) as f:
             phenolist = json.load(f)
     except (FileNotFoundError, PermissionError):
         raise PheWebError(
-            "You need a file to define your phenotypes at '{}'.\n".format(filepath)
+            "You need a file to define your phenotypes at '{}'.\n".format(
+                filepath)
             + "For more information on how to make one, see <https://github.com/statgen/pheweb#3-make-a-list-of-your-phenotypes>"
         )
     except json.JSONDecodeError as exc:
@@ -81,17 +84,19 @@ def get_phenolist(filepath: ty.Optional[str] = None) -> ty.List[ty.Dict[str, ty.
     return phenolist
 
 
+@lru_cache(maxsize=1)
 def get_phenolist_no_interaction(filepath: ty.Optional[str] = None) -> ty.List[ty.Dict]:
-    # TODO: should this be memoized?
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenolist")  # Allow override for unit testing
+    # Allow override for unit testing
+    filepath = filepath or get_filepath("phenolist")
     try:
         with open(os.path.join(filepath)) as f:
             phenolist = json.load(f)
     except (FileNotFoundError, PermissionError):
         raise PheWebError(
-            "You need a file to define your phenotypes at '{}'.\n".format(filepath)
+            "You need a file to define your phenotypes at '{}'.\n".format(
+                filepath)
             + "For more information on how to make one, see <https://github.com/statgen/pheweb#3-make-a-list-of-your-phenotypes>"
         )
     except json.JSONDecodeError as exc:
@@ -101,7 +106,7 @@ def get_phenolist_no_interaction(filepath: ty.Optional[str] = None) -> ty.List[t
 
     i = 0
     while i < len(phenolist):
-        if phenolist[i]["interaction"] is not None:
+        if phenolist[i]["interaction"]:
             del phenolist[i]  # Remove the element from the list
         else:
             phenolist[i]["phenocode"] = urllib.parse.quote_plus(
@@ -111,6 +116,7 @@ def get_phenolist_no_interaction(filepath: ty.Optional[str] = None) -> ty.List[t
     return phenolist
 
 
+@lru_cache(maxsize=1)
 def get_phenotype_summary(
     filepath: ty.Optional[str] = None,
 ) -> ty.List[ty.Dict[str, ty.Any]]:
@@ -135,12 +141,65 @@ def get_phenotype_summary(
     return phenotype_summary
 
 
+@lru_cache(maxsize=2)
+def get_phenocode_mask(with_suffixes=True) -> ty.List[str]:
+    """
+    Return phenotypes mask, a list of phenocode with suffixes
+    """
+
+    dict_pheno = get_phenotype_mask()
+
+    if with_suffixes:
+        pheno_code_mask = [get_phenocode_with_suffixes(
+            pheno) for pheno in dict_pheno]
+    else:
+        pheno_code_mask = list(set([pheno["phenocode"]
+                               for pheno in dict_pheno]))
+
+    return pheno_code_mask
+
+
+@lru_cache(maxsize=1)
+def get_phenotype_mask() -> ty.List[Dict]:
+    """
+    Return phenotypes mask
+    """
+
+    from .file_utils import get_filepath
+
+    pheno_mask_filepath = get_filepath("phenomask", must_exist=False)
+
+    dict_pheno = []
+
+    if not os.path.exists(pheno_mask_filepath):
+        return dict_pheno
+
+    with open(pheno_mask_filepath) as pheno_mask_file:
+        dict_pheno = json.load(pheno_mask_file)
+
+    return dict_pheno
+
+
+def pheno_is_masked(pheno):
+    """
+    Return whether phenotype is masked by phenomask file. 
+    """
+
+    pheno_mask = get_phenocode_mask()
+
+    if not get_phenocode_with_suffixes(pheno) in pheno_mask:
+        return False
+
+    return True
+
+
 def pad_gene(start: int, end: int) -> ty.Tuple[int, int]:
     """
     Calculates a range to show in LocusZoom region views for a gene.
     Adds 100kb on each side, but never go below 0 or pad longer than 500kb (LocusZoom's max_region_scale).
     """
-    total_padding = boltons.mathutils.clamp(int(500e3) - (end - start), 0, int(200e3))
+    total_padding = boltons.mathutils.clamp(
+        int(500e3) - (end - start), 0, int(200e3))
     padding_on_left = min(
         total_padding // 2, start
     )  # if start < padding//2, use `start` to avoid going below 0.
@@ -196,16 +255,18 @@ def get_phenocode_with_stratifications(pheno: dict) -> str:
     phenocode = pheno["phenocode"]
     for stratification in pheno["stratification"]:
         phenocode += "." + pheno["stratification"][stratification]
-    
+
     return phenocode
 
 
 def get_phenocode_with_suffixes(pheno: dict) -> str:
     phenocode = pheno["phenocode"]
-    if pheno["interaction"] is not None:
+    if pheno["interaction"]:
         phenocode += ".interaction-" + pheno["interaction"]
+
     for stratification in pheno["stratification"]:
         phenocode += "." + pheno["stratification"][stratification]
+
     return phenocode
 
 
@@ -214,7 +275,8 @@ def get_stratification_paths_server(phenos: dict) -> [str]:
     for pheno in phenos:
         stratification_path = ""
         for stratification in phenos[pheno]["stratification"]:
-            stratification_path += "." + phenos[pheno]["stratification"][stratification]
+            stratification_path += "." + \
+                phenos[pheno]["stratification"][stratification]
         stratification_paths.append(stratification_path)
     return stratification_paths
 
@@ -224,7 +286,8 @@ def get_stratification_paths(phenos: dict) -> [str]:
     for pheno in phenos:
         stratification_path = ""
         for stratification in pheno["stratification"]:
-            stratification_path += "." + pheno["stratification"][stratification]
+            stratification_path += "." + \
+                pheno["stratification"][stratification]
         stratification_paths.append(stratification_path)
     return stratification_paths
 
