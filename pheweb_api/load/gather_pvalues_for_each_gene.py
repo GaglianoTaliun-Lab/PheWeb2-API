@@ -18,7 +18,6 @@ from pathlib import Path
 from intervaltree import IntervalTree, Interval
 from typing import List, Any, Dict, Tuple
 import copy
-import os
 
 
 def run(argv: List[str]) -> None:
@@ -46,6 +45,8 @@ def run(argv: List[str]) -> None:
     out_tmp_filepath = Path(get_tmp_path(out_filepath))
 
     best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
+
+    matrices_newer_than_out = []
     for matrix_filepath in matrix_filepaths:
         if (
             out_filepath.exists()
@@ -54,33 +55,38 @@ def run(argv: List[str]) -> None:
             print(
                 f"skipping {out_filepath}, it is newer than {matrix_filepath}")
             continue
+        matrices_newer_than_out.append(matrix_filepath)
 
-        else:
-            regions_on_chrom = get_regions_on_chrom()
-            regions: List[Tuple[str, int, int]] = [
-                (chrom, start, end)
-                for chrom, regions in regions_on_chrom.items()
-                for (start, end) in regions
-            ]
+    if not matrices_newer_than_out:
+        print("best-phenos-by-gene.sqlite3 is up-to-date!")
+        return
 
-            print(f"{len(regions)=}")
+    for matrix_filepath in matrix_filepaths:
+        regions_on_chrom = get_regions_on_chrom()
+        regions: List[Tuple[str, int, int]] = [
+            (chrom, start, end)
+            for chrom, regions in regions_on_chrom.items()
+            for (start, end) in regions
+        ]
 
-            task_results = Parallelizer().run_multiple_tasks(
-                tasks=regions,
-                do_multiple_tasks=process_regions,
-                cmd="gather-pvalues-for-each-gene",
-                matrix_filepath=matrix_filepath,
-            )
-            # best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
-            for task_result in task_results:
-                assert task_result["type"] == "result"
-                partial_best_phenos_for_gene = task_result["value"]
-                for genename, best_phenos in partial_best_phenos_for_gene.items():
-                    # assert genename not in best_phenos_for_gene
-                    if genename in best_phenos_for_gene:
-                        best_phenos_for_gene[genename].extend(best_phenos)
-                    else:
-                        best_phenos_for_gene[genename] = best_phenos
+        print(f"{len(regions)=}")
+
+        task_results = Parallelizer().run_multiple_tasks(
+            tasks=regions,
+            do_multiple_tasks=process_regions,
+            cmd="gather-pvalues-for-each-gene",
+            matrix_filepath=matrix_filepath,
+        )
+        # best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
+        for task_result in task_results:
+            assert task_result["type"] == "result"
+            partial_best_phenos_for_gene = task_result["value"]
+            for genename, best_phenos in partial_best_phenos_for_gene.items():
+                # assert genename not in best_phenos_for_gene
+                if genename in best_phenos_for_gene:
+                    best_phenos_for_gene[genename].extend(best_phenos)
+                else:
+                    best_phenos_for_gene[genename] = best_phenos
     data = best_phenos_for_gene
     out_tmp_filepath = Path(get_tmp_path(out_filepath))
     db = sqlite3.connect(str(out_tmp_filepath))

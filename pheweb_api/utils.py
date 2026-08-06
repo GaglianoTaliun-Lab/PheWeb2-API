@@ -120,7 +120,7 @@ def get_phenotype_summary(
 ) -> ty.List[ty.Dict[str, ty.Any]]:
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenotypes_summary")
+    filepath = filepath or get_filepath("phenotypes_summary", must_exist=False)
 
     if not os.path.exists(filepath):
         return []
@@ -152,6 +152,7 @@ def get_phenotypes_to_process() -> ty.List[ty.Dict[str, ty.Any]]:
     phenos_to_process = get_phenolist()
 
     summary = get_phenotype_summary()
+
     summary_phenocodes = [get_phenocode_with_suffixes(
         pheno) for pheno in summary]
 

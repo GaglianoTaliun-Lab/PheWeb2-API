@@ -1,5 +1,5 @@
 from .. import conf
-from ..utils import get_phenolist, get_phenocode_with_suffixes
+from ..utils import get_phenocode_with_suffixes, get_phenotypes_to_process
 from ..file_utils import (
     write_json,
     get_filepath,
@@ -15,7 +15,7 @@ from typing import Iterator, Dict, Any, List
 
 
 def get_phenotypes_including_top_variants(existing_data) -> Iterator[Dict[str, Any]]:
-    for pheno in get_phenolist():
+    for pheno in get_phenotypes_to_process():
 
         if pheno in existing_data:
             continue
@@ -60,7 +60,7 @@ def get_phenotypes_including_top_variants(existing_data) -> Iterator[Dict[str, A
 
 
 def get_phenotypes_including_top_variants_stratified(existing_data_with_suffix) -> Iterator[Dict[str, Any]]:
-    for pheno in get_phenolist():
+    for pheno in get_phenotypes_to_process():
 
         phenocode = get_phenocode_with_suffixes(pheno)
 
@@ -117,12 +117,16 @@ def should_run() -> bool:
     oldest_output_mtime = min(fp.stat().st_mtime for fp in output_filepaths)
 
     input_filepaths = []
-    for pheno in get_phenolist():
+
+    for pheno in get_phenotypes_to_process():
         phenocode = pheno["phenocode"]
         for strats in pheno["stratification"]:
             phenocode = phenocode + "." + pheno["stratification"][strats]
         input_filepaths.append(
             Path(get_pheno_filepath("manhattan", phenocode)))
+
+    if not input_filepaths:
+        return False
 
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:

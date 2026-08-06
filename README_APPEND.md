@@ -7,13 +7,19 @@ The goal of these instructions is to append new GWAS data to an existing PheWeb2
 To try this feature, you can download our second small example dataset by following these steps:
 
 1. Download and unarchive the second example data (~19 GB):
-```
-PLACE HOLDER
+    ```
+    PLACE HOLDER
 
-For now example_regenie_2 folder already included.
-```
+    For now example_regenie_2 folder already included.
+    ```
 
-2. follow same steps used for the first time ingest using the second example manifest file as input.
+2. Import the manifest file into PheWeb2:
+    ```
+    pheweb2 phenolist import-phenolist /path/to/manifest.csv
+    ```
+    This will create a new `pheno-list.json` file in the root directory. The old one will be moved to the generated-by-pheweb/backups folder.
+
+3. follow same steps used for the first time ingest using the second example manifest file as input.
 
 ## 2. Configuration file
 When appending new GWAS data, you should ideally use the same set of variable–value pairs that were used during the initial data ingestion.
@@ -29,7 +35,14 @@ When appending new GWAS data, you should ideally use the same set of variable–
 
 Your new manifest file should include the new set of phenotypes to ingest.
 
-You can follow the same steps described for the initial data ingestion.
+1. Import the manifest file into PheWeb2:
+    ```
+    pheweb2 phenolist import-phenolist /path/to/manifest.csv
+    ```
+    This will create a new `pheno-list.json` file in the root directory. The old one will be moved to the generated-by-pheweb/backups folder.
+
+2. follow same steps used for the first time ingest using the second example manifest file as input.
+
 
 > [!NOTE]
 > The new manifest file may include existing phenotypes, but this is not required. Existing phenotypes will not be reprocessed. However, if the manifest file includes an existing phenotype with new stratifications, only the new stratifications will be ingested. In this context, existing phenotypes refers to phenotypes that have already been ingested. The pheno-list.json file used during the initial data ingestion is no longer required.
