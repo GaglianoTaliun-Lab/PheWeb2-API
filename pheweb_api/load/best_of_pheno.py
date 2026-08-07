@@ -4,7 +4,7 @@ This script creates generated-by-pheweb/best-of-pheno/<pheno> which contains the
 
 import os
 
-from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file
+from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file, get_tmp_path
 from ..utils import (
     get_phenotypes_to_process,
     get_phenocode_with_stratifications,
@@ -98,7 +98,11 @@ def make_bestof_file_explicit(in_filepath: str, out_filepath: str) -> None:
     assocs = list(q.pop_all())
     assocs.sort(key=lambda v: (chrom_order[v["chrom"]], v["pos"]))
 
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    with VariantFileWriter(tmp_out_filepath) as vfw:
+        vfw.write_all(assocs)
+
     backup_file(out_filepath, "best_of_pheno", "move")
 
-    with VariantFileWriter(out_filepath) as vfw:
-        vfw.write_all(assocs)
+    os.replace(tmp_out_filepath, out_filepath)

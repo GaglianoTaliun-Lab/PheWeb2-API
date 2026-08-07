@@ -17,7 +17,7 @@ from ..utils import (
     get_phenocode_with_suffixes,
 )
 from .. import conf
-from ..file_utils import VariantFileReader, write_json, get_pheno_filepath, backup_file
+from ..file_utils import VariantFileReader, get_tmp_path, write_json, get_pheno_filepath, backup_file
 from .load_utils import (
     MaxPriorityQueue,
     parallelize_per_pheno,
@@ -28,6 +28,7 @@ from .load_utils import (
 import math
 import argparse
 from typing import List, Dict, Any, Tuple
+import os
 
 Variant = Dict[str, Any]
 
@@ -111,9 +112,13 @@ def make_manhattan_json_file_explicit(in_filepath: str, out_filepath: str) -> No
             binner.process_variant(variant)
     data = binner.get_result()
 
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    write_json(filepath=tmp_out_filepath, data=data, data_subdir="manhattan")
+
     backup_file(out_filepath, "manhattan", "move")
 
-    write_json(filepath=out_filepath, data=data)
+    os.replace(tmp_out_filepath, out_filepath)
 
 
 class Binner:

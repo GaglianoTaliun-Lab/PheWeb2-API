@@ -6,7 +6,7 @@ import csv
 from functools import lru_cache
 import tqdm
 
-from ..file_utils import get_filepath, backup_file
+from ..file_utils import get_filepath, get_tmp_path, backup_file
 
 
 class VariantLoading:
@@ -14,16 +14,12 @@ class VariantLoading:
         self.variants = {}
 
         self.db_path = get_filepath("variants_db", must_exist=False)
+        self.tmp_db_path = get_tmp_path(self.db_path)
         self.load_or_create_variant_db()
 
     def load_or_create_variant_db(self):
 
-        db_path = self.db_path
-
-        if os.path.exists(db_path):
-            print(
-                f"DEBUG: Found existing database at {db_path}, skipping creation.")
-            return
+        db_path = self.tmp_db_path
 
         print(f"DEBUG: Creating new database at {db_path}")
         conn = sqlite3.connect(db_path)
@@ -77,9 +73,16 @@ class VariantLoading:
 
             print(f"DEBUG: Database creation complete. Entries loaded.")
 
+            # Making backup if outfiles exists
+            backup_file(get_filepath("variants_db",
+                        must_exist=False), "sites", "move")
+
+            os.replace(db_path, self.db_path)
+
         except Exception as e:
             print(f"DEBUG: Error inserting data: {e}")
             conn.rollback()
+            os.remove(db_path)
             raise e
         finally:
             conn.close()

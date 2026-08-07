@@ -119,7 +119,7 @@ def create_matrix(
             + repr(ret_bytes)
         )
 
-    os.rename(matrix_gz_tmp_filepath, matrix_gz_filepath)
+    os.replace(matrix_gz_tmp_filepath, matrix_gz_filepath)
 
 
 def append_to_matrix(
@@ -152,7 +152,7 @@ def append_to_matrix(
 
     backup_file(matrix_gz_filepath, get_matrix_subdir(), "move")
 
-    os.rename(matrix_gz_tmp_filepath, matrix_gz_filepath)
+    os.replace(matrix_gz_tmp_filepath, matrix_gz_filepath)
 
 
 def create_matrix_tbi(matrix_gz_filepath):
@@ -160,23 +160,29 @@ def create_matrix_tbi(matrix_gz_filepath):
     if not os.path.exists(matrix_tbi_filepath) or mtime(matrix_tbi_filepath) < mtime(
         matrix_gz_filepath
     ):
-        if os.path.exists(matrix_tbi_filepath):
-            backup_file(matrix_tbi_filepath, get_matrix_subdir(), "move")
+
         print("tabixing matrix")
+
         pysam.tabix_index(
             filename=matrix_gz_filepath,
+            index=".tbi.tmp",
             force=True,
             seq_col=0,
             start_col=1,
             end_col=1,  # note: column indexes start at 0, whereas `/usr/bin/tabix` starts at 1
         )
+
+        backup_file(matrix_tbi_filepath, get_matrix_subdir(), "move")
+
+        os.replace(matrix_tbi_filepath + ".tmp", matrix_tbi_filepath)
+
     else:
         print(f"{matrix_tbi_filepath} is up-to-date!")
 
 
 def run_matrix_functions(
     matrix_gz_filepath: str,
-    stratification: str = None,
+    stratification: str = "",
 ) -> None:
 
     sites_filepath = get_filepath("sites")
@@ -197,12 +203,18 @@ def run_matrix_functions(
                 for pheno in get_phenolist_no_interaction()
             )
 
-        # Keep pheno from current stratification not in matrix
-        phenos_to_process = [
-            pheno for pheno in phenolist_phenocodes
-            if pheno not in phenos_already_in_matrix and
-            stratification in pheno
-        ]
+            # Keep pheno from current stratification not in matrix
+            phenos_to_process = [
+                pheno for pheno in phenolist_phenocodes
+                if pheno not in phenos_already_in_matrix and
+                stratification in pheno  # Might not be needed
+            ]
+
+        else:
+            phenos_to_process = [
+                pheno for pheno in phenolist_phenocodes
+                if pheno not in phenos_already_in_matrix
+            ]
 
         if phenos_to_process:
             print(

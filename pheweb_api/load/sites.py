@@ -53,7 +53,7 @@ def run(argv):
         )
         exit(1)
 
-    manna = MergeManager()
+    manna = MergeManager(out_filepath)
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
 
@@ -132,7 +132,7 @@ def run(argv):
 class MergeManager:
     """Keeps track of what needs to get merged next."""
 
-    def __init__(self):
+    def __init__(self, out_filepath):
         self.n_procs = conf.get_num_procs(cmd="sites")
         self.files = []
 
@@ -142,6 +142,11 @@ class MergeManager:
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
 
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
+
+            if os.path.exists(out_filepath) \
+                    and mtime(out_filepath) >= mtime(filepath):
+                continue
+
             self.files.append(
                 {
                     "type": "input",

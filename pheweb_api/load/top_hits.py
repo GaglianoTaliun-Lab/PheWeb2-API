@@ -1,6 +1,7 @@
 from ..utils import get_phenotype_summary
 from .. import conf
 from ..file_utils import (
+    get_tmp_path,
     write_json,
     write_heterogenous_variantfile,
     get_filepath,
@@ -10,6 +11,7 @@ from ..file_utils import (
 )
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, Any, List, Iterator
 
@@ -115,20 +117,35 @@ just the top phenotype for each, use `pheweb top-loci`.
 
     hits = get_all_hits()
 
+    tmp_out_filepath_json = get_tmp_path(out_filepath_json)
+
+    write_json(filepath=tmp_out_filepath_json, data=hits, sort_keys=True)
+
     backup_file(out_filepath_json, "", "move")
 
-    write_json(filepath=out_filepath_json, data=hits, sort_keys=True)
+    os.replace(tmp_out_filepath_json, out_filepath_json)
+
     print("wrote {} hits to {}".format(len(hits), out_filepath_json))
+
+    tmp_out_filepath_1k_json = get_tmp_path(out_filepath_1k_json)
+
+    write_json(filepath=tmp_out_filepath_1k_json,
+               data=hits[:1000], sort_keys=True)
 
     backup_file(out_filepath_1k_json, "", "move")
 
-    write_json(filepath=out_filepath_1k_json, data=hits[:1000], sort_keys=True)
+    os.replace(tmp_out_filepath_1k_json, out_filepath_1k_json)
     print("wrote {} hits to {}".format(len(hits[:1000]), out_filepath_1k_json))
 
     if hits:  # If there are no hits, we can't write a proper tsv
         stringify_assocs(hits)
 
+        tmp_out_filepath_tsv = get_tmp_path(out_filepath_tsv)
+        write_heterogenous_variantfile(
+            tmp_out_filepath_tsv, hits, use_gzip=False)
+
         backup_file(out_filepath_tsv, "", "move")
 
-        write_heterogenous_variantfile(out_filepath_tsv, hits, use_gzip=False)
+        os.replace(tmp_out_filepath_tsv, out_filepath_tsv)
+
         print("wrote {} hits to {}".format(len(hits), out_filepath_tsv))

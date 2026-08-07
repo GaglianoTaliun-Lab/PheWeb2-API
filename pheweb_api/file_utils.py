@@ -16,7 +16,7 @@ import json
 import gzip
 import datetime
 import shutil
-from boltons.fileutils import AtomicSaver, mkdir_p
+from boltons.fileutils import AtomicSaver, mkdir_p, atomic_rename
 import pysam
 import itertools
 import random
@@ -521,6 +521,8 @@ class MatrixReader:
                 assert field in parse_utils.fields, field
                 self._colidxs[field] = colnum
 
+        self._info_for_pheno = {}
+
         # First add phenotypes from phenotype.json if it exists,
         if os.path.exists(get_filepath("phenotypes_summary")):
 
@@ -544,7 +546,7 @@ class MatrixReader:
             get_phenocode_with_stratifications(pheno): {
                 k: v for k, v in pheno.items() if k != "assoc_files"
             }
-            # TODO: allowing overwrites here
+            # TODO: allowing overwrites here?
             for pheno in phenos
             if get_phenocode_with_stratifications(pheno) not in self._info_for_pheno
         })
@@ -743,10 +745,14 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
         os.path.dirname(tmp_path), os.path.basename(tmp_path)
     )  # Avoid using the same tmp path as augment-phenos
     pysam.tabix_compress(vf_path, tmp_path, force=True)
+
+    backup_file(ivf_path, "pheno_gz", "move")
+
     os.rename(tmp_path, ivf_path)
 
     pysam.tabix_index(
         filename=ivf_path,
+        index=".tbi.tmp",
         force=True,
         seq_col=0,
         start_col=1,
@@ -754,6 +760,10 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
         end_col=1,
         line_skip=1,  # skip header
     )
+
+    backup_file(ivf_path + ".tbi", "pheno_gz", "move")
+
+    os.replace(ivf_path + ".tbi.tmp", ivf_path + ".tbi")
 
 
 def write_json(

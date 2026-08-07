@@ -13,8 +13,7 @@ from ..file_utils import (
     get_pheno_filepath,
     with_chrom_idx,
     get_tmp_path,
-    convert_VariantFile_to_IndexedVariantFile,
-    backup_file
+    convert_VariantFile_to_IndexedVariantFile
 )
 from .load_utils import parallelize_per_pheno, get_phenos_subset, get_phenolist
 
@@ -106,8 +105,6 @@ def convert(pheno: Dict[str, Any], ignore=None) -> None:
 
     out_unzipped_filepath = get_tmp_path(out_filepath)
 
-    backup_file(out_filepath, out_subdir, "move")
-
     with VariantFileReader(sites_filepath) as sites_reader, VariantFileReader(
         parsed_filepath
     ) as pheno_reader, VariantFileWriter(
@@ -175,6 +172,7 @@ def convert(pheno: Dict[str, Any], ignore=None) -> None:
 
     convert_VariantFile_to_IndexedVariantFile(
         out_unzipped_filepath, out_filepath)
+
     os.unlink(out_unzipped_filepath)
 
 

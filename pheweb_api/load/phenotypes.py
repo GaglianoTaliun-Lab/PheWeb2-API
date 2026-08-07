@@ -1,6 +1,7 @@
 from .. import conf
 from ..utils import get_phenocode_with_suffixes, get_phenotypes_to_process
 from ..file_utils import (
+    get_tmp_path,
     write_json,
     get_filepath,
     get_pheno_filepath,
@@ -167,12 +168,21 @@ def run(argv: List[str]) -> None:
     # Adding old data to new data and sorting based on pvalue
     data = sorted(list(existing_data) + list(data), key=lambda p: p["pval"])
 
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    write_json(filepath=tmp_out_filepath, data=data)
+
     backup_file(out_filepath, "", "move")
 
-    write_json(filepath=out_filepath, data=data)
+    os.replace(tmp_out_filepath, out_filepath)
+
     print("wrote {} phenotypes to {}".format(len(data), out_filepath))
+
+    tmp_out_filepath_tsv = get_tmp_path(out_filepath_tsv)
+
+    write_heterogenous_variantfile(tmp_out_filepath_tsv, data, use_gzip=False)
 
     backup_file(out_filepath_tsv, "", "move")
 
-    write_heterogenous_variantfile(out_filepath_tsv, data, use_gzip=False)
+    os.replace(tmp_out_filepath_tsv, out_filepath_tsv)
     print("wrote {} phenotypes to {}".format(len(data), out_filepath_tsv))

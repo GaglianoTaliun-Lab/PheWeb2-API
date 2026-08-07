@@ -3,7 +3,7 @@ This script takes a file with the columns [chrom, pos, ...] (but no headers) and
 """
 
 from ..utils import get_gene_tuples
-from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath, backup_file
+from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath, backup_file, get_tmp_path
 from .load_utils import mtime
 
 from intervaltree import IntervalTree, Interval
@@ -134,11 +134,18 @@ def run(argv: List[str]) -> None:
         print("gene annotation is up-to-date!")
         return
 
-    backup_file(out_filepath, data_subdir="sites", method="move")
-    annotate_genes(input_filepath, out_filepath)
+    # === annotate genes ===
+    # Get tmp file
+    tmp_out_filepath = get_tmp_path(out_filepath)
+    annotate_genes(input_filepath, tmp_out_filepath)
 
-    # Variant database
+    # Making backup if out_file exists
+    backup_file(out_filepath, data_subdir="sites", method="move")
+
+    # atomic replace
+    os.replace(tmp_out_filepath, out_filepath)
+
+    # === Variant database ===
     print("Generating sites/variants.db")
 
-    backup_file(get_filepath("variants_db", must_exist=False), "sites", "move")
     VariantLoading()

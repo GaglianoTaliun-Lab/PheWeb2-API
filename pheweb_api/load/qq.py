@@ -15,16 +15,16 @@ This script creates json files which can be used to render QQ plots.
 from ..utils import (
     round_sig,
     approx_equal,
-    get_phenolist,
     PheWebError,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
     get_phenotypes_to_process
 )
 from .. import conf
-from ..file_utils import VariantFileReader, write_json, get_pheno_filepath, backup_file
+from ..file_utils import VariantFileReader, get_tmp_path, write_json, get_pheno_filepath, backup_file
 from .load_utils import get_maf, parallelize_per_pheno, get_phenos_subset
 
+import os
 from typing import Dict, Any, List, Iterator, Set, Tuple
 import argparse
 import boltons.mathutils
@@ -124,9 +124,13 @@ def make_json_file_explicit(
         rv["overall"] = make_qq_unstratified(variants, include_qq=True)
         rv["ci"] = list(get_confidence_intervals(len(variants)))
 
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    write_json(filepath=tmp_out_filepath, data=rv)
+
     backup_file(out_filepath, "qq", "move")
 
-    write_json(filepath=out_filepath, data=rv)
+    os.replace(tmp_out_filepath, out_filepath)
 
 
 def get_variants_df(in_filepath: str, pheno: Dict[str, Any]) -> np.ndarray:

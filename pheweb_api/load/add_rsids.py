@@ -22,7 +22,8 @@ from ..file_utils import (
     VariantFileWriter,
     get_filepath,
     read_maybe_gzip,
-    backup_file
+    backup_file,
+    get_tmp_path
 )
 from .. import conf
 from .load_utils import mtime
@@ -166,11 +167,11 @@ def run(argv: List[str]) -> None:
         print("rsid annotation is up-to-date!")
         return
 
-    backup_file(out_filepath, data_subdir="sites", method="move")
+    tmp_out_filepath = get_tmp_path(out_filepath)
 
     with VariantFileReader(in_filepath) as in_reader, read_maybe_gzip(
         rsids_filepath
-    ) as rsids_f, VariantFileWriter(out_filepath) as writer:
+    ) as rsids_f, VariantFileWriter(tmp_out_filepath) as writer:
         rsid_group_reader = get_one_chr_pos_at_a_time(
             get_rsid_reader(rsids_f, rsids_filepath)
         )
@@ -222,3 +223,9 @@ def run(argv: List[str]) -> None:
                 for cpra in cp_group:
                     cpra["rsids"] = ""
                     writer.write(cpra)
+
+    # Making backup if out_file exists
+    backup_file(out_filepath, data_subdir="sites", method="move")
+
+    # atomic replace
+    os.replace(tmp_out_filepath, out_filepath)
