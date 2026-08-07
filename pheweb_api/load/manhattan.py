@@ -114,7 +114,7 @@ def make_manhattan_json_file_explicit(in_filepath: str, out_filepath: str) -> No
 
     tmp_out_filepath = get_tmp_path(out_filepath)
 
-    write_json(filepath=tmp_out_filepath, data=data, data_subdir="manhattan")
+    write_json(filepath=tmp_out_filepath, data=data)
 
     backup_file(out_filepath, "manhattan", "move")
 

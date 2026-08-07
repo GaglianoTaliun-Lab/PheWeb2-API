@@ -43,7 +43,7 @@ def get_filepath(kind: str, *, must_exist: bool = True) -> str:
     return filepath
 
 
-_data_subdirs: List[str] = [
+data_subdirs: List[str] = [
     "best_of_pheno", "interaction", "manhattan",
     "matrix", "matrix-stratified", "parsed", "pheno_gz",
     "phenolist", "qq", "resources",
@@ -67,8 +67,7 @@ def extract_data_subdir_from_filepath(filepath: str) -> str:
 
     data_sub_dir = parts[0]
 
-    if data_sub_dir not in _data_subdirs:
-        print("File not part of available data_subdirs")
+    if data_sub_dir not in data_subdirs:
         return ""
 
     return data_sub_dir
@@ -247,12 +246,12 @@ def backup_file(filepath: str,
                 ) -> str:
 
     if not conf.is_backups_enabled() or not os.path.exists(filepath):
-        return
+        return ""
 
     if not data_subdir:
         data_subdir = extract_data_subdir_from_filepath(filepath)
 
-    if data_subdir not in _data_subdirs:
+    if data_subdir not in data_subdirs:
         raise PheWebError(
             f"Invalid data_subdir '{data_subdir}' for {filepath}"
         )
@@ -524,7 +523,7 @@ class MatrixReader:
         self._info_for_pheno = {}
 
         # First add phenotypes from phenotype.json if it exists,
-        if os.path.exists(get_filepath("phenotypes_summary")):
+        if os.path.exists(get_filepath("phenotypes_summary", must_exist=False)):
 
             phenos = get_phenotype_summary()
 
