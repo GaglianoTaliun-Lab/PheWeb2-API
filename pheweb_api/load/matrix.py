@@ -112,6 +112,7 @@ def create_matrix(
         pheno_gz_glob.encode("utf8"),
         matrix_gz_tmp_filepath.encode("utf8"),
     )
+
     ret_bytes = ffi.string(ret, maxlen=1000)
     if ret_bytes != b"ok":
         raise PheWebError(
@@ -150,6 +151,14 @@ def append_to_matrix(
             + repr(ret_bytes)
         )
 
+    pysam.tabix_index(
+        filename=matrix_gz_tmp_filepath,
+        force=True,
+        seq_col=0,
+        start_col=1,
+        end_col=1,  # note: column indexes start at 0, whereas `/usr/bin/tabix` starts at 1
+    )
+
     backup_file(matrix_gz_filepath, get_matrix_subdir(), "move")
 
     os.replace(matrix_gz_tmp_filepath, matrix_gz_filepath)
@@ -160,21 +169,28 @@ def create_matrix_tbi(matrix_gz_filepath):
     if not os.path.exists(matrix_tbi_filepath) or mtime(matrix_tbi_filepath) < mtime(
         matrix_gz_filepath
     ):
+        tmp_tbi = get_tmp_path(matrix_tbi_filepath)
+        try:
+            print("tabixing matrix")
 
-        print("tabixing matrix")
+            if os.path.exists(matrix_tbi_filepath):
+                os.replace(matrix_tbi_filepath, tmp_tbi)
 
-        pysam.tabix_index(
-            filename=matrix_gz_filepath,
-            index=".tbi.tmp",
-            force=True,
-            seq_col=0,
-            start_col=1,
-            end_col=1,  # note: column indexes start at 0, whereas `/usr/bin/tabix` starts at 1
-        )
+            backup_file(matrix_tbi_filepath, get_matrix_subdir(), "move")
 
-        backup_file(matrix_tbi_filepath, get_matrix_subdir(), "move")
+            pysam.tabix_index(
+                filename=matrix_gz_filepath,
+                force=True,
+                seq_col=0,
+                start_col=1,
+                end_col=1,
+            )
 
-        os.replace(matrix_tbi_filepath + ".tmp", matrix_tbi_filepath)
+        except Exception as e:
+            if os.path.exists(tmp_tbi):
+                os.replace(tmp_tbi, matrix_tbi_filepath)
+
+        backup_file(tmp_tbi, get_matrix_subdir(), "move")
 
     else:
         print(f"{matrix_tbi_filepath} is up-to-date!")

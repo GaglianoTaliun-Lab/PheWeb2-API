@@ -745,13 +745,8 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
     )  # Avoid using the same tmp path as augment-phenos
     pysam.tabix_compress(vf_path, tmp_path, force=True)
 
-    backup_file(ivf_path, "pheno_gz", "move")
-
-    os.rename(tmp_path, ivf_path)
-
     pysam.tabix_index(
-        filename=ivf_path,
-        index=".tbi.tmp",
+        filename=tmp_path,
         force=True,
         seq_col=0,
         start_col=1,
@@ -760,9 +755,11 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
         line_skip=1,  # skip header
     )
 
+    backup_file(ivf_path, "pheno_gz", "move")
     backup_file(ivf_path + ".tbi", "pheno_gz", "move")
 
-    os.replace(ivf_path + ".tbi.tmp", ivf_path + ".tbi")
+    os.rename(tmp_path, ivf_path)
+    os.replace(tmp_path + ".tbi", ivf_path + ".tbi")
 
 
 def write_json(

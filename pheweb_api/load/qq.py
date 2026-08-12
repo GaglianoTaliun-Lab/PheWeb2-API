@@ -200,20 +200,30 @@ def make_qq_stratified(variants: np.ndarray) -> List[Dict[str, Any]]:
     return [make_strata(i) for i in range(NUM_MAF_RANGES)]
 
 
-def make_qq_unstratified(variants: np.ndarray, include_qq: bool) -> Dict[str, Any]:
-    variants[::-1].sort(order=["qval"])  # Sort descending.
+def make_qq_unstratified(
+    variants: np.ndarray, include_qq: bool
+) -> Dict[str, Any]:
+    variants[::-1].sort(order=["qval"])
     qvals = variants["qval"]
+
     rv: Dict[str, Any] = {}
+
     if include_qq:
         rv["qq"] = compute_qq(qvals)
+
     rv["count"] = len(qvals)
     rv["gc_lambda"] = {}
-    for perc in ["0.5", "0.1", "0.01", "0.001"]:
-        gc = gc_value_from_list(qvals, float(perc))
-        if math.isnan(gc) or abs(gc) == math.inf:
-            print("WARNING: got gc_value {!r}".format(gc))
-        else:
-            rv["gc_lambda"][perc] = round_sig(gc, 5)
+
+    # GC lambda is not meaningful with a single variant
+    if len(qvals) > 1:
+        for perc in ["0.5", "0.1", "0.01", "0.001"]:
+            gc = gc_value_from_list(qvals, float(perc))
+
+            if math.isnan(gc) or abs(gc) == math.inf:
+                print("WARNING: got gc_value {!r}".format(gc))
+            else:
+                rv["gc_lambda"][perc] = round_sig(gc, 5)
+
     return rv
 
 
@@ -288,6 +298,8 @@ assert approx_equal(gc_value(0.6123), 0.5645607)
 def get_confidence_intervals(
     num_variants: float, confidence: float = 0.95
 ) -> Iterator[Dict[str, float]]:
+    if num_variants <= 1:
+        return
     one_sided_doubt = (1 - confidence) / 2
 
     # `variant_counts` are the numbers of variants at which we'll calculate the confidence intervals

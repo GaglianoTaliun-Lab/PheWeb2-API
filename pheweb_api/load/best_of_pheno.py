@@ -6,7 +6,7 @@ import os
 
 from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file, get_tmp_path
 from ..utils import (
-    get_phenotypes_to_process,
+    get_phenolist,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
     chrom_order,
@@ -35,7 +35,7 @@ def run(argv: List[str]) -> None:
     args = parser.parse_args(argv)
 
     phenos = get_phenos_subset(
-        args.phenos) if args.phenos else get_phenotypes_to_process()
+        args.phenos) if args.phenos else get_phenolist()
 
     interaction_phenos = []
     non_interaction_phenos = []

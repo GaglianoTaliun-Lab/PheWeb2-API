@@ -325,17 +325,24 @@ void gzstreambase::close() {
 // Line-by-line file-reader that can handle plaintext or gzip files
 class LineReader {
 public:
-    inline void attach(const std::string& filepath) { // immediately reads the first line
+    inline void attach(const std::string& filepath) {
         stream.open(filepath.c_str());
+        _valid = true;
         next();
     }
     inline void next() {
-        std::getline(stream, line); // drops the \n
-        if (!line.empty() && line[line.size() - 1] == '\r') line.erase(line.size() - 1); // CR remover from <http://stackoverflow.com/a/2529011/1166306>
+        if (!std::getline(stream, line)) {
+            _valid = false;
+            line.clear();
+            return;
+        }
+        if (!line.empty() && line[line.size() - 1] == '\r') line.erase(line.size() - 1);
     }
-    inline bool eof() { return stream.peek() == std::ifstream::traits_type::eof(); } // tells whether `next()` will work.
+    inline bool eof() { return !_valid; }
     std::string line;
     igzstream stream;
+private:
+    bool _valid = false;
 };
 
 
@@ -465,13 +472,13 @@ int make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, co
     // If a line in an aug_pheno has the same chrom-pos-ref-alt as sites.tsv, then it must have the sites.tsv line as its prefix.
     //    (ie, it must have the same per-variant fields, in the same order.)
     // So, we iterate over sites.tsv, printing and advancing any aug_pheno that matches CPRA, and printing '' for every field in non-matching aug_phenos.
-    while(1) {
+    while (!sites_reader.eof()) {
         writer.write(sites_reader.line);
 
         size_t pos_after_cpra = pos_after_n_of_char(sites_reader.line, 4, '\t');
 
         for (size_t i=0; i<N_phenos; i++) {
-            if (!aug_readers[i].eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, aug_readers[i].line, 0, pos_after_cpra)) { // CPRAs match.
+            if (!aug_readers[i].eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, aug_readers[i].line, 0, pos_after_cpra)) {
                 if (0 != aug_readers[i].line.compare(0, sites_reader.line.size(), sites_reader.line)) {
                     std::ostringstream errstream;
                     errstream << "[There's a variant in a pheno file that has different information from that same variant in sites.tsv.]";
@@ -480,7 +487,7 @@ int make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, co
                     errstream << "[bad sites.tsv line = " << sites_reader.line << "]";
                     throw std::runtime_error(errstream.str().c_str());
                 }
-                if (n_fields(aug_readers[i].line) != n_per_variant_fields + aug_n_per_assoc_fields[i]) { // correct number of fields on line.
+                if (n_fields(aug_readers[i].line) != n_per_variant_fields + aug_n_per_assoc_fields[i]) {
                     std::ostringstream errstream;
                     errstream << "[a pheno has a line with a different number of tab-delimited fields than its header]";
                     errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
@@ -489,17 +496,14 @@ int make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, co
                     errstream << "[num fields in header = " << n_per_variant_fields + aug_n_per_assoc_fields[i] << "]";
                     throw std::runtime_error(errstream.str().c_str());
                 }
-                writer.write(aug_readers[i].line.c_str() + sites_reader.line.size(), aug_readers[i].line.size() - sites_reader.line.size()); //write per-assoc fields
+                writer.write(aug_readers[i].line.c_str() + sites_reader.line.size(), aug_readers[i].line.size() - sites_reader.line.size());
                 aug_readers[i].next();
-
-            } else { // CPRAs don't match
-                // write blanks for this pheno
+            } else {
                 for (size_t j=0; j<aug_n_per_assoc_fields[i]; j++) writer.write("\t");
             }
         }
         writer.write("\n");
 
-        if (sites_reader.eof()) break;
         sites_reader.next();
     }
 
@@ -572,53 +576,49 @@ int append_to_matrix(const char *sites_filepath,
     // ======= Writing sites =======
     sites_reader.next(); // skipper header
 
-    while(1) {
+    while (!sites_reader.eof()) {
 
-            size_t pos_after_cpra = pos_after_n_of_char(sites_reader.line, 4, '\t');
+        size_t pos_after_cpra = pos_after_n_of_char(sites_reader.line, 4, '\t');
 
-            // If old matrix has this variant, add it
-            if (!old_matrix_reader.eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, old_matrix_reader.line, 0, pos_after_cpra)) { // CPRAs match.
-                writer.write(old_matrix_reader.line);
-                old_matrix_reader.next();
-            } else{
-                writer.write(sites_reader.line);
-
-                // write blanks for old matrix
-                for (size_t j=0; j<(old_matrix_n_fields - n_per_variant_fields); j++) writer.write("\t");
-            }
-
-            for (size_t i=0; i<N_phenos; i++) {
-                if (!aug_readers[i].eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, aug_readers[i].line, 0, pos_after_cpra)) { // CPRAs match.
-                    if (0 != aug_readers[i].line.compare(0, sites_reader.line.size(), sites_reader.line)) {
-                        std::ostringstream errstream;
-                        errstream << "[There's a variant in a pheno file that has different information from that same variant in sites.tsv.]";
-                        errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
-                        errstream << "[bad pheno line = " << aug_readers[i].line << "]";
-                        errstream << "[bad sites.tsv line = " << sites_reader.line << "]";
-                        throw std::runtime_error(errstream.str().c_str());
-                    }
-                    if (n_fields(aug_readers[i].line) != n_per_variant_fields + aug_n_per_assoc_fields[i]) { // correct number of fields on line.
-                        std::ostringstream errstream;
-                        errstream << "[a pheno has a line with a different number of tab-delimited fields than its header]";
-                        errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
-                        errstream << "[bad pheno line = " << aug_readers[i].line << "]";
-                        errstream << "[num fields on line = " << n_fields(aug_readers[i].line) << "]";
-                        errstream << "[num fields in header = " << n_per_variant_fields + aug_n_per_assoc_fields[i] << "]";
-                        throw std::runtime_error(errstream.str().c_str());
-                    }
-                    writer.write(aug_readers[i].line.c_str() + sites_reader.line.size(), aug_readers[i].line.size() - sites_reader.line.size()); //write per-assoc fields
-                    aug_readers[i].next();
-
-                } else { // CPRAs don't match
-                    // write blanks for this pheno
-                    for (size_t j=0; j<aug_n_per_assoc_fields[i]; j++) writer.write("\t");
-                }
-            }
-            writer.write("\n");
-
-            if (sites_reader.eof()) break;
-            sites_reader.next();
+        // If old matrix has this variant, add it
+        if (!old_matrix_reader.eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, old_matrix_reader.line, 0, pos_after_cpra)) {
+            writer.write(old_matrix_reader.line);
+            old_matrix_reader.next();
+        } else {
+            writer.write(sites_reader.line);
+            // write blanks for old matrix
+            for (size_t j=0; j<(old_matrix_n_fields - n_per_variant_fields); j++) writer.write("\t");
         }
+
+        for (size_t i=0; i<N_phenos; i++) {
+            if (!aug_readers[i].eof() && 0 == sites_reader.line.compare(0, pos_after_cpra, aug_readers[i].line, 0, pos_after_cpra)) {
+                if (0 != aug_readers[i].line.compare(0, sites_reader.line.size(), sites_reader.line)) {
+                    std::ostringstream errstream;
+                    errstream << "[There's a variant in a pheno file that has different information from that same variant in sites.tsv.]";
+                    errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
+                    errstream << "[bad pheno line = " << aug_readers[i].line << "]";
+                    errstream << "[bad sites.tsv line = " << sites_reader.line << "]";
+                    throw std::runtime_error(errstream.str().c_str());
+                }
+                if (n_fields(aug_readers[i].line) != n_per_variant_fields + aug_n_per_assoc_fields[i]) {
+                    std::ostringstream errstream;
+                    errstream << "[a pheno has a line with a different number of tab-delimited fields than its header]";
+                    errstream << "[bad phenocode = " << aug_phenocodes[i] << "]";
+                    errstream << "[bad pheno line = " << aug_readers[i].line << "]";
+                    errstream << "[num fields on line = " << n_fields(aug_readers[i].line) << "]";
+                    errstream << "[num fields in header = " << n_per_variant_fields + aug_n_per_assoc_fields[i] << "]";
+                    throw std::runtime_error(errstream.str().c_str());
+                }
+                writer.write(aug_readers[i].line.c_str() + sites_reader.line.size(), aug_readers[i].line.size() - sites_reader.line.size());
+                aug_readers[i].next();
+            } else {
+                for (size_t j=0; j<aug_n_per_assoc_fields[i]; j++) writer.write("\t");
+            }
+        }
+        writer.write("\n");
+
+        sites_reader.next();   // ✅ avance à la fin, plus de if/break séparé
+    }
 
     writer.close();
 

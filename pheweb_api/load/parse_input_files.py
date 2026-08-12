@@ -11,7 +11,7 @@ from ..file_utils import (
     get_pheno_filepath,
     backup_file
 )
-from .read_input_file import PhenoReader, R2FileReader
+from .read_input_file import PhenoReader
 from .load_utils import parallelize_per_pheno, indent, get_phenos_subset
 
 import itertools

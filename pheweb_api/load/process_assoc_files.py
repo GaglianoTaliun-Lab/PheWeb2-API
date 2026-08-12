@@ -29,7 +29,7 @@ generate_autocomplete_db
 scripts = [script for script in scripts if script]
 
 
-def run(argv: List[str]) -> None:
+def run(argv: List[str]) -> int:
     if any(arg in ["-h", "--help"] for arg in argv):
         print(
             "Run all the steps to go from a prepared phenolist to a ready-to-serve pheweb."
