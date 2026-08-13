@@ -338,6 +338,8 @@ def test_first_time_ingest(use_tmp_path):
         assert variant["pval"] == 1.1e-8
 
     # ======== Testing qq ========
+    # NOTE: There is a limitation for the qq process. Since we are using only a single site,
+    # we cannot compute the gc_lambda.
 
     run_qq([])
 
@@ -717,6 +719,8 @@ def test_append_ingest(use_tmp_path) -> None:
         assert variant["pval"] == 2.6e-10
 
     # ======== Testing qq ========
+    # NOTE: There is a limitation for the qq process. Since we are using only a single site,
+    # we cannot compute the gc_lambda.
 
     run_qq([])
 
