@@ -1,6 +1,7 @@
 
 *__pycache__*
 .pytest_cache*/
+_tmp*/
 *.venv
 .env
 data
@@ -9,6 +10,7 @@ test.md
 /myenv
 *.out
 *.swp
+_tmp*
 
 raw_data
 pheno-list.csv

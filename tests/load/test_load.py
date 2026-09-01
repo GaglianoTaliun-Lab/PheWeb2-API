@@ -70,6 +70,11 @@ def use_tmp_path():
 
     conf.set_override("FIELD_ALIASES", FIELD_ALIASES)
 
+    # ou le module qui définit default_phenolist_filepath
+    import pheweb_api.load.phenolist
+    pheweb_api.load.phenolist.default_phenolist_filepath = get_filepath(
+        "phenolist", must_exist=False)
+
     try:
         yield tmp_path
     finally:
@@ -80,6 +85,10 @@ def use_tmp_path():
         conf.overrides.update(old_overrides)
         shutil.rmtree(tmp_path)
 
+
+# ***********************************************************
+# ******************** UNITTESTS ********************
+# ***********************************************************
 
 # ==================== TEST FILE UTILS ====================
 
@@ -130,6 +139,9 @@ def test_backup_file(use_tmp_path):
 
     assert contains_iso(str(phenolist_bckup))
 
+# ***********************************************************
+# ******************** INTEGRATION TESTS ********************
+# ***********************************************************
 
 # ==================== TEST FIRST TIME INGEST ====================
 
@@ -435,44 +447,6 @@ def test_first_time_ingest(use_tmp_path):
 # ==================== TEST APPEND INGEST ====================
 
 
-# def _simulate_first_time_ingest():
-
-#     summary_stat = dummy_summary_stats()
-#     manifest_file = dummy_manifest_file(summary_stat)
-
-#     run_phenolist([
-#         "import-phenolist",
-#         manifest_file,
-#         "-f",
-#         get_filepath("phenolist", must_exist=False)
-#     ])
-
-#     run_parse_input_files([])
-
-#     run_sites([])
-
-#     gene_aliases_fp = dummy_gene_aliases()
-#     dummy_rsids_filepath = dummy_rsids()
-
-#     run_add_rsids([])
-
-#     dummy_genes()
-
-#     run_add_genes([])
-#     run_make_cpras_rsids_sqlite3([])
-#     run_augment_phenos([])
-#     run_matrix([])
-
-#     run_gather_pvalues_for_each_gene([])
-#     run_manhattan([])
-#     run_qq([])
-#     run_phenotypes([])
-#     run_top_hits([])
-#     run_best_of_pheno([])
-
-#     AutocompleteLoading()
-
-
 def test_append_ingest(use_tmp_path) -> None:
     """
     Testing an append ingest.
@@ -485,7 +459,7 @@ def test_append_ingest(use_tmp_path) -> None:
 
     # Simulating first time ingest here
     simulate_first_time_ingest()
-    AutocompleteLoading()
+    # AutocompleteLoading()
 
     summary_stat_2 = dummy_summary_stats_2()
     manifest_file_2 = dummy_manifest_file_2(summary_stat_2)

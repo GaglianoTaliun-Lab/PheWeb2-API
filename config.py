@@ -9,8 +9,8 @@ PHEWEB_BASE_DIR = os.path.join(os.path.dirname(__file__))
 
 # By default, the data ingested into PheWeb 2 is stored in the `{PHEWEB_BASE_DIR}/generated-by-pheweb`  directory.
 # If you would like to change this, please provide the full path to your preferred alternative directory.
+# PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
 PHEWEB_DATA_DIR = os.path.join(PHEWEB_BASE_DIR, "generated-by-pheweb")
-# PHEWEB_DATA_DIR = '/full/path/to/some/other/dir/'
 
 
 # SECTION B: Public databases
