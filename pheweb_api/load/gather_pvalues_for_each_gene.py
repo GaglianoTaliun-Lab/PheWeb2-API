@@ -126,9 +126,6 @@ def merged_intervals(intervals: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     return ret
 
 
-assert merged_intervals([(1, 2), (2, 4), (5, 7)]) == [(1, 4), (5, 7)]
-
-
 def process_regions(taskq, retq, parent_overrides, matrix_filepath) -> None:
     try:
         from .. import conf

@@ -473,10 +473,6 @@ def _get_idxs_from_subset_str(subset_str: str) -> List[int]:
     return sorted(idxs)
 
 
-assert list(_get_idxs_from_subset_str("1,3,5-7")) == [1, 3, 5, 6, 7]
-assert list(_get_idxs_from_subset_str("5-7,1,3,3-3")) == [1, 3, 5, 6, 7]
-
-
 def indent(string: str) -> str:
     return "\n".join("   " + line for line in str(string).split("\n"))
 

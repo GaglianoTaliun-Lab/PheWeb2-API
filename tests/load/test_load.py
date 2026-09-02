@@ -70,7 +70,6 @@ def use_tmp_path():
 
     conf.set_override("FIELD_ALIASES", FIELD_ALIASES)
 
-    # ou le module qui définit default_phenolist_filepath
     import pheweb_api.load.phenolist
     pheweb_api.load.phenolist.default_phenolist_filepath = get_filepath(
         "phenolist", must_exist=False)
@@ -138,6 +137,25 @@ def test_backup_file(use_tmp_path):
         return bool(re.search(pattern, path))
 
     assert contains_iso(str(phenolist_bckup))
+
+
+def test_merged_intervals(use_tmp_path):
+    """
+    Testing interval merging for gather_pvalues_for_each_gene process.
+    """
+
+    from pheweb_api.load.gather_pvalues_for_each_gene import merged_intervals
+
+    assert merged_intervals([(1, 2), (2, 4), (5, 7)]) == [(1, 4), (5, 7)]
+
+
+def test_get_idxs_from_subset_str(use_tmp_path):
+
+    from pheweb_api.load.load_utils import _get_idxs_from_subset_str
+
+    assert list(_get_idxs_from_subset_str("1,3,5-7")) == [1, 3, 5, 6, 7]
+    assert list(_get_idxs_from_subset_str("5-7,1,3,3-3")) == [1, 3, 5, 6, 7]
+
 
 # ***********************************************************
 # ******************** INTEGRATION TESTS ********************
