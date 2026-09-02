@@ -3,6 +3,7 @@ from ..utils import (
     PheWebError,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
+    get_phenotypes_to_process
 )
 from .. import conf
 from ..file_utils import (
@@ -12,7 +13,7 @@ from ..file_utils import (
     get_pheno_filepath,
     with_chrom_idx,
     get_tmp_path,
-    convert_VariantFile_to_IndexedVariantFile,
+    convert_VariantFile_to_IndexedVariantFile
 )
 from .load_utils import parallelize_per_pheno, get_phenos_subset, get_phenolist
 
@@ -31,8 +32,9 @@ def run(argv: List[str]) -> None:
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
-    
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenotypes_to_process()
+
     interaction_phenos = []
     non_interaction_phenos = []
 
@@ -68,27 +70,36 @@ def get_input_filepaths(pheno: dict) -> List[str]:
         get_filepath("sites"),
     ]
 
+
 def get_output_filepaths(pheno: dict) -> List[str]:
     return [
         get_pheno_filepath("pheno_gz", pheno["phenocode"], must_exist=False),
-        get_pheno_filepath("pheno_gz_tbi", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "pheno_gz_tbi", pheno["phenocode"], must_exist=False),
     ]
-    
-def get_output_filepaths_interaction(pheno : dict) -> List[str]:
+
+
+def get_output_filepaths_interaction(pheno: dict) -> List[str]:
     return [
-        get_pheno_filepath("interaction", pheno["phenocode"], must_exist=False),
-        get_pheno_filepath("interaction_tbi", pheno["phenocode"], must_exist=False),  
+        get_pheno_filepath(
+            "interaction", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath("interaction_tbi",
+                           pheno["phenocode"], must_exist=False),
     ]
+
 
 def convert(pheno: Dict[str, Any], ignore=None) -> None:
     parsed_filepath = get_pheno_filepath("parsed", pheno["phenocode"])
 
-    out_filepath = get_pheno_filepath("pheno_gz", pheno["phenocode"], must_exist=False)
+    out_filepath = get_pheno_filepath(
+        "pheno_gz", pheno["phenocode"], must_exist=False)
+    out_subdir = "pheno_gz"
 
     if pheno["interaction"] is not None:
         out_filepath = get_pheno_filepath(
             "interaction", pheno["phenocode"], must_exist=False
         )
+        out_subdir = "interaction"
 
     sites_filepath = get_filepath("sites")
 
@@ -143,7 +154,8 @@ def convert(pheno: Dict[str, Any], ignore=None) -> None:
                         sites_filepath, parsed_filepath, pheno_variant
                     )
                 )
-            else:  # they're equal, so write out the match and then advance both. (pheno first and sites second)
+            # they're equal, so write out the match and then advance both. (pheno first and sites second)
+            else:
                 write_variant(sites_variant, pheno_variant)
                 try:
                     pheno_variant = next(pheno_variants)
@@ -158,7 +170,9 @@ def convert(pheno: Dict[str, Any], ignore=None) -> None:
                         )
                     )
 
-    convert_VariantFile_to_IndexedVariantFile(out_unzipped_filepath, out_filepath)
+    convert_VariantFile_to_IndexedVariantFile(
+        out_unzipped_filepath, out_filepath)
+
     os.unlink(out_unzipped_filepath)
 
 

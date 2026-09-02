@@ -12,7 +12,7 @@ from typing import List, Optional
 
 from .. import conf
 from ..file_utils import get_filepath, get_tmp_path
-from ..utils import get_phenolist, PheWebError
+from ..utils import get_phenolist, get_phenotype_summary, PheWebError
 from .. import weetabix
 
 
@@ -52,7 +52,8 @@ def main(
     annotate_trait_descriptions(
         symmetric_filepath, annotated_filepath, phenolist_path=phenolist_path
     )
-    weetabix.make_byte_index(annotated_filepath, 1, skip_lines=1, delimiter="\t")
+    weetabix.make_byte_index(annotated_filepath, 1,
+                             skip_lines=1, delimiter="\t")
 
 
 def make_symmetric(in_filepath: str, out_filepath: str) -> None:
@@ -64,7 +65,8 @@ def make_symmetric(in_filepath: str, out_filepath: str) -> None:
     so this function adds that second line for the symmetric position in the correlation matrix.
     If the file already has both directions for some or all pairs of traits, that's okay.
     """
-    expected_colnames = ["Trait1", "Trait2", "rg", "SE", "Z", "P-value", "Method"]
+    expected_colnames = ["Trait1", "Trait2",
+                         "rg", "SE", "Z", "P-value", "Method"]
     trait_pairs_seen = set()
     with open(in_filepath) as in_f:
         header = next(in_f)
@@ -104,7 +106,7 @@ def annotate_trait_descriptions(
 
     pheno_labels = {
         pheno["phenocode"]: pheno.get("phenostring", pheno["phenocode"])
-        for pheno in get_phenolist(filepath=phenolist_path)
+        for pheno in get_phenotype_summary(filepath=phenolist_path)
     }
 
     with open(in_filepath, "r") as in_f, AtomicSaver(

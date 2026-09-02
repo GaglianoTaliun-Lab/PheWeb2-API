@@ -1,0 +1,13 @@
+phenocode,phenostring,assoc_files,num_samples,num_cases,num_controls,category,interaction,stratification.sex,stratification.ancestry
+CCC_ASTHM_COM,Asthma,example_regenie_2/male/CCC_ASTHM_COM.regenie.gz,12129,1328,10801,health,,male,european
+CCC_ASTHM_COM,Asthma,example_regenie_2/female/CCC_ASTHM_COM.regenie.gz,12277,1906,10371,health,,female,european
+CCC_ASTHM_COM,Asthma,example_regenie_2/both/CCC_ASTHM_COM.regenie.gz,24406,3234,21172,health,,both,european
+CCC_ASTHM_COM,Asthma,example_regenie_2/both/CCC_ASTHM_COM.regenie.gz,24406,3234,21172,health,sex,both,european
+CCC_HBP_COM,High blood pressure or hypertension,example_regenie_2/male/CCC_HBP_COM.regenie.gz,12098,4714,7384,health,,male,european
+CCC_HBP_COM,High blood pressure or hypertension,example_regenie_2/female/CCC_HBP_COM.regenie.gz,12277,4285,7992,health,,female,european
+CCC_HBP_COM,High blood pressure or hypertension,example_regenie_2/both/CCC_HBP_COM.regenie.gz,24375,8999,15376,health,,both,european
+CCC_HBP_COM,High blood pressure or hypertension,example_regenie_2/both/CCC_HBP_COM.regenie.gz,24375,8999,15376,health,sex,both,european
+CCC_UTHYR_COM,UNDER-active thyroid gland,example_regenie_2/male/CCC_UTHYR_COM.regenie.gz,12050,768,11282,health,,male,european
+CCC_UTHYR_COM,UNDER-active thyroid gland,example_regenie_2/female/CCC_UTHYR_COM.regenie.gz,12162,2442,9720,health,,female,european
+CCC_UTHYR_COM,UNDER-active thyroid gland,example_regenie_2/both/CCC_UTHYR_COM.regenie.gz,24212,3210,21002,health,,both,european
+CCC_UTHYR_COM,UNDER-active thyroid gland,example_regenie_2/both/CCC_UTHYR_COM.regenie.gz,24212,3210,21002,health,sex,both,european

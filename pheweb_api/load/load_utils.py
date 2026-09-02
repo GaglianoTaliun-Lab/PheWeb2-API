@@ -1,4 +1,9 @@
-from ..utils import round_sig, get_phenolist, PheWebError, fmt_seconds
+from ..utils import (round_sig,
+                     get_phenolist,
+                     get_phenotypes_to_process,
+                     get_phenocode_with_suffixes,
+                     PheWebError,
+                     fmt_seconds)
 from .. import conf
 from .. import parse_utils
 from ..file_utils import get_dated_tmp_path
@@ -158,10 +163,12 @@ class MaxPriorityQueue:
         __eq__ = __lt__ = __gt__ = lambda s, o: False
 
     def __init__(self):
-        self._q = []  # a heap-property-satisfying list like [(priority, ComparesFalse(), item), ...]
+        # a heap-property-satisfying list like [(priority, ComparesFalse(), item), ...]
+        self._q = []
 
     def add(self, item, priority) -> None:
-        heapq.heappush(self._q, (-priority, MaxPriorityQueue.ComparesFalse(), item))
+        heapq.heappush(
+            self._q, (-priority, MaxPriorityQueue.ComparesFalse(), item))
 
     def add_and_keep_size(
         self, item, priority, size: int, popped_callback: Optional[Callable] = None
@@ -217,14 +224,16 @@ class Parallelizer:
             args = (taskq, retq, conf.overrides, matrix_filepath)
 
         procs = [
-            multiprocessing.Process(target=do_multiple_tasks, args=args, daemon=True)
+            multiprocessing.Process(
+                target=do_multiple_tasks, args=args, daemon=True)
             for _ in range(n_procs)
         ]
         for p in procs:
             p.start()
         with ProgressBar() as progressbar:
             n_tasks_complete = 0
-            self._update_progressbar(progressbar, n_tasks_complete, n_procs, len(tasks))
+            self._update_progressbar(
+                progressbar, n_tasks_complete, n_procs, len(tasks))
             while True:
                 try:
                     ret = retq.get(block=True, timeout=10)
@@ -408,7 +417,8 @@ class PerPhenoParallelizer(Parallelizer):
             pc = ret["task"]["phenocode"]
             v = ret["value"]
             if isinstance(v, dict) and v.get("type", "") == "warning":
-                continue  # TODO: self._progressbar.prepend_message(ret['message'])
+                # TODO: self._progressbar.prepend_message(ret['message'])
+                continue
             assert pc not in pheno_results
             pheno_results[pc] = v
         return pheno_results
@@ -416,7 +426,7 @@ class PerPhenoParallelizer(Parallelizer):
     def should_process_pheno(self, pheno, get_input_filepaths, get_output_filepaths):
         input_filepaths = get_input_filepaths(pheno)
         output_filepaths = get_output_filepaths(pheno)
-        
+
         if isinstance(input_filepaths, str):
             input_filepaths = [input_filepaths]
         if isinstance(output_filepaths, str):
@@ -429,16 +439,7 @@ class PerPhenoParallelizer(Parallelizer):
                         " or ".join(output_filepaths), fp
                     )
                 )
-                
-        # print(f"""
-        #       DEBUG : should process pheno? (should return false)
-        #       1 : {any(not os.path.exists(fp) for fp in output_filepaths)}
-        #       2 : {max(map(mtime, input_filepaths)) > min(map(mtime, output_filepaths))}
-              
-        #       input_filepaths : {input_filepaths}
-        #       output_filepaths : {output_filepaths}
-        #       """, flush = True)
-    
+
         return any(not os.path.exists(fp) for fp in output_filepaths) or max(
             map(mtime, input_filepaths)
         ) > min(map(mtime, output_filepaths))
@@ -460,7 +461,8 @@ def get_phenos_subset(pheno_subset_str: str) -> List[Dict[str, Any]]:
 
 def _get_idxs_from_subset_str(subset_str: str) -> List[int]:
     if not re.match(r"^(\d+(-\d+)?)(,\d+(-\d+)?)*$", subset_str):
-        raise PheWebError("Couldn't parse subset string: {}".format(repr(subset_str)))
+        raise PheWebError(
+            "Couldn't parse subset string: {}".format(repr(subset_str)))
     idxs: Set[int] = set()
     for part in subset_str.split(","):
         if "-" in part:
@@ -469,10 +471,6 @@ def _get_idxs_from_subset_str(subset_str: str) -> List[int]:
         else:
             idxs.add(int(part))
     return sorted(idxs)
-
-
-assert list(_get_idxs_from_subset_str("1,3,5-7")) == [1, 3, 5, 6, 7]
-assert list(_get_idxs_from_subset_str("5-7,1,3,3-3")) == [1, 3, 5, 6, 7]
 
 
 def indent(string: str) -> str:
