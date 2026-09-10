@@ -460,6 +460,12 @@ def get_phenos_subset(pheno_subset_str: str) -> List[Dict[str, Any]]:
 
 
 def _get_idxs_from_subset_str(subset_str: str) -> List[int]:
+    """
+    Extracting idx from an str representation
+
+    '1,3,5-7'       --> [1, 3, 5, 6, 7]
+    '5-7,1,3,3-3'   --> [1, 3, 5, 6, 7]
+    """
     if not re.match(r"^(\d+(-\d+)?)(,\d+(-\d+)?)*$", subset_str):
         raise PheWebError(
             "Couldn't parse subset string: {}".format(repr(subset_str)))

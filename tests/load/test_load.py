@@ -150,11 +150,63 @@ def test_merged_intervals(use_tmp_path):
 
 
 def test_get_idxs_from_subset_str(use_tmp_path):
+    """
+    Testing extracting idx from an str representation
+    """
 
     from pheweb_api.load.load_utils import _get_idxs_from_subset_str
 
     assert list(_get_idxs_from_subset_str("1,3,5-7")) == [1, 3, 5, 6, 7]
     assert list(_get_idxs_from_subset_str("5-7,1,3,3-3")) == [1, 3, 5, 6, 7]
+
+
+def test_round_sig(use_tmp_path):
+    """
+    Testing rounding to n significant digits
+    """
+
+    assert round_sig(0.00123, 2) == 0.0012
+    assert round_sig(1.59e-10, 2) == 1.6e-10
+
+
+def test_approx_equal(use_tmp_path):
+    """
+    Testing if a and b approximativaly equals based on a tolerance factor.
+    """
+
+    assert approx_equal(42, 42.0000001)
+    assert not approx_equal(42, 42.01)
+
+
+def test_fmt_seconds(use_tmp_path):
+    """
+    Testing converting float seconds into seconds, minutes or hours as an str
+    """
+
+    assert fmt_seconds(9) == "9 seconds"
+    assert fmt_seconds(900) == "15 minutes"
+    assert fmt_seconds(90000) == "25 hours"
+
+
+def test_pad_gene(use_tmp_path):
+    """
+    Testing pad_gene
+    """
+
+    assert pad_gene(1000, 2345) == (0, 102345), pad_gene(1000, 2345)
+    assert pad_gene(1000, 400000) == (0, 500000), pad_gene(1000, 400000)
+    assert pad_gene(200000, 400000) == (
+        100000, 500000), pad_gene(200000, 400000)
+    assert pad_gene(200000, 500000) == (
+        100000, 600000), pad_gene(200000, 500000)
+    assert pad_gene(200000, 500001) == (
+        100001, 600001), pad_gene(200000, 500001)
+    assert pad_gene(200000, 600000) == (
+        150000, 650000), pad_gene(200000, 600000)
+    assert pad_gene(200000, 700000) == (
+        200000, 700000), pad_gene(200000, 700000)
+    assert pad_gene(200000, 800000) == (
+        200000, 800000), pad_gene(200000, 800000)
 
 
 # ***********************************************************

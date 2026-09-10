@@ -46,7 +46,7 @@ def dummy_phenolist() -> str:
     phenolist_data = [
         {
             "assoc_files": [
-                "/lustre07/scratch/jordboul/PheWeb/Dev/PheWeb2-API/generated-by-pheweb/tmp/generated-by-pheweb/DUMMY_COM.regenie.gz"
+                get_generated_path("DUMMY_COM.regenie.gz")
             ],
             "category": "dummy_category",
             "interaction": None,
@@ -62,7 +62,7 @@ def dummy_phenolist() -> str:
         },
         {
             "assoc_files": [
-                "/lustre07/scratch/jordboul/PheWeb/Dev/PheWeb2-API/generated-by-pheweb/tmp/generated-by-pheweb/DUMMY_COM.regenie.gz"
+                get_generated_path("DUMMY_COM.regenie.gz")
             ],
             "category": "dummy_category",
             "interaction": "sex",

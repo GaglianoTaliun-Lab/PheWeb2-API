@@ -24,6 +24,9 @@ def load_module_from_filepath(module_name: str, filepath: str) -> types.ModuleTy
 
 
 def round_sig(x: float, digits: int) -> float:
+    """
+    Rounding to n significant digits.
+    """
     if x == 0:
         return 0
     elif abs(x) == math.inf or math.isnan(x):
@@ -34,29 +37,22 @@ def round_sig(x: float, digits: int) -> float:
         return round(x, digits - 1 - digits_above_zero)
 
 
-assert round_sig(0.00123, 2) == 0.0012
-assert round_sig(1.59e-10, 2) == 1.6e-10
-
-
 def approx_equal(a: float, b: float, tolerance: float = 1e-4) -> bool:
+    """
+    Computing if a and b approximativaly equals based on a tolerance factor.
+    """
     return abs(a - b) <= max(abs(a), abs(b)) * tolerance
 
 
-assert approx_equal(42, 42.0000001)
-assert not approx_equal(42, 42.01)
-
-
 def fmt_seconds(seconds: float) -> str:
+    """
+    Converting float seconds into seconds, minutes or hours as an str
+    """
     if seconds < 5 * 60:
         return "{} seconds".format(int(seconds))
     if seconds < 5 * 60 * 60:
         return "{} minutes".format(int(seconds // 60))
     return "{} hours".format(int(seconds // 60 // 60))
-
-
-assert fmt_seconds(9) == "9 seconds"
-assert fmt_seconds(900) == "15 minutes"
-assert fmt_seconds(90000) == "25 hours"
 
 
 def get_phenolist(filepath: ty.Optional[str] = None) -> ty.List[ty.Dict[str, ty.Any]]:
@@ -176,16 +172,6 @@ def pad_gene(start: int, end: int) -> ty.Tuple[int, int]:
         int(100e3), total_padding - padding_on_left
     )  # put the remaining padding on the right, but not more than 100kb.
     return (start - padding_on_left, end + padding_on_right)
-
-
-assert pad_gene(1000, 2345) == (0, 102345), pad_gene(1000, 2345)
-assert pad_gene(1000, 400000) == (0, 500000), pad_gene(1000, 400000)
-assert pad_gene(200000, 400000) == (100000, 500000), pad_gene(200000, 400000)
-assert pad_gene(200000, 500000) == (100000, 600000), pad_gene(200000, 500000)
-assert pad_gene(200000, 500001) == (100001, 600001), pad_gene(200000, 500001)
-assert pad_gene(200000, 600000) == (150000, 650000), pad_gene(200000, 600000)
-assert pad_gene(200000, 700000) == (200000, 700000), pad_gene(200000, 700000)
-assert pad_gene(200000, 800000) == (200000, 800000), pad_gene(200000, 800000)
 
 
 chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]
