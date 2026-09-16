@@ -888,3 +888,297 @@ def test_append_ingest(use_tmp_path) -> None:
     # looking at logs, nothing is being reprocessed
     run_process_assoc_files([])
     assert True
+
+
+def test_append_new_stratification(use_tmp_path) -> None:
+    """
+    Testing appending a new stratification to a first time ingest.
+    """
+
+    print("==================== TEST APPEND NEW STRATIFICATION ====================")
+
+    # Simulating first time ingest here
+    simulate_first_time_ingest()
+
+    phenolist_fp = get_filepath("phenolist")
+
+    # asserting it contains summary_stat as assoc_file
+    with open(phenolist_fp, "r") as f:
+        first_pheno = json.load(f)
+
+    conf.overrides["ASSOC_TEST_NAME"] = "ADD"
+
+    summary_statistic_european = dummy_summary_stats_european()
+    manifest_file_3 = dummy_manifest_file_3(summary_statistic_european)
+
+    # ======== Testing phenolist ========
+    run_phenolist([
+        "import-phenolist",
+        manifest_file_3,
+        "-f",
+        get_filepath("phenolist", must_exist=False)
+    ])
+
+    phenolist_fp = get_filepath("phenolist")
+
+    # asserting it contains summary_stat as assoc_file
+    with open(phenolist_fp, "r") as f:
+        data = json.load(f)
+
+        assert data[0]["stratification"]["ancestry"] == "european"
+        assert data[0]["stratification"]["sex"] == "female"
+
+    dummy_phenocode = get_phenocode_with_suffixes(data[0])
+
+    # ======== parseinputfile ========
+    run_parse_input_files([])
+
+    # === Testing sites ===
+    run_sites([])
+
+    uanno_fp = get_filepath("unanno")
+
+    assert Path(uanno_fp).exists()
+
+    # Making sure that there are now 2 sites.
+    with VariantFileReader(uanno_fp) as uanno_file:
+
+        reader = iter(uanno_file)
+
+        variant = next(reader)
+
+        assert variant["chrom"] == "11"
+        assert variant["pos"] == 73234296
+        assert variant["ref"] == "C"
+        assert variant["alt"] == "T"
+
+        variant = next(reader)
+
+        assert variant["chrom"] == "19"
+        assert variant["pos"] == 44908822
+        assert variant["ref"] == "C"
+        assert variant["alt"] == "T"
+
+    # ======== Testing add_rsids ========
+    run_add_rsids([])
+
+    sites_rsids_filepath = get_filepath("sites-rsids", must_exist=False)
+    assert Path(sites_rsids_filepath).exists()
+
+    # Making sure that there are now 2 sites.
+    with VariantFileReader(sites_rsids_filepath) as sites_rsids_file:
+
+        reader = iter(sites_rsids_file)
+
+        variant = next(reader)
+        assert variant["rsids"] == "rs2511241"
+
+        variant = next(reader)
+        assert variant["rsids"] == "rs7412"
+
+    # ======== Testing add_genes ========
+
+    run_add_genes([])
+
+    sites_filepath = get_filepath("sites", must_exist=False)
+    assert Path(sites_filepath).exists()
+
+    # Making sure that there are now 2 sites.
+    with VariantFileReader(sites_filepath) as sites_file:
+
+        reader = iter(sites_file)
+
+        variant = next(reader)
+        assert variant["nearest_genes"] == "P2RY2"
+
+        variant = next(reader)
+        assert variant["nearest_genes"] == "APOE"
+
+    # ======== Testing make_cpras_rsids_sqlite3 ========
+    run_make_cpras_rsids_sqlite3([])
+
+    cpras_rsids_filepath = get_filepath("cpras-rsids-sqlite3")
+
+    assert Path(cpras_rsids_filepath).exists()
+
+    cpras_rsids_db = sqlite3.connect(cpras_rsids_filepath)
+    cur = cpras_rsids_db.cursor()
+
+    #
+    cur.execute("SELECT * FROM cpras_rsids")
+    cpras_rsids = cur.fetchall()
+
+    # Making sure that there are now 2 sites.
+    assert cpras_rsids[0] == ('11-73234296-C-T', 'rs2511241')
+    assert cpras_rsids[1] == ('19-44908822-C-T', 'rs7412')
+
+    # ======== augment_phenos ========
+
+    run_augment_phenos([])
+
+    # ======== Testing matrix ========
+    run_matrix([])
+
+    stratification_paths = get_stratification_paths(
+        first_pheno + get_phenolist_no_interaction()
+    )
+
+    assert ".all.both" in stratification_paths
+    assert ".european.female" in stratification_paths
+
+    matrix_gz_stratified_filepath_1 = get_pheno_filepath(
+        "matrix-stratified", ".all.both", must_exist=False
+    )
+
+    matrix_gz_stratified_filepath_2 = get_pheno_filepath(
+        "matrix-stratified", ".european.female", must_exist=False
+    )
+
+    assert Path(matrix_gz_stratified_filepath_1).exists()
+    assert Path(matrix_gz_stratified_filepath_2).exists()
+
+    # Making sure that there are now two matrices
+    assert MatrixReader(matrix_gz_stratified_filepath_1).get_phenocodes()[0] == \
+        "DUMMY_COM.all.both"
+    assert MatrixReader(matrix_gz_stratified_filepath_2).get_phenocodes()[0] == \
+        "DUMMY_3_COM.european.female"
+
+    # ======== Testing gather_pvalues_for_each_gene ========
+    run_gather_pvalues_for_each_gene([])
+
+    best_phenos_by_gene_filepath = Path(get_filepath(
+        "best-phenos-by-gene-sqlite3", must_exist=False))
+
+    best_phenos_by_gene_db = sqlite3.connect(str(best_phenos_by_gene_filepath))
+    cur = best_phenos_by_gene_db.cursor()
+    cur.execute("SELECT * FROM best_phenos_for_each_gene")
+    best_phenos_for_each_gene = {
+        gene: json.loads(data)
+        for gene, data in cur.fetchall()
+    }
+
+    # Making sure best pheno by gene now contains both dummy pheno
+    assert "APOE" in best_phenos_for_each_gene
+    assert best_phenos_for_each_gene["APOE"][0]["phenocode"] == "DUMMY_COM.all.both"
+    assert best_phenos_for_each_gene["APOE"][0]["pval"] == 2.7e-69
+
+    assert "P2RY2" in best_phenos_for_each_gene
+    assert best_phenos_for_each_gene["P2RY2"][0]["phenocode"] == "DUMMY_3_COM.european.female"
+    assert best_phenos_for_each_gene["P2RY2"][0]["pval"] == 2.7e-56
+
+    # ======== Testing manhattan ========
+    run_manhattan([])
+
+    manhattan_filepath = get_pheno_filepath("manhattan", dummy_phenocode)
+
+    assert Path(manhattan_filepath).exists()
+
+    # ======== Testing qq ========
+    # NOTE: There is a limitation for the qq process. Since we are using only a single site,
+    # we cannot compute the gc_lambda.
+
+    run_qq([])
+
+    qq_filepath = get_pheno_filepath("qq", dummy_phenocode)
+
+    assert Path(qq_filepath).exists()
+
+    # ======== Testing phenotypes ========
+
+    run_phenotypes([])
+
+    phenotypes_filepath = get_filepath("phenotypes_summary", must_exist=False)
+    phenotypes_tsv_filepath = get_filepath(
+        "phenotypes_summary_tsv", must_exist=False)
+
+    assert Path(phenotypes_filepath).exists()
+    assert Path(phenotypes_tsv_filepath).exists()
+
+    with open(phenotypes_filepath, "r") as phenotypes_file:
+
+        data = json.load(phenotypes_file)
+
+        phenocodes = [d["phenocode"] for d in data]
+
+        assert "DUMMY_COM" in phenocodes
+        assert "DUMMY_3_COM" in phenocodes
+
+    # ======== Testing top_hits ========
+
+    run_top_hits([])
+
+    top_hits_filepath = get_filepath("top-hits")
+    top_hits_1k_filepath = get_filepath("top-hits-1k")
+    top_hits_tsv = get_filepath("top-hits-tsv")
+
+    assert Path(top_hits_filepath).exists()
+    assert Path(top_hits_1k_filepath).exists()
+    assert Path(top_hits_tsv).exists()
+
+    for filepath in [top_hits_filepath, top_hits_1k_filepath]:
+        with open(filepath, "r") as f:
+            data = json.load(f)
+
+            top_hits = {
+                top_hit["phenostring"]: top_hit for top_hit in data
+            }
+
+            print("TOP HITS:", top_hits)
+
+            assert "dummy" in top_hits
+            assert top_hits["dummy"]["pval"] == 1.1e-08
+
+            assert "dummy_3" in top_hits
+            assert top_hits["dummy_3"]["pval"] == 2.7e-56
+
+    # ======== Testing best_of_pheno ========
+
+    run_best_of_pheno([])
+
+    best_of_pheno_filepath = get_pheno_filepath(
+        "best_of_pheno", dummy_phenocode)
+
+    assert Path(best_of_pheno_filepath).exists()
+
+    # ======== Testing autocomplete ========
+    AutocompleteLoading()
+
+    autocomplete_db_filepath = get_filepath(
+        "autocomplete_db")
+
+    assert Path(autocomplete_db_filepath).exists()
+
+    autocomplete_db = sqlite3.connect(autocomplete_db_filepath)
+    cur = autocomplete_db.cursor()
+
+    cur.execute("SELECT * FROM genes")
+    genes = {
+        row[0]: row
+        for row in cur.fetchall()
+    }
+
+    assert genes["APOE"] == ("APOE", "19", 44905791, 44909393)
+    assert genes["P2RY2"] == ("P2RY2", "11", 73218281, 73242427)
+
+    cur.execute("SELECT * FROM phenotypes")
+    phenotypes = {
+        row[0]: row
+        for row in cur.fetchall()
+    }
+    assert phenotypes["DUMMY_COM"] == ("DUMMY_COM", "dummy")
+    assert phenotypes["DUMMY_3_COM"] == ("DUMMY_3_COM", "dummy_3")
+
+    cur.execute("SELECT rsid, variant_id, chrom, pos FROM variants")
+    variants = {
+        row[0]: row
+        for row in cur.fetchall()
+    }
+
+    assert variants["rs7412"] == ("rs7412", "19-44908822-C-T", "19", 44908822)
+    assert variants["rs2511241"] == (
+        "rs2511241", "11-73234296-C-T", "11", 73234296)
+
+    # ======== Testing process_assoc_files ========
+    # looking at logs, nothing is being reprocessed
+    run_process_assoc_files([])
+    assert True

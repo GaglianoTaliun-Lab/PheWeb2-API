@@ -5,7 +5,7 @@ This avoids reading any variant more than once.
  The total number of bases in the padded genes (without double-counting overlaps) is 2100Mbases (40%) (in 16k intervals)
 """
 
-from ..utils import get_padded_gene_tuples, get_phenolist, get_stratification_paths
+from ..utils import get_padded_gene_tuples, get_phenolist, get_phenotype_summary, get_stratification_paths
 from ..file_utils import MatrixReader, get_filepath, get_tmp_path, get_pheno_filepath, backup_file
 from .load_utils import Parallelizer
 from .. import conf
@@ -31,7 +31,8 @@ def run(argv: List[str]) -> None:
 
     if conf.has_stratifications():
         matrix_filepaths = []
-        stratification_paths = set(get_stratification_paths(get_phenolist()))
+        stratification_paths = get_stratification_paths(get_phenotype_summary() +
+                                                        get_phenolist())
         print(f"stratification paths : {stratification_paths}")
         for stratification_path in stratification_paths:
             matrix_filepaths.append(

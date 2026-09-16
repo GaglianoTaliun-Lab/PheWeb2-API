@@ -242,7 +242,7 @@ def get_stratification_paths(phenos: dict) -> [str]:
             stratification_path += "." + \
                 pheno["stratification"][stratification]
         stratification_paths.append(stratification_path)
-    return stratification_paths
+    return list(set(stratification_paths))
 
 
 def get_stratifications(phenos: list) -> ty.Dict[str, ty.Any]:

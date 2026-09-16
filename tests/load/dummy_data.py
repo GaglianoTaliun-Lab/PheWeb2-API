@@ -11,6 +11,63 @@ from pheweb_api.file_utils import *
 
 from pheweb_api.load.matrix import create_matrix_tbi
 
+# --------------------- RESOURCES ---------------------
+
+
+def dummy_gene_aliases() -> str:
+    """
+    Creating a dummmy gene_aliases containing a single (alias, canonical) gene combinaison.
+    """
+
+    # alias, canonicals
+    dummy_aliases = {
+        "APOE": "APOE",
+        "ALPL": "ALPL",
+        "P2RY2": "P2RY2",
+    }
+
+    aliases_filepath = Path(get_filepath(
+        "gene-aliases-sqlite3", must_exist=False))
+    aliases_tmp_filepath = Path(get_tmp_path(aliases_filepath))
+    db = sqlite3.connect(str(aliases_tmp_filepath))
+    with db:
+        db.execute(
+            "CREATE TABLE gene_aliases (alias TEXT PRIMARY KEY, canonicals_comma TEXT)"
+        )
+        db.executemany(
+            "INSERT INTO gene_aliases VALUES (?,?)", sorted(
+                dummy_aliases.items())
+        )
+
+    aliases_tmp_filepath.replace(aliases_filepath)
+
+    return aliases_filepath
+
+
+def dummy_genes() -> str:
+    genes_filepath = get_filepath("genes", must_exist=False)
+
+    with open(genes_filepath, "w") as genes_file:
+        genes_file.write("1\t21509397\t21578410\tALPL\tENSG00000162551\n")
+        genes_file.write("11\t73218281\t73242427\tP2RY2\tENSG00000175591\n")
+        genes_file.write("19\t44905791\t44909393\tAPOE\tENSG00000130203\n")
+
+    return genes_filepath
+
+
+def dummy_rsids() -> str:
+
+    rsids_filepath = get_filepath("rsids", must_exist=False)
+
+    with gzip.open(rsids_filepath, "wt") as rsids_f:
+        rsids_f.write("1\t21506237\trs3856178\tC\tT\n")
+        rsids_f.write("11\t73234296\trs2511241\tC\tT\n")
+        rsids_f.write("19\t44908822\trs7412\tC\tT")
+
+    return rsids_filepath
+
+# --------------------- DUMMY 1 ---------------------
+
 
 def dummy_summary_stats():
 
@@ -84,85 +141,6 @@ def dummy_phenolist() -> str:
         json.dump(phenolist_data, phenolist_file)
 
     return phenolist_filepath
-
-
-def dummy_summary_stats_2():
-
-    summary_stat = get_generated_path("DUMMY_2_COM.regenie.gz")
-
-    header = "CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ A1FREQ_CASES A1FREQ_CONTROLS INFO N N_CASES N_CONTROLS TEST BETA SE CHISQ LOG10P EXTRA\n"
-    line1 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-CONDTL 0.51648 0.094504 33.2653 8.09473 NA\n"
-    line2 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_SNP -0.897824 0.161193 29.8844 7.33858 NA\n"
-    line3 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_SNPxsex 0.674982 0.10785 39.9898 9.59296 NA\n"
-    line4 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_2DF NA NA 42.6455 9.26035 NA"
-    with gzip.open(summary_stat, "wt") as f:
-        f.writelines([header, line1, line2, line3, line4])
-
-    return summary_stat
-
-
-def dummy_manifest_file_2(summary_stat_2) -> str:
-
-    manifest = get_generated_path("manifest-example-2.csv")
-
-    header = "phenocode,phenostring,assoc_files,num_samples,num_cases,num_controls,category,interaction,stratification.sex,stratification.ancestry\n"
-    line1 = f"DUMMY_2_COM,dummy_2,{summary_stat_2},25460,22179,3281,other_category,,both,all\n"
-    line2 = f"DUMMY_2_COM,dummy_2,{summary_stat_2},25460,22179,3281,other_category,sex,both,all\n"
-
-    with open(manifest, "w") as f:
-        f.writelines([header, line1, line2])
-
-    return manifest
-
-
-def dummy_gene_aliases() -> str:
-    """
-    Creating a dummmy gene_aliases containing a single (alias, canonical) gene combinaison.
-    """
-
-    # alias, canonicals
-    dummy_aliases = {
-        "APOE": "APOE",
-        "ALPL": "ALPL"
-    }
-
-    aliases_filepath = Path(get_filepath(
-        "gene-aliases-sqlite3", must_exist=False))
-    aliases_tmp_filepath = Path(get_tmp_path(aliases_filepath))
-    db = sqlite3.connect(str(aliases_tmp_filepath))
-    with db:
-        db.execute(
-            "CREATE TABLE gene_aliases (alias TEXT PRIMARY KEY, canonicals_comma TEXT)"
-        )
-        db.executemany(
-            "INSERT INTO gene_aliases VALUES (?,?)", sorted(
-                dummy_aliases.items())
-        )
-
-    aliases_tmp_filepath.replace(aliases_filepath)
-
-    return aliases_filepath
-
-
-def dummy_genes() -> str:
-    genes_filepath = get_filepath("genes", must_exist=False)
-
-    with open(genes_filepath, "w") as genes_file:
-        genes_file.write("1\t21509397\t21578410\tALPL\tENSG00000162551\n")
-        genes_file.write("19\t44905791\t44909393\tAPOE\tENSG00000130203")
-
-    return genes_filepath
-
-
-def dummy_rsids() -> str:
-
-    rsids_filepath = get_filepath("rsids", must_exist=False)
-
-    with gzip.open(rsids_filepath, "wt") as rsids_f:
-        rsids_f.write("1\t21506237\trs3856178\tC\tT\n")
-        rsids_f.write("19\t44908822\trs7412\tC\tT")
-
-    return rsids_filepath
 
 
 def dummy_unanno() -> str:
@@ -583,10 +561,15 @@ def dummy_autocomplete_db() -> str:
 
 
 def simulate_first_time_ingest():
+    """
+    Hard coded first time ingest results
+    """
 
     summary_stat_filepath = dummy_summary_stats()
     dummy_manifest_file(summary_stat_filepath)
     dummy_phenolist()
+
+    # Ressources
     dummy_gene_aliases()
     dummy_genes()
     dummy_rsids()
@@ -611,3 +594,62 @@ def simulate_first_time_ingest():
     dummy_best_of_pheno()
 
     dummy_autocomplete_db()
+
+
+# --------------------- DUMMY 2 ---------------------
+
+
+def dummy_summary_stats_2():
+
+    summary_stat = get_generated_path("DUMMY_2_COM.regenie.gz")
+
+    header = "CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ A1FREQ_CASES A1FREQ_CONTROLS INFO N N_CASES N_CONTROLS TEST BETA SE CHISQ LOG10P EXTRA\n"
+    line1 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-CONDTL 0.51648 0.094504 33.2653 8.09473 NA\n"
+    line2 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_SNP -0.897824 0.161193 29.8844 7.33858 NA\n"
+    line3 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_SNPxsex 0.674982 0.10785 39.9898 9.59296 NA\n"
+    line4 = "1 21506237 1:21506237:C:T C T 0.0704679 0.0708858 0.546808 1.00647 25460 22179 3281 ADD-INT_2DF NA NA 42.6455 9.26035 NA"
+    with gzip.open(summary_stat, "wt") as f:
+        f.writelines([header, line1, line2, line3, line4])
+
+    return summary_stat
+
+
+def dummy_manifest_file_2(summary_stat_2) -> str:
+
+    manifest = get_generated_path("manifest-example-2.csv")
+
+    header = "phenocode,phenostring,assoc_files,num_samples,num_cases,num_controls,category,interaction,stratification.sex,stratification.ancestry\n"
+    line1 = f"DUMMY_2_COM,dummy_2,{summary_stat_2},25460,22179,3281,other_category,,both,all\n"
+    line2 = f"DUMMY_2_COM,dummy_2,{summary_stat_2},25460,22179,3281,other_category,sex,both,all\n"
+
+    with open(manifest, "w") as f:
+        f.writelines([header, line1, line2])
+
+    return manifest
+
+# --------------------- DUMMY 3 (EURO) ---------------------
+
+
+def dummy_summary_stats_european():
+
+    summary_stat = get_generated_path("DUMMY_3_COM.regenie.gz")
+
+    header = "CHROM GENPOS ID ALLELE0 ALLELE1 A1FREQ A1FREQ_CASES A1FREQ_CONTROLS INFO N N_CASES N_CONTROLS TEST BETA SE CHISQ LOG10P EXTRA\n"
+    line1 = "11 73234296 1:73234296:C:T C T 0.000590158 0.000654151 0.000725739 0.482684 12309 2300 10009 ADD 0.0407304 0.953807 0.00182355 55.5648 NA\n"
+    with gzip.open(summary_stat, "wt") as f:
+        f.writelines([header, line1])
+
+    return summary_stat
+
+
+def dummy_manifest_file_3(summary_stat) -> str:
+
+    manifest = get_generated_path("manifest-example.csv")
+
+    header = "phenocode,phenostring,assoc_files,num_samples,num_cases,num_controls,category,interaction,stratification.sex,stratification.ancestry\n"
+    line1 = f"DUMMY_3_COM,dummy_3,{summary_stat},12309,2300,10009,dummy_category,,female,european\n"
+
+    with open(manifest, "w") as f:
+        f.writelines([header, line1])
+
+    return manifest
