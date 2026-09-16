@@ -19,9 +19,9 @@ augment_phenos
 matrix
 gather_pvalues_for_each_gene
 manhattan
-top_hits
 qq
 phenotypes
+top_hits
 best_of_pheno
 pheno_correlation
 generate_autocomplete_db
@@ -29,7 +29,7 @@ generate_autocomplete_db
 scripts = [script for script in scripts if script]
 
 
-def run(argv: List[str]) -> None:
+def run(argv: List[str]) -> int:
     if any(arg in ["-h", "--help"] for arg in argv):
         print(
             "Run all the steps to go from a prepared phenolist to a ready-to-serve pheweb."
@@ -55,7 +55,8 @@ def run(argv: List[str]) -> None:
         print("==> Starting `pheweb {}`".format(script.replace("_", "-")))
         start_time = time.time()
         script_parts = script.split()
-        module = importlib.import_module(".{}".format(script_parts[0]), __package__)
+        module = importlib.import_module(
+            ".{}".format(script_parts[0]), __package__)
         module_run = getattr(module, "run", None)  # appeases mypy
         if not callable(module_run):
             raise Exception(
@@ -66,10 +67,12 @@ def run(argv: List[str]) -> None:
         try:
             module_run(script_parts[1:])
         except Exception:
-            print("==> failed after {}".format(fmt_seconds(time.time() - start_time)))
+            print("==> failed after {}".format(
+                fmt_seconds(time.time() - start_time)))
             raise
         else:
             print(
-                "==> Completed in {}".format(fmt_seconds(time.time() - start_time)),
+                "==> Completed in {}".format(
+                    fmt_seconds(time.time() - start_time)),
                 end="\n\n",
             )

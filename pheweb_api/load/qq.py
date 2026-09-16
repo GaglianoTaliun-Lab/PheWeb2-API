@@ -15,15 +15,16 @@ This script creates json files which can be used to render QQ plots.
 from ..utils import (
     round_sig,
     approx_equal,
-    get_phenolist,
     PheWebError,
     get_phenocode_with_stratifications,
     get_phenocode_with_suffixes,
+    get_phenotypes_to_process
 )
 from .. import conf
-from ..file_utils import VariantFileReader, write_json, get_pheno_filepath
+from ..file_utils import VariantFileReader, get_tmp_path, write_json, get_pheno_filepath, backup_file
 from .load_utils import get_maf, parallelize_per_pheno, get_phenos_subset
 
+import os
 from typing import Dict, Any, List, Iterator, Set, Tuple
 import argparse
 import boltons.mathutils
@@ -37,14 +38,16 @@ NUM_MAF_RANGES = 4
 
 
 def run(argv: List[str]) -> None:
-    parser = argparse.ArgumentParser(description="Make a QQ plot for each phenotype.")
+    parser = argparse.ArgumentParser(
+        description="Make a QQ plot for each phenotype.")
     parser.add_argument(
         "--phenos",
         help="Can be like '4,5,6,12' or '4-6,12' to run on only the phenos at those positions (0-indexed) in pheno-list.json (and only if they need to run)",
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenotypes_to_process()
 
     interaction_phenos = []
     non_interaction_phenos = []
@@ -115,11 +118,19 @@ def make_json_file_explicit(
         rv["overall"] = make_qq_unstratified(
             variants, include_qq=False
         )  # Must run AFTER `_stratified()`, because it sorts by qval, which could bias the maf_range strata.
-        rv["ci"] = list(get_confidence_intervals(len(variants) / len(rv["by_maf"])))
+        rv["ci"] = list(get_confidence_intervals(
+            len(variants) / len(rv["by_maf"])))
     else:
         rv["overall"] = make_qq_unstratified(variants, include_qq=True)
         rv["ci"] = list(get_confidence_intervals(len(variants)))
-    write_json(filepath=out_filepath, data=rv)
+
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    write_json(filepath=tmp_out_filepath, data=rv)
+
+    backup_file(out_filepath, "qq", "move")
+
+    os.replace(tmp_out_filepath, out_filepath)
 
 
 def get_variants_df(in_filepath: str, pheno: Dict[str, Any]) -> np.ndarray:
@@ -172,7 +183,7 @@ def make_qq_stratified(variants: np.ndarray) -> List[Dict[str, Any]]:
             len(variants) * (idx + 1) // NUM_MAF_RANGES,
         )
         qvals = variants["qval"][
-            slice_indices[0] : slice_indices[1]
+            slice_indices[0]: slice_indices[1]
         ].copy()  # Make sure to copy so we don't modify `variants`.
         qvals *= -1
         qvals.sort()
@@ -189,20 +200,30 @@ def make_qq_stratified(variants: np.ndarray) -> List[Dict[str, Any]]:
     return [make_strata(i) for i in range(NUM_MAF_RANGES)]
 
 
-def make_qq_unstratified(variants: np.ndarray, include_qq: bool) -> Dict[str, Any]:
-    variants[::-1].sort(order=["qval"])  # Sort descending.
+def make_qq_unstratified(
+    variants: np.ndarray, include_qq: bool
+) -> Dict[str, Any]:
+    variants[::-1].sort(order=["qval"])
     qvals = variants["qval"]
+
     rv: Dict[str, Any] = {}
+
     if include_qq:
         rv["qq"] = compute_qq(qvals)
+
     rv["count"] = len(qvals)
     rv["gc_lambda"] = {}
-    for perc in ["0.5", "0.1", "0.01", "0.001"]:
-        gc = gc_value_from_list(qvals, float(perc))
-        if math.isnan(gc) or abs(gc) == math.inf:
-            print("WARNING: got gc_value {!r}".format(gc))
-        else:
-            rv["gc_lambda"][perc] = round_sig(gc, 5)
+
+    # GC lambda is not meaningful with a single variant
+    if len(qvals) > 1:
+        for perc in ["0.5", "0.1", "0.01", "0.001"]:
+            gc = gc_value_from_list(qvals, float(perc))
+
+            if math.isnan(gc) or abs(gc) == math.inf:
+                print("WARNING: got gc_value {!r}".format(gc))
+            else:
+                rv["gc_lambda"][perc] = round_sig(gc, 5)
+
     return rv
 
 
@@ -267,7 +288,8 @@ def gc_value(pval: float, quantile: float = 0.5) -> float:
     return scipy.stats.chi2.ppf(1 - pval, 1) / scipy.stats.chi2.ppf(1 - quantile, 1)
 
 
-assert approx_equal(gc_value(0.49), 1.047457)  # I computed these using that R code.
+# I computed these using that R code.
+assert approx_equal(gc_value(0.49), 1.047457)
 assert approx_equal(gc_value(0.5), 1)
 assert approx_equal(gc_value(0.50001), 0.9999533)
 assert approx_equal(gc_value(0.6123), 0.5645607)
@@ -276,6 +298,8 @@ assert approx_equal(gc_value(0.6123), 0.5645607)
 def get_confidence_intervals(
     num_variants: float, confidence: float = 0.95
 ) -> Iterator[Dict[str, float]]:
+    if num_variants <= 1:
+        return
     one_sided_doubt = (1 - confidence) / 2
 
     # `variant_counts` are the numbers of variants at which we'll calculate the confidence intervals

@@ -1,6 +1,6 @@
 from ..utils import (
     chrom_order,
-    get_phenolist,
+    get_phenotypes_to_process,
     PheWebError,
     get_phenocode_with_stratifications,
 )
@@ -13,6 +13,7 @@ from ..file_utils import (
     make_basedir,
     get_dated_tmp_path,
     get_tmp_path,
+    backup_file
 )
 from .load_utils import mtime, indent, ProgressBar
 
@@ -29,7 +30,6 @@ MAX_NUM_FILES_TO_MERGE_AT_ONCE = (
 MIN_NUM_FILES_TO_MERGE_AT_ONCE = (
     4   # Try to avoid ever merging fewer than this many files at a time.
 )
-
 
 
 def run(argv):
@@ -53,23 +53,35 @@ def run(argv):
         )
         exit(1)
 
-    manna = MergeManager()
-
-    if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
-        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(len(manna.files) // manna.n_procs, 2)
-        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
-        
+    manna = MergeManager(out_filepath)
 
     # TODO: If a phenotype is removed, this still reports that the list of sites is up-to-date.  How to check that?
-    if os.path.exists(out_filepath) and not force:
-        if mtime(out_filepath) >= max(mtime(f["filepath"]) for f in manna.files):
-            print("The list of sites is up-to-date!")
-            return
+
+    if not manna.files and not force:
+        print("The list of sites is up-to-date!")
+        return
+
+    # Merging previous site file if it exists.
+    existing_out = None
+    if os.path.exists(out_filepath):
+
+        existing_out = out_filepath
+        print(f"Original '{existing_out}' will be included in files to merge.")
+
+        # Treating old site file as a merged file.
+        manna.append_file("merged", existing_out)
+
+    if len(manna.files) / manna.n_procs < MAX_NUM_FILES_TO_MERGE_AT_ONCE:
+        MAX_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            len(manna.files) // manna.n_procs, 2)
+        MIN_NUM_FILES_TO_MERGE_AT_ONCE = max(
+            MAX_NUM_FILES_TO_MERGE_AT_ONCE // 2, 2)
 
     taskq = multiprocessing.Queue()
     retq = multiprocessing.Queue()
     procs = [
-        multiprocessing.Process(target=mp_target, args=(taskq, retq))
+        multiprocessing.Process(
+            target=mp_target, args=(taskq, retq, existing_out))
         for _ in range(manna.n_procs)
     ]
     for p in procs:
@@ -105,20 +117,36 @@ def run(argv):
         p.join()
         assert p.exitcode == 0
     make_basedir(out_filepath)
-    os.rename(manna.files[0]["filepath"], out_filepath)
+
+    if existing_out:
+
+        backup_file(out_filepath, "sites", "move")
+
+        final_tmp = get_tmp_path("final-merge")
+        os.rename(manna.files[0]["filepath"], final_tmp)
+        os.replace(final_tmp, out_filepath)
+    else:
+        os.rename(manna.files[0]["filepath"], out_filepath)
 
 
 class MergeManager:
     """Keeps track of what needs to get merged next."""
 
-    def __init__(self):
+    def __init__(self, out_filepath):
         self.n_procs = conf.get_num_procs(cmd="sites")
         self.files = []
 
-        for pheno in get_phenolist():
+        # Get pheno from pheno list
+        for pheno in get_phenotypes_to_process():
             if conf.has_stratifications():
                 pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
+
             filepath = get_pheno_filepath("parsed", pheno["phenocode"])
+
+            if os.path.exists(out_filepath) \
+                    and mtime(out_filepath) >= mtime(filepath):
+                continue
+
             self.files.append(
                 {
                     "type": "input",
@@ -126,6 +154,15 @@ class MergeManager:
                     "pheno": pheno,
                 }
             )
+
+    def append_file(self, f_type, filepath):
+        self.files.append({
+            "type": f_type,
+            "filepath": filepath,
+        })
+
+    def set_files(self, files):
+        self.files = files
 
     def apply_ret(self, ret):
         if ret["type"] == "task-completion":
@@ -147,7 +184,8 @@ class MergeManager:
                     + "\n"
                 )
             raise PheWebError(
-                "Child process had exception, info dumped to {}".format(exc_filepath)
+                "Child process had exception, info dumped to {}".format(
+                    exc_filepath)
             )
         else:
             raise PheWebError("Unknown ret type: {}".format(ret["type"]))
@@ -174,7 +212,8 @@ class MergeManager:
             # MAKE A TASK FOR THE WORKER
             files_to_merge = self.files[:MAX_NUM_FILES_TO_MERGE_AT_ONCE]
             self.files = self.files[MAX_NUM_FILES_TO_MERGE_AT_ONCE:]
-            out_filepath = get_tmp_path(f"merging-{random.randrange(int(1e10))}")
+            out_filepath = get_tmp_path(
+                f"merging-{random.randrange(int(1e10))}")
             taskq.put(
                 {
                     "files_to_merge": files_to_merge,
@@ -183,10 +222,10 @@ class MergeManager:
             )
 
 
-def mp_target(taskq, retq):
+def mp_target(taskq, retq, existing_out):
     for task in iter(taskq.get, {"exit": True}):
         try:
-            for ret in merge(task["files_to_merge"], task["out_filepath"]):
+            for ret in merge(task["files_to_merge"], task["out_filepath"], existing_out):
                 if isinstance(ret, dict) and ret["type"] == "warning":
                     retq.put(ret)
                 else:
@@ -213,7 +252,7 @@ def mp_target(taskq, retq):
             )
 
 
-def merge(files_to_merge, out_filepath):
+def merge(files_to_merge, out_filepath, existing_out):
     # files_to_merge is like [
     #   {filepath: "/foo/bar", type:"input", pheno:pheno},
     #   {filepath: "/foo/bar", type:"merged"},
@@ -268,7 +307,8 @@ def merge(files_to_merge, out_filepath):
         )
 
     for file_to_merge in files_to_merge:
-        if file_to_merge["type"] == "merged":
+        # Deleting merged file but not old sites file.
+        if file_to_merge["type"] == "merged" and file_to_merge["filepath"] != existing_out:
             os.remove(file_to_merge["filepath"])
     # print('{:8} variants in {} <- {}'.format(n_variants, os.path.basename(out_filepath), [os.path.basename(f['filepath']) for f in files_to_merge]))
 

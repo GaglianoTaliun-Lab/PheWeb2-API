@@ -1,5 +1,5 @@
 from ..utils import get_gene_tuples_with_ensg, PheWebError
-from ..file_utils import get_filepath, get_tmp_path
+from ..file_utils import get_filepath, get_tmp_path, backup_file
 from .. import conf
 
 import re
@@ -16,7 +16,7 @@ def get_genenamesorg_ensg_aliases_map(
 ) -> Dict[str, List[str]]:
     ensgs_to_consider = set(ensgs_to_consider)
     r = urllib.request.urlopen(
-        "https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/json/non_alt_loci_set.json"
+        "https://storage.googleapis.com/public-download-files/hgnc/json/json/non_alt_loci_set.json"
     )
     data = r.read().decode("utf-8")
     ensg_to_aliases = {}
@@ -61,13 +61,15 @@ def get_gene_aliases() -> Dict[str, str]:
 
     canonicals_upper = {g["canonical"].upper() for g in genes}
     ensg_to_canonical = {g["ensg"]: g["canonical"] for g in genes}
-    ensg_to_aliases = get_genenamesorg_ensg_aliases_map(g["ensg"] for g in genes)
+    ensg_to_aliases = get_genenamesorg_ensg_aliases_map(
+        g["ensg"] for g in genes)
     canonical_to_aliases = {
         ensg_to_canonical[ensg]: ensg_to_aliases.get(ensg, [])
         for ensg in ensg_to_canonical.keys()
     }
     for canonical, aliases in canonical_to_aliases.items():
-        aliases = [alias for alias in aliases if alias.upper() not in canonicals_upper]
+        aliases = [alias for alias in aliases if alias.upper()
+                   not in canonicals_upper]
         aliases.append(canonical.upper())
         aliases = list(set(aliases))
         canonical_to_aliases[canonical] = aliases
@@ -82,7 +84,8 @@ def get_gene_aliases() -> Dict[str, str]:
 
 
 def download_gene_aliases() -> None:
-    aliases_filepath = Path(get_filepath("gene-aliases-sqlite3", must_exist=False))
+    aliases_filepath = Path(get_filepath(
+        "gene-aliases-sqlite3", must_exist=False))
     aliases_tmp_filepath = Path(get_tmp_path(aliases_filepath))
     print("gene aliases will be stored at {!r}".format(str(aliases_filepath)))
     if aliases_tmp_filepath.exists():
@@ -93,8 +96,12 @@ def download_gene_aliases() -> None:
             "CREATE TABLE gene_aliases (alias TEXT PRIMARY KEY, canonicals_comma TEXT)"
         )
         db.executemany(
-            "INSERT INTO gene_aliases VALUES (?,?)", sorted(get_gene_aliases().items())
+            "INSERT INTO gene_aliases VALUES (?,?)", sorted(
+                get_gene_aliases().items())
         )
+
+    backup_file(aliases_filepath, "resources", "move")
+
     aliases_tmp_filepath.replace(aliases_filepath)
 
 
@@ -110,7 +117,8 @@ def run(argv: List[str]) -> None:
 
         download_genes.run([])
 
-    dest_filepath = Path(get_filepath("gene-aliases-sqlite3", must_exist=False))
+    dest_filepath = Path(get_filepath(
+        "gene-aliases-sqlite3", must_exist=False))
     if dest_filepath.exists():
         return
 

@@ -6,21 +6,20 @@ import csv
 from functools import lru_cache
 import tqdm
 
-class VariantLoading:
-    def __init__(self, file_path):
-        self.variants = {}
-        self.file_path = file_path
+from ..file_utils import get_filepath, get_tmp_path, backup_file
 
-        self.db_path = os.path.join(file_path, "variants.db")
-        self.load_or_create_variant_db(file_path)
-    
-    def load_or_create_variant_db(self, file_path):
-        
-        db_path = self.db_path
-        
-        if os.path.exists(db_path):
-            print(f"DEBUG: Found existing database at {db_path}, skipping creation.")
-            return
+
+class VariantLoading:
+    def __init__(self):
+        self.variants = {}
+
+        self.db_path = get_filepath("variants_db", must_exist=False)
+        self.tmp_db_path = get_tmp_path(self.db_path)
+        self.load_or_create_variant_db()
+
+    def load_or_create_variant_db(self):
+
+        db_path = self.tmp_db_path
 
         print(f"DEBUG: Creating new database at {db_path}")
         conn = sqlite3.connect(db_path)
@@ -40,7 +39,7 @@ class VariantLoading:
             )
             """)
 
-            tsv_path = os.path.join(file_path, "sites.tsv")
+            tsv_path = get_filepath("sites")
             print(f"DEBUG: Loading data from {tsv_path}")
             rows = []
             with gzip.open(tsv_path, "rt") as tsvfile:
@@ -74,14 +73,20 @@ class VariantLoading:
 
             print(f"DEBUG: Database creation complete. Entries loaded.")
 
+            # Making backup if outfiles exists
+            backup_file(get_filepath("variants_db",
+                        must_exist=False), "sites", "move")
+
+            os.replace(db_path, self.db_path)
+
         except Exception as e:
             print(f"DEBUG: Error inserting data: {e}")
             conn.rollback()
+            os.remove(db_path)
             raise e
         finally:
             conn.close()
 
-    
     @lru_cache(maxsize=1000)
     def query_variants(self, prefix, max_results=4):
         db_path = self.db_path
@@ -116,9 +121,6 @@ class VariantLoading:
         except Exception as e:
             print(f"DEBUG: Error querying variants: {e}")
             raise e
-            
 
-
-    
     def get_variants(self):
         return self.variants

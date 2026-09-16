@@ -2,7 +2,9 @@
 This script creates generated-by-pheweb/best-of-pheno/<pheno> which contains the strongest 100k associations for the phenotype.
 """
 
-from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath
+import os
+
+from ..file_utils import VariantFileReader, VariantFileWriter, get_pheno_filepath, backup_file, get_tmp_path
 from ..utils import (
     get_phenolist,
     get_phenocode_with_stratifications,
@@ -14,6 +16,7 @@ from .load_utils import (
     MaxPriorityQueue,
     parallelize_per_pheno,
     get_phenos_subset,
+    mtime
 )
 
 import argparse
@@ -31,7 +34,8 @@ def run(argv: List[str]) -> None:
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenolist()
 
     interaction_phenos = []
     non_interaction_phenos = []
@@ -73,14 +77,16 @@ def run(argv: List[str]) -> None:
 def make_bestof_file(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("pheno_gz", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 
 def make_bestof_file_interaction(pheno: Dict[str, Any]) -> None:
     make_bestof_file_explicit(
         get_pheno_filepath("interaction", pheno["phenocode"]),
-        get_pheno_filepath("best_of_pheno", pheno["phenocode"], must_exist=False),
+        get_pheno_filepath(
+            "best_of_pheno", pheno["phenocode"], must_exist=False),
     )
 
 
@@ -91,5 +97,12 @@ def make_bestof_file_explicit(in_filepath: str, out_filepath: str) -> None:
             q.add_and_keep_size(v, v["pval"], NUM_VARIANTS)
     assocs = list(q.pop_all())
     assocs.sort(key=lambda v: (chrom_order[v["chrom"]], v["pos"]))
-    with VariantFileWriter(out_filepath) as vfw:
+
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    with VariantFileWriter(tmp_out_filepath) as vfw:
         vfw.write_all(assocs)
+
+    backup_file(out_filepath, "best_of_pheno", "move")
+
+    os.replace(tmp_out_filepath, out_filepath)

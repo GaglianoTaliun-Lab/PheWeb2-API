@@ -3,7 +3,7 @@ This script takes a file with the columns [chrom, pos, ...] (but no headers) and
 """
 
 from ..utils import get_gene_tuples
-from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath
+from ..file_utils import VariantFileReader, VariantFileWriter, get_filepath, backup_file, get_tmp_path
 from .load_utils import mtime
 
 from intervaltree import IntervalTree, Interval
@@ -12,6 +12,7 @@ import os
 import os.path
 import boltons.iterutils
 from typing import List, Tuple, Optional, Dict, Iterator
+from ..models.variant_utils import VariantLoading
 
 Chrom = str
 GeneName = str
@@ -45,7 +46,8 @@ class GeneAnnotator(object):
     def __init__(self, interval_tuples: Iterator[Tuple[Chrom, int, int, GeneName]]):
         """interval_tuples is like [('22', 12321, 12345, 'APOL1'), ...]"""
         self._its: Dict[Chrom, IntervalTree] = {}
-        gene_start_tuples_by_chrom: Dict[Chrom, List[Tuple[int, GeneName]]] = {}
+        gene_start_tuples_by_chrom: Dict[Chrom,
+                                         List[Tuple[int, GeneName]]] = {}
         gene_end_tuples_by_chrom: Dict[Chrom, List[Tuple[int, GeneName]]] = {}
         for chrom, pos_start, pos_end, gene_name in interval_tuples:
             if chrom not in self._its:
@@ -77,7 +79,8 @@ class GeneAnnotator(object):
         if overlapping_genes:
             return ",".join(
                 sorted(
-                    boltons.iterutils.unique_iter(og.data for og in overlapping_genes)
+                    boltons.iterutils.unique_iter(
+                        og.data for og in overlapping_genes)
                 )
             )
         nearest_gene_end = self._gene_ends[chrom].get_item_before(pos)
@@ -99,6 +102,7 @@ class GeneAnnotator(object):
 def annotate_genes(in_filepath: str, out_filepath: str) -> None:
     """Both args are filepaths"""
     ga = GeneAnnotator(get_gene_tuples())
+
     with VariantFileWriter(out_filepath) as out_f, VariantFileReader(
         in_filepath
     ) as variants:
@@ -128,5 +132,20 @@ def run(argv: List[str]) -> None:
         mtime(genes_filepath), mtime(input_filepath)
     ) <= mtime(out_filepath):
         print("gene annotation is up-to-date!")
-    else:
-        annotate_genes(input_filepath, out_filepath)
+        return
+
+    # === annotate genes ===
+    # Get tmp file
+    tmp_out_filepath = get_tmp_path(out_filepath)
+    annotate_genes(input_filepath, tmp_out_filepath)
+
+    # Making backup if out_file exists
+    backup_file(out_filepath, data_subdir="sites", method="move")
+
+    # atomic replace
+    os.replace(tmp_out_filepath, out_filepath)
+
+    # === Variant database ===
+    print("Generating sites/variants.db")
+
+    VariantLoading()
