@@ -1,7 +1,8 @@
-import pysam
+import gzip
 import os
 from collections import defaultdict
 
+import pysam
 
 class SNPFetcher:
     def __init__(self, file_base_path, window_size=200):
@@ -58,6 +59,11 @@ class SNPFetcher:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
         # print("found file")
+
+        # Creating an index to access columns by name
+        with gzip.open(file_path, "rt") as f:
+            header = tuple(f.readline().rstrip().split("\t"))
+
         tabix_file = pysam.TabixFile(file_path)
         grouped_snps = self.group_snps_by_region(snp_list)
         # print(grouped_snps)
@@ -69,16 +75,17 @@ class SNPFetcher:
             try:
                 for record in tabix_file.fetch(chrom, region_start, region_end):
                     # TODO: it seems like tabix index doesn't match the position
-                    record_data = record.strip().split("\t")
+                    record_data = dict(zip(header, record.strip().split("\t")))
+
                     # print(record_data)
-                    pos = record_data[1]
+                    pos = record_data["pos"]
                     # print(pos)
                     for snp in snps:
                         parts = snp.split("-")
                         if (
                             int(parts[1]) == int(pos)
-                            and record_data[2] == parts[2]
-                            and record_data[3] == parts[3]
+                            and record_data["ref"] == parts[2]
+                            and record_data["alt"] == parts[3]
                         ):
                             # print("found snp in raw file")
                             # print(record_data[2] == parts[2] and record_data[3] == parts[3])
@@ -86,16 +93,17 @@ class SNPFetcher:
                                 {
                                     "chrom": chrom,
                                     "pos": pos,
-                                    "ref": record_data[2],
-                                    "alt": record_data[3],
-                                    "rsids": record_data[4],
-                                    "nearest_genes": record_data[5],
-                                    "pval": record_data[-6],
-                                    "beta": record_data[-5],
-                                    "sebeta": record_data[-4],
-                                    "af": record_data[-3],
-                                    "imp_quality": record_data[-2],
-                                    "n_samples":record_data[-1]
+                                    "ref": record_data.get("ref"),
+                                    "alt": record_data.get("alt"),
+                                    "rsids": record_data.get("rsids"),
+                                    "nearest_genes": record_data.get("nearest_genes"),
+                                    "pval": record_data.get("pval"),
+                                    "beta": record_data.get("beta"),
+                                    "sebeta": record_data.get("sebeta"),
+                                    "af": record_data.get("af"),
+                                    "maf": record_data.get("maf"),
+                                    "imp_quality": record_data.get("imp_quality"),
+                                    "n_samples": record_data.get("n_samples"),
                                 }
                             )
                     # if any((int(snp.split('-')[1]) == int(pos) and record_data[2] == snp.split('-')[2] and record_data[3] == snp.split('-')[3]) for snp in snps):
