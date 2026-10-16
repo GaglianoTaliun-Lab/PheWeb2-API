@@ -36,6 +36,9 @@ You can install PheWeb2 and all required dependencies within a virtual environme
    pip install -e .
    ```
 
+> [!IMPORTANT]
+> The following instructions cover ingesting data into a fresh PheWeb2 instance for the first time. For other tasks, such as adding new data to an existing instance, see this [repository's Wiki](https://github.com/GaglianoTaliun-Lab/PheWeb2-API/wiki).
+
 ## 2. First time ingest — Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
