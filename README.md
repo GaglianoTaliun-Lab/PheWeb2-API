@@ -37,7 +37,7 @@ You can install PheWeb2 and all required dependencies within a virtual environme
    pip install -e .
    ```
 
-## 2. First time ingest — Test it out using our small example data
+## 2. Test it out using our small example data
 To familiarize yourself with PheWeb2, we recommend first trying to configure and run it with the provided example dataset by following the steps below.
 
 > **🚨 Important:** 
@@ -84,7 +84,7 @@ To familiarize yourself with PheWeb2, we recommend first trying to configure and
 6. To access the interactive API documentation, open your internet browser and navigate to `http://localhost:9543/docs`, assuming you are running it on the same machine at port 9543.
 
 
-## 3. First time ingest — Run using your own data
+## 3. Run using your own data
 
 ### 3.1. Configuration file
 The self-documenting [config.py](config.py) configuration file includes all the variables that determine where PheWeb2 API stores ingested GWAS data, how it processes this data, and how it serves it through HTTP. 
