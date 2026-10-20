@@ -1,4 +1,4 @@
-from ..utils import get_phenolist, get_phenocode_with_stratifications
+from ..utils import get_phenolist, get_phenocode_with_stratifications, get_phenotypes_to_process, get_phenocode_with_suffixes
 from .. import conf
 from ..file_utils import get_tmp_path, get_dated_tmp_path
 from .load_utils import PerPhenoParallelizer
@@ -54,11 +54,13 @@ monitor_command = {
 
 def run(argv: List[str]) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--engine", choices=["slurm", "sge", "uge"], required=True)
+    parser.add_argument(
+        "--engine", choices=["slurm", "sge", "uge"], required=True)
     parser.add_argument(
         "--step", choices=["parse", "augment-phenos", "manhattan", "qq"], required=True
     )
-    parser.add_argument("--N_per_job", default=3) # default is 3 to avoid IO restictions
+    # default is 3 to avoid IO restictions
+    parser.add_argument("--N_per_job", default=3)
     parser.add_argument("--account", help="Slurm account to use")
     args = parser.parse_args(argv)
 
@@ -92,24 +94,29 @@ def run(argv: List[str]) -> None:
             get_output_filepaths=get_output_filepaths,
         )
     phenolist = get_phenolist()
+
     for pheno in phenolist:
-        if pheno["interaction"] is not None:
-            pheno["phenocode"] += ".interaction-" + pheno["interaction"]
-        if conf.has_stratifications():
-            pheno["phenocode"] = get_phenocode_with_stratifications(pheno)
-            
-    idxs = [i for i, pheno in enumerate(phenolist) if should_process(pheno)]
+        pheno["phenocode"] = get_phenocode_with_suffixes(pheno)
+
+    phenos_to_process = get_phenotypes_to_process()
+    phenocodes_to_process = [get_phenocode_with_suffixes(
+        pheno) for pheno in phenos_to_process]
+
+    idxs = [i for i, pheno in enumerate(phenolist)
+            if pheno["phenocode"] in phenocodes_to_process and should_process(pheno)]
+
     if not idxs:
         print("All phenos are up-to-date!")
         exit(0)
-    
+
     jobs = chunked(idxs, args.N_per_job)
-    batch_filepath = get_dated_tmp_path("{}-{}".format(args.engine, args.step)) + ".sh"
+    batch_filepath = get_dated_tmp_path(
+        "{}-{}".format(args.engine, args.step)) + ".sh"
     tmp_path = get_tmp_path(args.step)
     mkdir_p(tmp_path)
     # specify the account for slurm
     slurm_header = header_template[args.engine]
-    if args.engine == "slurm" and args.account:  
+    if args.engine == "slurm" and args.account:
         slurm_header = slurm_header.replace(
             "#!/bin/bash\n",
             "#!/bin/bash\n#SBATCH --account={}\n".format(args.account)
@@ -124,7 +131,8 @@ def run(argv: List[str]) -> None:
         for job in jobs:
             f.write(",".join(map(str, job)) + "\n")
         f.write(")\n\n")
-        f.write("export PHEWEB_DATADIR={!r}\n".format(conf.get_pheweb_data_dir()))
+        f.write("export PHEWEB_DATADIR={!r}\n".format(
+            conf.get_pheweb_data_dir()))
         f.write(
             sys.argv[0]
             + " conf NUM_PROCS=1 "

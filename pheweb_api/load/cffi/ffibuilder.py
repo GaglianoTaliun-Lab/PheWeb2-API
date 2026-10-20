@@ -17,4 +17,8 @@ ffibuilder.set_source(
 )
 ffibuilder.cdef("""
 const char* cffi_make_matrix(const char *sites_filepath, const char *augmented_pheno_glob, const char *matrix_filepath);
+const char* cffi_append_to_matrix(const char *sites_filepath, const char **pheno_files, const size_t n_phenos, const char *old_matrix_filepath, const char *new_matrix_filepath);
 """)
+
+if __name__ == "__main__":
+    ffibuilder.compile(verbose=True)

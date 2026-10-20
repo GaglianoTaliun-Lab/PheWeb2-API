@@ -1,6 +1,7 @@
 from .utils import (
     PheWebError,
     get_phenolist,
+    get_phenotype_summary,
     chrom_order,
     get_phenocode_with_stratifications,
 )
@@ -14,7 +15,8 @@ from contextlib import contextmanager
 import json
 import gzip
 import datetime
-from boltons.fileutils import AtomicSaver, mkdir_p
+import shutil
+from boltons.fileutils import AtomicSaver, mkdir_p, atomic_rename
 import pysam
 import itertools
 import random
@@ -41,10 +43,41 @@ def get_filepath(kind: str, *, must_exist: bool = True) -> str:
     return filepath
 
 
+data_subdirs: List[str] = [
+    "best_of_pheno", "interaction", "manhattan",
+    "matrix", "matrix-stratified", "parsed", "pheno_gz",
+    "phenolist", "qq", "resources",
+    "sites", ""
+]
+
+
+def extract_data_subdir_from_filepath(filepath: str) -> str:
+    data_dir = Path(conf.get_pheweb_data_dir())
+    path = Path(filepath)
+
+    try:
+        rel = path.relative_to(data_dir)
+    except ValueError:
+        print(f"Pheweb data dir ({data_dir}) not part of filepath.")
+        return "Error"
+
+    parts = rel.parts
+    if len(parts) == 0:
+        return ""
+
+    data_sub_dir = parts[0]
+
+    if data_sub_dir not in data_subdirs:
+        return ""
+
+    return data_sub_dir
+
+
 _single_filepaths: Dict[str, Callable[[], str]] = {
     # in data_dir:
     "correlations-raw": (
-        lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-correlations.txt")
+        lambda: os.path.join(conf.get_pheweb_base_dir(),
+                             "pheno-correlations.txt")
     ),
     # "phenolist": (lambda: os.path.join(conf.get_pheweb_base_dir(), "pheno-list.json")),
     "phenolist": (lambda: get_generated_path("pheno-list.json")),
@@ -74,14 +107,17 @@ _single_filepaths: Dict[str, Callable[[], str]] = {
         )
     ),
     "genes-hg19": (
-        lambda: get_generated_path("resources/genes-v{}-hg19.bed".format(conf.get_gencode_version()))
+        lambda: get_generated_path(
+            "resources/genes-v{}-hg19.bed".format(conf.get_gencode_version()))
     ),
     "genes-hg38": (
-        lambda: get_generated_path("resources/genes-v{}-hg38.bed".format(conf.get_gencode_version()))
+        lambda: get_generated_path(
+            "resources/genes-v{}-hg38.bed".format(conf.get_gencode_version()))
     ),
     "gene-aliases-sqlite3": (
         lambda: get_generated_path(
-            "resources/gene_aliases-v{}.sqlite3".format(conf.get_gencode_version())
+            "resources/gene_aliases-v{}.sqlite3".format(
+                conf.get_gencode_version())
         )
     ),
     # simple:
@@ -112,6 +148,8 @@ _single_filepaths: Dict[str, Callable[[], str]] = {
     "manhattan": (lambda: get_generated_path("manhattan")),
     "qq": (lambda: get_generated_path("qq")),
     "matrix-stratified": (lambda: get_generated_path("matrix")),
+    "autocomplete_db": (lambda: get_generated_path("sites/autocomplete.db")),
+    "variants_db": (lambda: get_generated_path("sites/variants.db"))
 }
 
 
@@ -131,20 +169,25 @@ def get_pheno_filepath(kind: str, phenocode: str, *, must_exist: bool = True) ->
 _pheno_filepaths: Dict[str, Callable[[str], str]] = {
     "parsed": (lambda phenocode: get_generated_path("parsed", phenocode)),
     "pheno_gz": (
-        lambda phenocode: get_generated_path("pheno_gz", "{}.gz".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "pheno_gz", "{}.gz".format(phenocode))
     ),
     "pheno_gz_tbi": (
-        lambda phenocode: get_generated_path("pheno_gz", "{}.gz.tbi".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "pheno_gz", "{}.gz.tbi".format(phenocode))
     ),
     "interaction": (
-        lambda phenocode: get_generated_path("interaction", "{}.gz".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "interaction", "{}.gz".format(phenocode))
     ),
     "interaction_tbi": (
-        lambda phenocode: get_generated_path("interaction", "{}.gz.tbi".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "interaction", "{}.gz.tbi".format(phenocode))
     ),
     "best_of_pheno": (lambda phenocode: get_generated_path("best_of_pheno", phenocode)),
     "manhattan": (
-        lambda phenocode: get_generated_path("manhattan", "{}.json".format(phenocode))
+        lambda phenocode: get_generated_path(
+            "manhattan", "{}.json".format(phenocode))
     ),
     "qq": (lambda phenocode: get_generated_path("qq", "{}.json".format(phenocode))),
     "matrix-stratified": (
@@ -165,7 +208,7 @@ def get_tmp_path(arg: Union[Path, str]) -> str:
     if arg.startswith(get_generated_path()):
         mkdir_p(get_generated_path("tmp"))
         tmp_basename = (
-            arg[len(get_generated_path()) :]
+            arg[len(get_generated_path()):]
             .lstrip(os.path.sep)
             .replace(os.path.sep, "-")
         )
@@ -178,15 +221,82 @@ def get_tmp_path(arg: Union[Path, str]) -> str:
     assert ret != arg, (ret, arg)
     while os.path.exists(ret):
         ret = "{}/{}-{}".format(
-            os.path.dirname(ret), random.choice("123456789"), os.path.basename(ret)
+            os.path.dirname(ret), random.choice(
+                "123456789"), os.path.basename(ret)
         )
     return ret
 
 
 def get_dated_tmp_path(prefix: str) -> str:
     assert "/" not in prefix, prefix
-    time_str = datetime.datetime.isoformat(datetime.datetime.now()).replace(":", "-")
+    time_str = datetime.datetime.isoformat(
+        datetime.datetime.now()).replace(":", "-")
     return get_tmp_path(prefix + "-" + time_str)
+
+
+def get_backup_path():
+    return get_generated_path("backups")
+
+
+def backup_file(filepath: str,
+                data_subdir: str = "",
+                method: str = "copy",
+                add_iso_date=True,
+                log=False
+                ) -> str:
+
+    if not conf.is_backups_enabled() or not os.path.exists(filepath):
+        return ""
+
+    if not data_subdir:
+        data_subdir = extract_data_subdir_from_filepath(filepath)
+
+    if data_subdir not in data_subdirs:
+        raise PheWebError(
+            f"Invalid data_subdir '{data_subdir}' for {filepath}"
+        )
+
+    _methods = ["copy", "move"]
+
+    if method not in _methods:
+        raise PheWebError(
+            "method must be one of the following: {}".format(
+                ", ".join(_methods)
+            )
+        )
+
+    dest_dir = os.path.join(get_backup_path(), data_subdir)
+
+    if add_iso_date:
+        backup_filename = "{}-{}".format(
+            datetime.datetime.now().isoformat(),
+            os.path.basename(filepath)
+        )
+    else:
+        backup_filename = os.path.basename(filepath)
+
+    backup_filepath = os.path.join(dest_dir, backup_filename)
+
+    make_basedir(backup_filepath)
+
+    if method == "move":
+        if log:
+            print(f"NOTE: moving the old {filepath!r} to {backup_filepath!r}")
+        shutil.move(filepath, backup_filepath)
+    else:
+        if log:
+            print(f"NOTE: copying the old {filepath!r} to {backup_filepath!r}")
+        shutil.copy(filepath, backup_filepath)
+
+    return backup_filepath
+
+
+def get_matrix_subdir():
+
+    if conf.has_stratifications():
+        return "matrix-stratified"
+
+    return "matrix"
 
 
 csv.register_dialect(
@@ -201,7 +311,7 @@ csv.register_dialect(
 )
 
 
-## Readers
+# Readers
 
 
 @contextmanager
@@ -217,11 +327,13 @@ def VariantFileReader(
                 print(variant)
     """
     with read_maybe_gzip(filepath) as f:
-        reader: Iterator[List[str]] = csv.reader(f, dialect="pheweb-internal-dialect")
+        reader: Iterator[List[str]] = csv.reader(
+            f, dialect="pheweb-internal-dialect")
         try:
             fields = next(reader)
         except StopIteration:
-            raise PheWebError("It looks like the file {} is empty".format(filepath))
+            raise PheWebError(
+                "It looks like the file {} is empty".format(filepath))
         if fields[
             0
         ].startswith(
@@ -294,7 +406,8 @@ class _vfr_only_per_variant_fields:
 def IndexedVariantFileReader(phenocode: str):
     filepath = get_pheno_filepath("pheno_gz", phenocode)
     with read_gzip(filepath) as f:
-        reader: Iterator[List[str]] = csv.reader(f, dialect="pheweb-internal-dialect")
+        reader: Iterator[List[str]] = csv.reader(
+            f, dialect="pheweb-internal-dialect")
         fields = next(reader)
     if fields[0].startswith(
         "#"
@@ -349,7 +462,8 @@ class _ivfr:
         # Doesn't make much sense to me.  There must be a reason that I don't understand.
 
         try:
-            tabix_iter = self._tabix_file.fetch(chrom, start - 1, end - 1, parser=None)
+            tabix_iter = self._tabix_file.fetch(
+                chrom, start - 1, end - 1, parser=None)
         except Exception as exc:
             raise PheWebError(
                 "ERROR when fetching {}-{}-{} from {}".format(
@@ -383,21 +497,6 @@ class MatrixReader:
             else matrix_filepath
         )
 
-        phenos: List[Dict[str, Any]] = get_phenolist()
-        phenocodes: List[str] = [pheno["phenocode"] for pheno in phenos]
-
-        if conf.has_stratifications():
-            phenocodes: List[str] = [
-                get_phenocode_with_stratifications(pheno) for pheno in phenos
-            ]
-
-        self._info_for_pheno = {
-            get_phenocode_with_stratifications(pheno): {
-                k: v for k, v in pheno.items() if k != "assoc_files"
-            }
-            for pheno in phenos
-        }
-
         with read_gzip(self._filepath) as f:
             reader = csv.reader(f, dialect="pheweb-internal-dialect")
             colnames = next(reader)
@@ -414,12 +513,42 @@ class MatrixReader:
                 assert len(x) == 2, x
                 field, phenocode = x
                 assert field in parse_utils.fields, field
-                assert phenocode in phenocodes, phenocode
-                self._colidxs_for_pheno.setdefault(phenocode, {})[field] = colnum
+                self._colidxs_for_pheno.setdefault(phenocode, {})[
+                    field] = colnum
             else:
                 field = colname
                 assert field in parse_utils.fields, field
                 self._colidxs[field] = colnum
+
+        self._info_for_pheno = {}
+
+        # First add phenotypes from phenotype.json if it exists,
+        if os.path.exists(get_filepath("phenotypes_summary", must_exist=False)):
+
+            phenos = get_phenotype_summary()
+
+            keys_black_list = ("num_peaks", "rsids", "alt", "ref", "pos",
+                               "chrom", "nearest_genes", "pval")
+
+            self._info_for_pheno = {
+                get_phenocode_with_stratifications(pheno): {
+                    k: v for k, v in pheno.items() if k not in keys_black_list
+                }
+                for pheno in phenos
+            }
+
+        # uses pheno-list.json afterwards
+        # TODO: maybe get_phenolist_no_interaction instead?
+        phenos: List[Dict[str, Any]] = get_phenolist()
+
+        self._info_for_pheno.update({
+            get_phenocode_with_stratifications(pheno): {
+                k: v for k, v in pheno.items() if k != "assoc_files"
+            }
+            # TODO: allowing overwrites here?
+            for pheno in phenos
+            if get_phenocode_with_stratifications(pheno) not in self._info_for_pheno
+        })
 
     def get_phenocodes(self) -> List[str]:
         return list(self._colidxs_for_pheno)
@@ -483,6 +612,10 @@ class _mr(_ivfr):
                     variant["phenos"][phenocode] = p
         return variant
 
+    def __iter__(self):
+        for row in self._tabix_file.fetch():
+            yield self._parse_variant_row(row.split("\t"))
+
 
 def with_chrom_idx(variants: Iterator[Dict[str, Any]]) -> Iterator[Dict[str, Any]]:
     for v in variants:
@@ -517,7 +650,7 @@ def read_maybe_gzip(filepath: Union[str, Path]):
             yield f
 
 
-## Writers
+# Writers
 
 
 @contextmanager
@@ -611,16 +744,22 @@ def convert_VariantFile_to_IndexedVariantFile(vf_path: str, ivf_path: str) -> No
         os.path.dirname(tmp_path), os.path.basename(tmp_path)
     )  # Avoid using the same tmp path as augment-phenos
     pysam.tabix_compress(vf_path, tmp_path, force=True)
-    os.rename(tmp_path, ivf_path)
 
     pysam.tabix_index(
-        filename=ivf_path,
+        filename=tmp_path,
         force=True,
         seq_col=0,
         start_col=1,
-        end_col=1,  # note: `pysam.tabix_index` calls the first column `0`, but cmdline `tabix` calls it `1`.
+        # note: `pysam.tabix_index` calls the first column `0`, but cmdline `tabix` calls it `1`.
+        end_col=1,
         line_skip=1,  # skip header
     )
+
+    backup_file(ivf_path, "pheno_gz", "move")
+    backup_file(ivf_path + ".tbi", "pheno_gz", "move")
+
+    os.rename(tmp_path, ivf_path)
+    os.replace(tmp_path + ".tbi", ivf_path + ".tbi")
 
 
 def write_json(

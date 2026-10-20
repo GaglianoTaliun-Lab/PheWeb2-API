@@ -1,5 +1,5 @@
 from .. import conf
-from ..file_utils import write_json, write_heterogenous_variantfile, get_filepath
+from ..file_utils import write_json, write_heterogenous_variantfile, get_filepath, backup_file
 
 from .top_hits import get_all_hits, stringify_assocs
 
@@ -53,9 +53,15 @@ shown.  If you want all hits, use `pheweb top-hits`.
         exit(1)
 
     loci = sorted(get_loci(), key=lambda d: d["pval"])
+
+    backup_file(out_filepath_json, "", "move")
+
     write_json(filepath=out_filepath_json, data=loci, sort_keys=True)
     print("wrote {} loci to {}".format(len(loci), out_filepath_json))
 
     stringify_assocs(loci)
+
+    backup_file(out_filepath_tsv, "", "move")
+
     write_heterogenous_variantfile(out_filepath_tsv, loci)
     print("wrote {} loci to {}".format(len(loci), out_filepath_tsv))

@@ -1,26 +1,30 @@
 from .. import conf
-from ..utils import get_phenolist
+from ..utils import get_phenocode_with_suffixes, get_phenotypes_to_process
 from ..file_utils import (
+    get_tmp_path,
     write_json,
     get_filepath,
     get_pheno_filepath,
     write_heterogenous_variantfile,
+    backup_file
 )
 
+import os
 import json
 from pathlib import Path
 from typing import Iterator, Dict, Any, List
 
 
-def get_phenotypes_including_top_variants() -> Iterator[Dict[str, Any]]:
-    for pheno in get_phenolist():
-        # if there's an interaction, add it to filename
-        # if pheno["interaction"]:
-        #     phenocode = phenocode + ".inter-" + pheno["interaction"]
+def get_phenotypes_including_top_variants(existing_data) -> Iterator[Dict[str, Any]]:
+    for pheno in get_phenotypes_to_process():
+
+        if pheno in existing_data:
+            continue
 
         with open(get_pheno_filepath("qq", pheno["phenocode"])) as f:
             # GC lambda 0.01 isn't set if it was infinite or otherwise broken.
-            gc_lambda_hundred = json.load(f)["overall"]["gc_lambda"].get("0.01", None)
+            gc_lambda_hundred = json.load(
+                f)["overall"]["gc_lambda"].get("0.01", None)
 
         with open(get_pheno_filepath("manhattan", pheno["phenocode"])) as f:
             variants = json.load(f)["unbinned_variants"]
@@ -56,17 +60,13 @@ def get_phenotypes_including_top_variants() -> Iterator[Dict[str, Any]]:
         yield ret
 
 
-def get_phenotypes_including_top_variants_stratified() -> Iterator[Dict[str, Any]]:
-    for pheno in get_phenolist():
-        phenocode = pheno["phenocode"]
+def get_phenotypes_including_top_variants_stratified(existing_data_with_suffix) -> Iterator[Dict[str, Any]]:
+    for pheno in get_phenotypes_to_process():
 
-        # if there's an interaction, add it to filename
-        if pheno["interaction"]:
-            phenocode = phenocode + ".interaction-" + pheno["interaction"]
+        phenocode = get_phenocode_with_suffixes(pheno)
 
-        # if there's stratifications, add it to filename
-        for strats in pheno["stratification"]:
-            phenocode = phenocode + "." + pheno["stratification"][strats]
+        if phenocode in existing_data_with_suffix:
+            continue
 
         with open(get_pheno_filepath("manhattan", phenocode)) as f:
             variants = json.load(f)["unbinned_variants"]
@@ -118,11 +118,16 @@ def should_run() -> bool:
     oldest_output_mtime = min(fp.stat().st_mtime for fp in output_filepaths)
 
     input_filepaths = []
-    for pheno in get_phenolist():
+
+    for pheno in get_phenotypes_to_process():
         phenocode = pheno["phenocode"]
         for strats in pheno["stratification"]:
             phenocode = phenocode + "." + pheno["stratification"][strats]
-        input_filepaths.append(Path(get_pheno_filepath("manhattan", phenocode)))
+        input_filepaths.append(
+            Path(get_pheno_filepath("manhattan", phenocode)))
+
+    if not input_filepaths:
+        return False
 
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:
@@ -141,17 +146,43 @@ def run(argv: List[str]) -> None:
         print("Already up-to-date!")
         return
 
-    if conf.has_stratifications():
-        data = sorted(
-            get_phenotypes_including_top_variants_stratified(), key=lambda p: p["pval"]
-        )
-    else:
-        data = sorted(get_phenotypes_including_top_variants(), key=lambda p: p["pval"])
-
     out_filepath = get_filepath("phenotypes_summary", must_exist=False)
-    write_json(filepath=out_filepath, data=data)
+    out_filepath_tsv = get_filepath("phenotypes_summary_tsv", must_exist=False)
+
+    # Adding existing data if there is.
+    existing_data = []
+    if os.path.exists(out_filepath):
+        with open(out_filepath, "r") as existing_f:
+            existing_data = json.load(existing_f)
+
+    existing_data_with_suffix = [get_phenocode_with_suffixes(d)
+                                 for d in existing_data]
+
+    if conf.has_stratifications():
+        data = get_phenotypes_including_top_variants_stratified(
+            existing_data_with_suffix)
+    else:
+        # TODO: Test this
+        data = get_phenotypes_including_top_variants(existing_data)
+
+    # Adding old data to new data and sorting based on pvalue
+    data = sorted(list(existing_data) + list(data), key=lambda p: p["pval"])
+
+    tmp_out_filepath = get_tmp_path(out_filepath)
+
+    write_json(filepath=tmp_out_filepath, data=data)
+
+    backup_file(out_filepath, "", "move")
+
+    os.replace(tmp_out_filepath, out_filepath)
+
     print("wrote {} phenotypes to {}".format(len(data), out_filepath))
 
-    out_filepath_tsv = get_filepath("phenotypes_summary_tsv", must_exist=False)
-    write_heterogenous_variantfile(out_filepath_tsv, data, use_gzip=False)
+    tmp_out_filepath_tsv = get_tmp_path(out_filepath_tsv)
+
+    write_heterogenous_variantfile(tmp_out_filepath_tsv, data, use_gzip=False)
+
+    backup_file(out_filepath_tsv, "", "move")
+
+    os.replace(tmp_out_filepath_tsv, out_filepath_tsv)
     print("wrote {} phenotypes to {}".format(len(data), out_filepath_tsv))

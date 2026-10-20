@@ -1,4 +1,7 @@
-from ..utils import get_phenolist, PheWebError, get_phenocode_with_stratifications
+from ..utils import (get_phenolist,
+                     get_phenotypes_to_process,
+                     PheWebError,
+                     get_phenocode_with_stratifications)
 from .. import conf
 from ..file_utils import (
     VariantFileWriter,
@@ -6,8 +9,9 @@ from ..file_utils import (
     get_generated_path,
     get_filepath,
     get_pheno_filepath,
+    backup_file
 )
-from .read_input_file import PhenoReader, R2FileReader
+from .read_input_file import PhenoReader
 from .load_utils import parallelize_per_pheno, indent, get_phenos_subset
 
 import itertools
@@ -26,7 +30,8 @@ def run(argv: List[str]) -> None:
     )
     args = parser.parse_args(argv)
 
-    phenos = get_phenos_subset(args.phenos) if args.phenos else get_phenolist()
+    phenos = get_phenos_subset(
+        args.phenos) if args.phenos else get_phenotypes_to_process()
 
     # Single loop to handle both updates
     for pheno in phenos:
@@ -51,7 +56,8 @@ def run(argv: List[str]) -> None:
     if failed_results:
         # failed_filepath = get_generated_path("tmp", f"parse-failures-{}.txt") #TODO: generate a unique filename for each slurm job?
         run_id = uuid.uuid4().hex[:8]
-        failed_filepath = get_generated_path("tmp", f"parse-failures-{run_id}.txt")
+        failed_filepath = get_generated_path(
+            "tmp", f"parse-failures-{run_id}.txt")
         print(f"Failed filepath: {failed_filepath}")
 
         write_json(
@@ -67,7 +73,8 @@ def run(argv: List[str]) -> None:
             )
         )
 
-        succeeded_phenos = [p for p in phenos if p["phenocode"] not in failed_results]
+        succeeded_phenos = [
+            p for p in phenos if p["phenocode"] not in failed_results]
         succeeded_filepath = get_generated_path(
             "tmp", f"pheno-list-successful-only-{run_id}.json"
         )
@@ -90,7 +97,8 @@ def run(argv: List[str]) -> None:
                 )
                 + "To continue with only these phenotypes, run:\n"
                 + "cp {!r} {!r}\n".format(
-                    succeeded_filepath, get_filepath("phenolist", must_exist=False)
+                    succeeded_filepath, get_filepath(
+                        "phenolist", must_exist=False)
                 )
                 + "The errors for each failed phenotype are in {!r}\n".format(
                     failed_filepath
@@ -121,15 +129,23 @@ def convert(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
     try:
         # if conf.stratified():
         #     pheno['phenocode'] = get_phenocode_with_stratifications(pheno)
-        
+
+        out_filepath = get_pheno_filepath(
+            "parsed", pheno["phenocode"], must_exist=False)
+
         with VariantFileWriter(
-            get_pheno_filepath("parsed", pheno["phenocode"], must_exist=False)
+            out_filepath
         ) as writer:
-            pheno_reader = PhenoReader(pheno, minimum_maf=conf.get_assoc_min_maf())
+
+            backup_file(out_filepath, "parsed", "move")
+
+            pheno_reader = PhenoReader(
+                pheno, minimum_maf=conf.get_assoc_min_maf())
             variants = pheno_reader.get_variants()
             debugging_limit_num_variants = conf.get_debugging_limit_num_variants()
             if debugging_limit_num_variants:
-                variants = itertools.islice(variants, 0, debugging_limit_num_variants)
+                variants = itertools.islice(
+                    variants, 0, debugging_limit_num_variants)
             writer.write_all(variants)
 
     except Exception as exc:

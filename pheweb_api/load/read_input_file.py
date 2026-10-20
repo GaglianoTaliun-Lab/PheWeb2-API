@@ -537,6 +537,3 @@ class R2FileReader:
 
     #             variant_id = f"{chrom}:{pos}:{ref}:{alt}"
     #             self.variants[variant_id] = r2
-    
- 
-            

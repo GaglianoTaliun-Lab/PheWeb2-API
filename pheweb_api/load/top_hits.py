@@ -1,14 +1,17 @@
-from ..utils import get_phenolist
+from ..utils import get_phenotype_summary
 from .. import conf
 from ..file_utils import (
+    get_tmp_path,
     write_json,
     write_heterogenous_variantfile,
     get_filepath,
     get_pheno_filepath,
     get_phenocode_with_stratifications,
+    backup_file
 )
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, Any, List, Iterator
 
@@ -36,7 +39,7 @@ def get_hits(pheno: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
 
 def get_all_hits() -> List[Dict[str, Any]]:
     return sorted(
-        (hit for pheno in get_phenolist() for hit in get_hits(pheno)),
+        (hit for pheno in get_phenotype_summary() for hit in get_hits(pheno)),
         key=lambda hit: hit["pval"],
     )
 
@@ -63,12 +66,12 @@ def should_run() -> bool:
                     "manhattan", get_phenocode_with_stratifications(pheno)
                 )
             )
-            for pheno in get_phenolist()
+            for pheno in get_phenotype_summary()
         ]
     else:
         input_filepaths = [
             Path(get_pheno_filepath("manhattan", pheno["phenocode"]))
-            for pheno in get_phenolist()
+            for pheno in get_phenotype_summary()
         ]
     newest_input_mtime = max(fp.stat().st_mtime for fp in input_filepaths)
     if newest_input_mtime > oldest_output_mtime:
@@ -114,13 +117,35 @@ just the top phenotype for each, use `pheweb top-loci`.
 
     hits = get_all_hits()
 
-    write_json(filepath=out_filepath_json, data=hits, sort_keys=True)
+    tmp_out_filepath_json = get_tmp_path(out_filepath_json)
+
+    write_json(filepath=tmp_out_filepath_json, data=hits, sort_keys=True)
+
+    backup_file(out_filepath_json, "", "move")
+
+    os.replace(tmp_out_filepath_json, out_filepath_json)
+
     print("wrote {} hits to {}".format(len(hits), out_filepath_json))
 
-    write_json(filepath=out_filepath_1k_json, data=hits[:1000], sort_keys=True)
+    tmp_out_filepath_1k_json = get_tmp_path(out_filepath_1k_json)
+
+    write_json(filepath=tmp_out_filepath_1k_json,
+               data=hits[:1000], sort_keys=True)
+
+    backup_file(out_filepath_1k_json, "", "move")
+
+    os.replace(tmp_out_filepath_1k_json, out_filepath_1k_json)
     print("wrote {} hits to {}".format(len(hits[:1000]), out_filepath_1k_json))
 
     if hits:  # If there are no hits, we can't write a proper tsv
         stringify_assocs(hits)
-        write_heterogenous_variantfile(out_filepath_tsv, hits, use_gzip=False)
+
+        tmp_out_filepath_tsv = get_tmp_path(out_filepath_tsv)
+        write_heterogenous_variantfile(
+            tmp_out_filepath_tsv, hits, use_gzip=False)
+
+        backup_file(out_filepath_tsv, "", "move")
+
+        os.replace(tmp_out_filepath_tsv, out_filepath_tsv)
+
         print("wrote {} hits to {}".format(len(hits), out_filepath_tsv))

@@ -53,7 +53,8 @@ def set_override(key: str, value: Any) -> None:
         # raise PheWebError("parse_utils customization isn't implemented yet.")
     elif key == "FIELD_ALIASES":
         if not isinstance(value, dict):
-            raise PheWebError("FIELD_ALIASES should be dict, not {!r}".format(value))
+            raise PheWebError(
+                "FIELD_ALIASES should be dict, not {!r}".format(value))
         for alias, field_name in value.items():
             if not isinstance(alias, str):
                 raise PheWebError("Alias {!r} should be str.".format(alias))
@@ -71,10 +72,12 @@ def set_override(key: str, value: Any) -> None:
         overrides[key] = {**parse_utils.default_field_aliases, **value}
     elif key == "ASSOC_TEST_NAME":
         if not isinstance(value, list):
-            raise PheWebError("ASSOC_TEST_NAME should be list, not {!r}".format(value))
+            raise PheWebError(
+                "ASSOC_TEST_NAME should be list, not {!r}".format(value))
         for test_name in value:
             if not isinstance(test_name, str):
-                raise PheWebError("Test name {!r} should be str.".format(test_name))
+                raise PheWebError(
+                    "Test name {!r} should be str.".format(test_name))
         overrides[key] = set(value)
     else:
         overrides[key] = value
@@ -82,7 +85,8 @@ def set_override(key: str, value: Any) -> None:
 
 def load_overrides_from_file(filepath: str) -> None:
     if not os.path.isfile(filepath):
-        raise PheWebError("Cannot load config from non-existent {!r}".format(filepath))
+        raise PheWebError(
+            "Cannot load config from non-existent {!r}".format(filepath))
     try:
         module = load_module_from_filepath("config", filepath)
     except Exception:
@@ -123,7 +127,8 @@ def _get_config_optional_str(key: str) -> Optional[str]:
 def _get_config_str(key: str, default: Optional[str] = None) -> str:
     _check_overrides_type(key, str)
     if default is None and key not in overrides:
-        raise PheWebError("overrides is missing required config for {!r}".format(key))
+        raise PheWebError(
+            "overrides is missing required config for {!r}".format(key))
     return overrides[key] if default is None else overrides.get(key, default)
 
 
@@ -166,7 +171,7 @@ def get_pheweb_base_dir() -> str:
     else:
         base_dir = _get_config_str("PHEWEB_BASE_DIR", os.path.curdir)
     base_dir = os.path.abspath(base_dir)
-    
+
     if not _mkdir_and_check_readable(base_dir):
         raise PheWebError(
             "PheWeb cannot use PHEWEB_BASE_DIR {!r}, because it either can't create it or can't read it.".format(
@@ -174,6 +179,7 @@ def get_pheweb_base_dir() -> str:
             )
         )
     return base_dir
+
 
 def get_cors_origins() -> List[str]:
     if "CORS_ORIGINS" in os.environ:
@@ -187,18 +193,21 @@ def get_host() -> str:
         return os.environ["HOST"]
     else:
         return _get_config_str("HOST", "127.0.0.1")
-    
+
+
 def get_port() -> int:
     if "PORT" in os.environ:
         return int(os.environ["PORT"])
     else:
         return _get_config_int("PORT", 9000)
 
+
 def get_num_api_workers() -> int:
     if "NUM_API_WORKERS" in os.environ:
         return int(os.environ["NUM_API_WORKERS"])
     else:
         return _get_config_int("NUM_API_WORKERS", 4)
+
 
 def get_cache_dir() -> Optional[str]:
     key = "cache_dir"
@@ -217,7 +226,7 @@ def get_cache_dir() -> Optional[str]:
     return cache_dir
 
 
-## Debugging config
+# Debugging config
 def is_debug_mode() -> bool:
     return "ENABLE_DEBUG" in os.environ or _get_config_bool("ENABLE_DEBUG", False)
 
@@ -230,7 +239,12 @@ def is_allowed_to_download() -> bool:
     return not _get_config_bool("disallow_downloads", False)
 
 
-## Loading config
+def is_backups_enabled() -> bool:
+    return _get_config_bool("ENABLE_BACKUPS", True)
+
+# Loading config
+
+
 def get_num_procs(cmd: Optional[str] = None) -> int:
     import multiprocessing
 
@@ -274,7 +288,7 @@ def get_dbsnp_version() -> int:
     return _get_config_int("DBSNP_VERSION", 157)
 
 
-## Configuration for parsing/ingesting GWAS files
+# Configuration for parsing/ingesting GWAS files
 def has_stratifications() -> bool:
     return _get_config_bool("ENABLE_STRATIFICATIONS", True)
 
@@ -311,7 +325,7 @@ def get_field_aliases() -> Dict[str, str]:
     return overrides.get("FIELD_ALIASES", parse_utils.default_field_aliases)
 
 
-## Manhattan / top-hits / top-loci config
+# Manhattan / top-hits / top-loci config
 def get_within_pheno_mask_around_peak() -> int:
     return _get_config_int("WITHIN_PHENO_MASK_AROUND_PEAK", 500_000)
 
@@ -344,7 +358,7 @@ def get_top_hits_pval_cutoff() -> float:
     return _get_config_float("TOP_HITS_PVAL_CUTOFF", 1e-6)
 
 
-## Pheno correlation config
+# Pheno correlation config
 def should_show_correlations() -> bool:
     return _get_config_bool("SHOW_CORRELATIONS", False)
 
@@ -353,9 +367,10 @@ def get_pheno_correlations_pvalue_threshold() -> float:
     return _get_config_float("PHENO_CORRELATIONS_PVALUE_THRESHOLD", 0.05)
 
 
-## Serving config
+# Serving config
 def get_api_url_prefix() -> str:
     return _get_config_str("API_URL_PREFIX", "")
+
 
 def get_lzjs_version() -> str:
     return _get_config_str("lzjs_version", "0.13.4")
@@ -372,7 +387,8 @@ def get_urlprefix() -> str:
 def get_custom_templates_dir() -> Optional[str]:
     key = "custom_templates"
     custom_templates_dir = _get_config_str(key, "custom_templates")
-    custom_templates_dir = os.path.abspath(os.path.expanduser(custom_templates_dir))
+    custom_templates_dir = os.path.abspath(
+        os.path.expanduser(custom_templates_dir))
     if not _is_readable(custom_templates_dir):
         return None
     return custom_templates_dir
@@ -427,5 +443,3 @@ def should_show_manhattan_filter_button() -> bool:
 
 def should_show_manhattan_filter_consequence() -> bool:
     return _get_config_bool("show_manhattan_filter_consequence", False)
-
-

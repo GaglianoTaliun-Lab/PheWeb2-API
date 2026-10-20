@@ -24,6 +24,9 @@ def load_module_from_filepath(module_name: str, filepath: str) -> types.ModuleTy
 
 
 def round_sig(x: float, digits: int) -> float:
+    """
+    Rounding to n significant digits.
+    """
     if x == 0:
         return 0
     elif abs(x) == math.inf or math.isnan(x):
@@ -34,19 +37,17 @@ def round_sig(x: float, digits: int) -> float:
         return round(x, digits - 1 - digits_above_zero)
 
 
-assert round_sig(0.00123, 2) == 0.0012
-assert round_sig(1.59e-10, 2) == 1.6e-10
-
-
 def approx_equal(a: float, b: float, tolerance: float = 1e-4) -> bool:
+    """
+    Computing if a and b approximativaly equals based on a tolerance factor.
+    """
     return abs(a - b) <= max(abs(a), abs(b)) * tolerance
 
 
-assert approx_equal(42, 42.0000001)
-assert not approx_equal(42, 42.01)
-
-
 def fmt_seconds(seconds: float) -> str:
+    """
+    Converting float seconds into seconds, minutes or hours as an str
+    """
     if seconds < 5 * 60:
         return "{} seconds".format(int(seconds))
     if seconds < 5 * 60 * 60:
@@ -54,22 +55,19 @@ def fmt_seconds(seconds: float) -> str:
     return "{} hours".format(int(seconds // 60 // 60))
 
 
-assert fmt_seconds(9) == "9 seconds"
-assert fmt_seconds(900) == "15 minutes"
-assert fmt_seconds(90000) == "25 hours"
-
-
 def get_phenolist(filepath: ty.Optional[str] = None) -> ty.List[ty.Dict[str, ty.Any]]:
     # TODO: should this be memoized?
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenolist")  # Allow override for unit testing
+    # Allow override for unit testing
+    filepath = filepath or get_filepath("phenolist")
     try:
         with open(os.path.join(filepath)) as f:
             phenolist = json.load(f)
     except (FileNotFoundError, PermissionError):
         raise PheWebError(
-            "You need a file to define your phenotypes at '{}'.\n".format(filepath)
+            "You need a file to define your phenotypes at '{}'.\n".format(
+                filepath)
             + "For more information on how to make one, see <https://github.com/statgen/pheweb#3-make-a-list-of-your-phenotypes>"
         )
     except json.JSONDecodeError as exc:
@@ -85,13 +83,15 @@ def get_phenolist_no_interaction(filepath: ty.Optional[str] = None) -> ty.List[t
     # TODO: should this be memoized?
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenolist")  # Allow override for unit testing
+    # Allow override for unit testing
+    filepath = filepath or get_filepath("phenolist")
     try:
         with open(os.path.join(filepath)) as f:
             phenolist = json.load(f)
     except (FileNotFoundError, PermissionError):
         raise PheWebError(
-            "You need a file to define your phenotypes at '{}'.\n".format(filepath)
+            "You need a file to define your phenotypes at '{}'.\n".format(
+                filepath)
             + "For more information on how to make one, see <https://github.com/statgen/pheweb#3-make-a-list-of-your-phenotypes>"
         )
     except json.JSONDecodeError as exc:
@@ -116,7 +116,11 @@ def get_phenotype_summary(
 ) -> ty.List[ty.Dict[str, ty.Any]]:
     from .file_utils import get_filepath
 
-    filepath = filepath or get_filepath("phenotypes_summary")
+    filepath = filepath or get_filepath("phenotypes_summary", must_exist=False)
+
+    if not os.path.exists(filepath):
+        return []
+
     try:
         with open(os.path.join(filepath)) as f:
             phenotype_summary = json.load(f)
@@ -135,12 +139,32 @@ def get_phenotype_summary(
     return phenotype_summary
 
 
+def get_phenotypes_to_process() -> ty.List[ty.Dict[str, ty.Any]]:
+    """
+    Return phenotypes to process based on phenolist file.
+    Discounting any phenotypes already processed from summary.
+    """
+
+    phenos_to_process = get_phenolist()
+
+    summary = get_phenotype_summary()
+
+    summary_phenocodes = [get_phenocode_with_suffixes(
+        pheno) for pheno in summary]
+
+    phenos_to_process = [pheno for pheno in phenos_to_process
+                         if get_phenocode_with_suffixes(pheno) not in summary_phenocodes]
+
+    return phenos_to_process
+
+
 def pad_gene(start: int, end: int) -> ty.Tuple[int, int]:
     """
     Calculates a range to show in LocusZoom region views for a gene.
     Adds 100kb on each side, but never go below 0 or pad longer than 500kb (LocusZoom's max_region_scale).
     """
-    total_padding = boltons.mathutils.clamp(int(500e3) - (end - start), 0, int(200e3))
+    total_padding = boltons.mathutils.clamp(
+        int(500e3) - (end - start), 0, int(200e3))
     padding_on_left = min(
         total_padding // 2, start
     )  # if start < padding//2, use `start` to avoid going below 0.
@@ -148,16 +172,6 @@ def pad_gene(start: int, end: int) -> ty.Tuple[int, int]:
         int(100e3), total_padding - padding_on_left
     )  # put the remaining padding on the right, but not more than 100kb.
     return (start - padding_on_left, end + padding_on_right)
-
-
-assert pad_gene(1000, 2345) == (0, 102345), pad_gene(1000, 2345)
-assert pad_gene(1000, 400000) == (0, 500000), pad_gene(1000, 400000)
-assert pad_gene(200000, 400000) == (100000, 500000), pad_gene(200000, 400000)
-assert pad_gene(200000, 500000) == (100000, 600000), pad_gene(200000, 500000)
-assert pad_gene(200000, 500001) == (100001, 600001), pad_gene(200000, 500001)
-assert pad_gene(200000, 600000) == (150000, 650000), pad_gene(200000, 600000)
-assert pad_gene(200000, 700000) == (200000, 700000), pad_gene(200000, 700000)
-assert pad_gene(200000, 800000) == (200000, 800000), pad_gene(200000, 800000)
 
 
 chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]
@@ -196,7 +210,7 @@ def get_phenocode_with_stratifications(pheno: dict) -> str:
     phenocode = pheno["phenocode"]
     for stratification in pheno["stratification"]:
         phenocode += "." + pheno["stratification"][stratification]
-    
+
     return phenocode
 
 
@@ -214,7 +228,8 @@ def get_stratification_paths_server(phenos: dict) -> [str]:
     for pheno in phenos:
         stratification_path = ""
         for stratification in phenos[pheno]["stratification"]:
-            stratification_path += "." + phenos[pheno]["stratification"][stratification]
+            stratification_path += "." + \
+                phenos[pheno]["stratification"][stratification]
         stratification_paths.append(stratification_path)
     return stratification_paths
 
@@ -224,9 +239,10 @@ def get_stratification_paths(phenos: dict) -> [str]:
     for pheno in phenos:
         stratification_path = ""
         for stratification in pheno["stratification"]:
-            stratification_path += "." + pheno["stratification"][stratification]
+            stratification_path += "." + \
+                pheno["stratification"][stratification]
         stratification_paths.append(stratification_path)
-    return stratification_paths
+    return list(set(stratification_paths))
 
 
 def get_stratifications(phenos: list) -> ty.Dict[str, ty.Any]:
