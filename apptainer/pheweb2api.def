@@ -5,8 +5,8 @@ From: python:3.12.4-slim
     Author = Hongyu Xiao
     Purpose = Reproducible env for PheWeb2-API on HPC
     Base = python:3.12.4-slim
-    Version = 0.2.0
-    Date = 2025-10
+    Version = 0.6.0
+    Date = 2026-10
 
 %environment
     export PYTHONUNBUFFERED=1

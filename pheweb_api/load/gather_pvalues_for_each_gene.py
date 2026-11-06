@@ -43,10 +43,7 @@ def run(argv: List[str]) -> None:
 
     print(f"{matrix_filepaths=}")
 
-    out_tmp_filepath = Path(get_tmp_path(out_filepath))
-
-    best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
-
+    # Up-to-date or not
     matrices_newer_than_out = []
     for matrix_filepath in matrix_filepaths:
         if (
@@ -62,15 +59,27 @@ def run(argv: List[str]) -> None:
         print("best-phenos-by-gene.sqlite3 is up-to-date!")
         return
 
-    for matrix_filepath in matrix_filepaths:
+    out_tmp_filepath = Path(get_tmp_path(out_filepath))
+
+    db = sqlite3.connect(str(out_tmp_filepath))
+
+    with db:
+
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS best_phenos_for_each_gene (
+                gene TEXT PRIMARY KEY,
+                json TEXT
+            )
+        """)
+
+    for _, matrix_filepath in enumerate(matrix_filepaths):
+
         regions_on_chrom = get_regions_on_chrom()
-        regions: List[Tuple[str, int, int]] = [
+        regions = [
             (chrom, start, end)
             for chrom, regions in regions_on_chrom.items()
             for (start, end) in regions
         ]
-
-        print(f"{len(regions)=}")
 
         task_results = Parallelizer().run_multiple_tasks(
             tasks=regions,
@@ -78,31 +87,46 @@ def run(argv: List[str]) -> None:
             cmd="gather-pvalues-for-each-gene",
             matrix_filepath=matrix_filepath,
         )
-        # best_phenos_for_gene: Dict[str, List[Dict[str, Any]]] = {}
+
         for task_result in task_results:
             assert task_result["type"] == "result"
-            partial_best_phenos_for_gene = task_result["value"]
-            for genename, best_phenos in partial_best_phenos_for_gene.items():
-                # assert genename not in best_phenos_for_gene
-                if genename in best_phenos_for_gene:
-                    best_phenos_for_gene[genename].extend(best_phenos)
+
+            partial = task_result["value"]
+
+            for gene, phenos in partial.items():
+
+                row = db.execute(
+                    """
+                    SELECT json
+                    FROM best_phenos_for_each_gene
+                    WHERE gene=?
+                    """,
+                    (gene,),
+                ).fetchone()
+
+                if row is None:
+                    merged = phenos
                 else:
-                    best_phenos_for_gene[genename] = best_phenos
-    data = best_phenos_for_gene
-    out_tmp_filepath = Path(get_tmp_path(out_filepath))
-    db = sqlite3.connect(str(out_tmp_filepath))
-    with db:
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS best_phenos_for_each_gene (gene TEXT PRIMARY KEY, json TEXT)"
-        )
-        db.executemany(
-            "INSERT INTO best_phenos_for_each_gene (gene, json) VALUES (?,?)",
-            ((k, json.dumps(v)) for k, v in data.items()),
-        )
+                    existing = json.loads(row[0])
+                    merged = existing + phenos
+                    merged = order_and_truncate_phenos(merged)
+
+                db.execute(
+                    """
+                    INSERT OR REPLACE INTO best_phenos_for_each_gene
+                    (gene, json)
+                    VALUES (?, ?)
+                    """,
+                    (gene, json.dumps(merged)),
+                )
+
+    db.commit()
+    db.close()
 
     backup_file(out_filepath, "", "move")
 
     out_tmp_filepath.replace(out_filepath)
+
     print("Done making best-pheno-for-each-gene at {}".format(str(out_filepath)))
 
 
@@ -125,6 +149,9 @@ def merged_intervals(intervals: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         else:
             ret[-1] = (ret[-1][0], max(ret[-1][1], end))
     return ret
+
+
+assert merged_intervals([(1, 2), (2, 4), (5, 7)]) == [(1, 4), (5, 7)]
 
 
 def process_regions(taskq, retq, parent_overrides, matrix_filepath) -> None:
@@ -212,7 +239,5 @@ def get_gene_intervaltree_for_chrom() -> Dict[str, IntervalTree]:
 
 
 def order_and_truncate_phenos(phenos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-
     phenos.sort(key=lambda a: a["pval"])
-
     return phenos
