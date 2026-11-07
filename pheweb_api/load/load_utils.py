@@ -442,7 +442,7 @@ class PerPhenoParallelizer(Parallelizer):
 
         return any(not os.path.exists(fp) for fp in output_filepaths) or max(
             map(mtime, input_filepaths)
-        ) > min(map(mtime, output_filepaths))
+        ) >= min(map(mtime, output_filepaths))
 
 
 def parallelize_per_pheno(

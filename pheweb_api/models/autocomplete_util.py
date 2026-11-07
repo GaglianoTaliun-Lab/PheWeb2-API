@@ -76,7 +76,7 @@ class AutocompleteLoading:
             # Sites file is newer than autocomplete.db
             modify_variants_table = False
             if not self.table_exists(cur, "variants") or \
-                    mtime(get_filepath("sites")) > mtime(self.db_path):
+                    mtime(get_filepath("sites")) >= mtime(self.db_path):
                 modify_variants_table = True
 
             gene_db_filepath = os.path.join(
@@ -86,7 +86,7 @@ class AutocompleteLoading:
             # gene db file newer than autocomplete.db
             modify_genes_table = False
             if not self.table_exists(cur, "genes") or \
-                    mtime(gene_db_filepath) > mtime(self.db_path):
+                    mtime(gene_db_filepath) >= mtime(self.db_path):
                 modify_genes_table = True
 
             phenotypes_filepath = os.path.join(
@@ -95,7 +95,7 @@ class AutocompleteLoading:
             # phenotypes.json is newer than autocomplete.db
             modify_phenotypes_table = False
             if not self.table_exists(cur, "phenotypes") or \
-                    mtime(phenotypes_filepath) > mtime(self.db_path):
+                    mtime(phenotypes_filepath) >= mtime(self.db_path):
                 modify_phenotypes_table = True
 
             # phenotypes.tsv is newer than autocomplete.db
